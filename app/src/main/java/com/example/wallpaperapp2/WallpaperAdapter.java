@@ -1,5 +1,6 @@
 package com.example.wallpaperapp2;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,6 +50,12 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         holder.btnFavorite.setOnClickListener(v -> {
             wallpaper.isFavorite = !wallpaper.isFavorite;
             notifyItemChanged(position);
+        });
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), WallpaperDetailActivity.class);
+            intent.putExtra("wallpaper_id", wallpaper.id);
+            v.getContext().startActivity(intent);
         });
     }
 

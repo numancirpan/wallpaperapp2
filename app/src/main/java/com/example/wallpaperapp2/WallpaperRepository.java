@@ -10,10 +10,10 @@ public class WallpaperRepository {
     public static void initializeData() {
         if (!wallpaperList.isEmpty()) return;
 
-        wallpaperList.add(new Wallpaper(R.drawable.wall1, "Green Dream", "Nature"));
-        wallpaperList.add(new Wallpaper(R.drawable.wall2, "Pattern World", "Art"));
-        wallpaperList.add(new Wallpaper(R.drawable.wall3, "City Racing", "City"));
-        wallpaperList.add(new Wallpaper(R.drawable.wall4, "Mystic Water", "Nature"));
+        wallpaperList.add(new Wallpaper(1, R.drawable.wall1, "Green Dream"));
+        wallpaperList.add(new Wallpaper(2, R.drawable.wall2, "Pattern World"));
+        wallpaperList.add(new Wallpaper(3, R.drawable.wall3, "City Racing"));
+        wallpaperList.add(new Wallpaper(4, R.drawable.wall4, "Mystic Water"));
     }
 
     public static List<Wallpaper> getFavoriteWallpapers() {
@@ -33,7 +33,10 @@ public class WallpaperRepository {
 
         for (Wallpaper wallpaper : wallpaperList) {
             boolean matchesQuery = wallpaper.title.toLowerCase().contains(query.toLowerCase());
-            boolean matchesCategory = category.equals("All") || wallpaper.category.equalsIgnoreCase(category);
+
+            boolean matchesCategory =
+                    category.equals("All") ||
+                            (!wallpaper.aiCategory.isEmpty() && wallpaper.aiCategory.equalsIgnoreCase(category));
 
             if (matchesQuery && matchesCategory) {
                 filteredList.add(wallpaper);
@@ -41,5 +44,14 @@ public class WallpaperRepository {
         }
 
         return filteredList;
+    }
+
+    public static Wallpaper getWallpaperById(int id) {
+        for (Wallpaper wallpaper : wallpaperList) {
+            if (wallpaper.id == id) {
+                return wallpaper;
+            }
+        }
+        return null;
     }
 }
