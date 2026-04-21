@@ -43,7 +43,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
                 wallpaper.isFavorite = !wallpaper.isFavorite;
 
                 if (wallpaper.isFavorite && wallpaper.aiCategory.isEmpty()) {
-                    runFakeAiClassification(wallpaper);
+                    AiClassifier.analyzeWallpaper(wallpaper);
                 }
 
                 updateAiTexts();
@@ -74,28 +74,5 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void runFakeAiClassification(Wallpaper wallpaper) {
-        switch (wallpaper.id) {
-            case 1:
-                wallpaper.aiCategory = "Nature";
-                wallpaper.aiLabels = "forest, green, landscape";
-                break;
-            case 2:
-                wallpaper.aiCategory = "Art";
-                wallpaper.aiLabels = "pattern, abstract, design";
-                break;
-            case 3:
-                wallpaper.aiCategory = "City";
-                wallpaper.aiLabels = "car, street, urban";
-                break;
-            case 4:
-                wallpaper.aiCategory = "Nature";
-                wallpaper.aiLabels = "water, lake, sky";
-                break;
-            default:
-                wallpaper.aiCategory = "Unknown";
-                wallpaper.aiLabels = "unclassified";
-                break;
-        }
-    }
+
 }

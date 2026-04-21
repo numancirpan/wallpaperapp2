@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -13,11 +12,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.ViewHolder> {
+public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.ViewHolder> {
 
-    List<Wallpaper> list;
+    private List<Wallpaper> list;
 
-    public WallpaperAdapter(List<Wallpaper> list) {
+    public FavoriteAiAdapter(List<Wallpaper> list) {
         this.list = list;
     }
 
@@ -30,7 +29,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_wallpaper, parent, false);
+                .inflate(R.layout.item_favorite_ai, parent, false);
         return new ViewHolder(view);
     }
 
@@ -38,24 +37,20 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Wallpaper wallpaper = list.get(position);
 
-        holder.imageView.setImageResource(wallpaper.imageRes);
-        holder.txtWallpaperTitle.setText(wallpaper.title);
+        holder.imageFavorite.setImageResource(wallpaper.imageRes);
+        holder.txtFavoriteTitle.setText(wallpaper.title);
 
-        if (wallpaper.isFavorite) {
-            holder.btnFavorite.setImageResource(android.R.drawable.btn_star_big_on);
+        if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
+            holder.txtFavoriteAiCategory.setText("AI Category: Not analyzed yet");
         } else {
-            holder.btnFavorite.setImageResource(android.R.drawable.btn_star_big_off);
+            holder.txtFavoriteAiCategory.setText("AI Category: " + wallpaper.aiCategory);
         }
 
-        holder.btnFavorite.setOnClickListener(v -> {
-            wallpaper.isFavorite = !wallpaper.isFavorite;
-
-            if (wallpaper.isFavorite && wallpaper.aiCategory.isEmpty()) {
-                AiClassifier.analyzeWallpaper(wallpaper);
-            }
-
-            notifyItemChanged(position);
-        });
+        if (wallpaper.aiLabels == null || wallpaper.aiLabels.isEmpty()) {
+            holder.txtFavoriteAiLabels.setText("AI Labels: Not available");
+        } else {
+            holder.txtFavoriteAiLabels.setText("AI Labels: " + wallpaper.aiLabels);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), WallpaperDetailActivity.class);
@@ -70,15 +65,17 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageView;
-        ImageButton btnFavorite;
-        TextView txtWallpaperTitle;
+        ImageView imageFavorite;
+        TextView txtFavoriteTitle;
+        TextView txtFavoriteAiCategory;
+        TextView txtFavoriteAiLabels;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            imageView = itemView.findViewById(R.id.imageView);
-            btnFavorite = itemView.findViewById(R.id.btnFavorite);
-            txtWallpaperTitle = itemView.findViewById(R.id.txtWallpaperTitle);
+            imageFavorite = itemView.findViewById(R.id.imageFavorite);
+            txtFavoriteTitle = itemView.findViewById(R.id.txtFavoriteTitle);
+            txtFavoriteAiCategory = itemView.findViewById(R.id.txtFavoriteAiCategory);
+            txtFavoriteAiLabels = itemView.findViewById(R.id.txtFavoriteAiLabels);
         }
     }
 }
