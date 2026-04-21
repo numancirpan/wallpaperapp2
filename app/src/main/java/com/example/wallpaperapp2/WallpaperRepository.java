@@ -28,17 +28,13 @@ public class WallpaperRepository {
         return favoriteList;
     }
 
-    public static List<Wallpaper> searchWallpapers(String query, String category) {
+    public static List<Wallpaper> searchWallpapersByTitle(String query) {
         List<Wallpaper> filteredList = new ArrayList<>();
 
         for (Wallpaper wallpaper : wallpaperList) {
             boolean matchesQuery = wallpaper.title.toLowerCase().contains(query.toLowerCase());
 
-            boolean matchesCategory =
-                    category.equals("All") ||
-                            (!wallpaper.aiCategory.isEmpty() && wallpaper.aiCategory.equalsIgnoreCase(category));
-
-            if (matchesQuery && matchesCategory) {
+            if (matchesQuery) {
                 filteredList.add(wallpaper);
             }
         }
