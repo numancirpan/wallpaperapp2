@@ -41,13 +41,27 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
             btnFavorite.setOnClickListener(v -> {
                 wallpaper.isFavorite = !wallpaper.isFavorite;
+                updateFavoriteIcon();
 
                 if (wallpaper.isFavorite && wallpaper.aiCategory.isEmpty()) {
-                    AiClassifier.analyzeWallpaper(wallpaper);
-                }
+                    txtAiCategory.setText("AI Category: Analyzing...");
+                    txtAiLabels.setText("AI Labels: Processing...");
 
-                updateAiTexts();
-                updateFavoriteIcon();
+                    AiClassifier.analyzeWallpaper(this, wallpaper, new AiClassifier.OnClassificationCompleteListener() {
+                        @Override
+                        public void onComplete(Wallpaper updatedWallpaper) {
+                            updateAiTexts();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            txtAiCategory.setText("AI Category: Analysis failed");
+                            txtAiLabels.setText("AI Labels: Not available");
+                        }
+                    });
+                } else {
+                    updateAiTexts();
+                }
             });
         }
     }

@@ -15,6 +15,7 @@ public class WallpaperRepository {
         wallpaperList.add(new Wallpaper(2, R.drawable.wall2, "Pattern World"));
         wallpaperList.add(new Wallpaper(3, R.drawable.wall3, "City Racing"));
         wallpaperList.add(new Wallpaper(4, R.drawable.wall4, "Mystic Water"));
+        wallpaperList.add(new Wallpaper(5, R.drawable.wall5, ""));
     }
 
     public static List<Wallpaper> getFavoriteWallpapers() {

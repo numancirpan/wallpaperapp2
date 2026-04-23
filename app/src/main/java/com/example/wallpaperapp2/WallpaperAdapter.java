@@ -51,10 +51,20 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             wallpaper.isFavorite = !wallpaper.isFavorite;
 
             if (wallpaper.isFavorite && wallpaper.aiCategory.isEmpty()) {
-                AiClassifier.analyzeWallpaper(wallpaper);
-            }
+                AiClassifier.analyzeWallpaper(v.getContext(), wallpaper, new AiClassifier.OnClassificationCompleteListener() {
+                    @Override
+                    public void onComplete(Wallpaper updatedWallpaper) {
+                        notifyItemChanged(position);
+                    }
 
-            notifyItemChanged(position);
+                    @Override
+                    public void onError(Exception e) {
+                        notifyItemChanged(position);
+                    }
+                });
+            } else {
+                notifyItemChanged(position);
+            }
         });
 
         holder.itemView.setOnClickListener(v -> {
