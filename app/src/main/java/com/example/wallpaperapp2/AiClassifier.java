@@ -18,18 +18,18 @@ import java.util.List;
 
 public class AiClassifier {
 
-    public interface OnClassificationCompleteListener {
-        void onComplete(Wallpaper wallpaper);
+    public interface OnLabelsReadyListener {
+        void onSuccess(List<AiLabelData> labels);
         void onError(Exception e);
     }
 
-    public static void analyzeWallpaper(
+    public static void analyzeImage(
             @NonNull Context context,
-            @NonNull Wallpaper wallpaper,
-            @NonNull OnClassificationCompleteListener listener
+            int imageRes,
+            @NonNull OnLabelsReadyListener listener
     ) {
         try {
-            Drawable drawable = ContextCompat.getDrawable(context, wallpaper.imageRes);
+            Drawable drawable = ContextCompat.getDrawable(context, imageRes);
             if (!(drawable instanceof BitmapDrawable)) {
                 listener.onError(new Exception("Image resource could not be converted to bitmap."));
                 return;
@@ -39,54 +39,30 @@ public class AiClassifier {
             InputImage image = InputImage.fromBitmap(bitmap, 0);
 
             ImageLabelerOptions options = new ImageLabelerOptions.Builder()
-                    .setConfidenceThreshold(0.5f)
+                    .setConfidenceThreshold(0.40f)
                     .build();
 
             ImageLabeling.getClient(options)
                     .process(image)
                     .addOnSuccessListener(labels -> {
-                        List<String> topLabels = extractTopLabels(labels);
-                        List<String> existingCategories = WallpaperRepository.getExistingAiCategories();
+                        List<AiLabelData> result = new ArrayList<>();
 
-                        String resolvedCategory = CategoryResolver.resolveCategory(topLabels, existingCategories);
+                        int limit = Math.min(labels.size(), 6);
+                        for (int i = 0; i < limit; i++) {
+                            ImageLabel label = labels.get(i);
+                            result.add(new AiLabelData(label.getText(), label.getConfidence()));
+                        }
 
-                        wallpaper.aiLabels = joinLabels(topLabels);
-                        wallpaper.aiCategory = resolvedCategory;
+                        if (result.isEmpty()) {
+                            result.add(new AiLabelData("Unknown", 0f));
+                        }
 
-                        listener.onComplete(wallpaper);
+                        listener.onSuccess(result);
                     })
                     .addOnFailureListener(listener::onError);
 
         } catch (Exception e) {
             listener.onError(e);
         }
-    }
-
-    private static List<String> extractTopLabels(List<ImageLabel> labels) {
-        List<String> results = new ArrayList<>();
-
-        int limit = Math.min(labels.size(), 5);
-        for (int i = 0; i < limit; i++) {
-            results.add(labels.get(i).getText());
-        }
-
-        if (results.isEmpty()) {
-            results.add("unknown");
-        }
-
-        return results;
-    }
-
-    private static String joinLabels(List<String> labels) {
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < labels.size(); i++) {
-            builder.append(labels.get(i));
-            if (i < labels.size() - 1) {
-                builder.append(", ");
-            }
-        }
-
-        return builder.toString();
     }
 }

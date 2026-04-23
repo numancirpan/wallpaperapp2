@@ -43,20 +43,30 @@ public class WallpaperDetailActivity extends AppCompatActivity {
                 wallpaper.isFavorite = !wallpaper.isFavorite;
                 updateFavoriteIcon();
 
-                if (wallpaper.isFavorite && wallpaper.aiCategory.isEmpty()) {
+                if (wallpaper.isFavorite && (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty())) {
                     txtAiCategory.setText("AI Category: Analyzing...");
                     txtAiLabels.setText("AI Labels: Processing...");
 
-                    AiClassifier.analyzeWallpaper(this, wallpaper, new AiClassifier.OnClassificationCompleteListener() {
+                    AiClassifier.analyzeImage(this, wallpaper.imageRes, new AiClassifier.OnLabelsReadyListener() {
                         @Override
-                        public void onComplete(Wallpaper updatedWallpaper) {
+                        public void onSuccess(java.util.List<AiLabelData> labels) {
+                            String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
+                            String finalCategory = CategoryMatcher.matchOrCreate(
+                                    generatedCategory,
+                                    WallpaperRepository.getExistingAiCategories()
+                            );
+
+                            wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels);
+                            wallpaper.aiCategory = finalCategory;
+
                             updateAiTexts();
                         }
 
                         @Override
                         public void onError(Exception e) {
-                            txtAiCategory.setText("AI Category: Analysis failed");
-                            txtAiLabels.setText("AI Labels: Not available");
+                            wallpaper.aiCategory = "Uncategorized";
+                            wallpaper.aiLabels = "Analysis failed";
+                            updateAiTexts();
                         }
                     });
                 } else {

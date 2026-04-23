@@ -50,15 +50,26 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         holder.btnFavorite.setOnClickListener(v -> {
             wallpaper.isFavorite = !wallpaper.isFavorite;
 
-            if (wallpaper.isFavorite && wallpaper.aiCategory.isEmpty()) {
-                AiClassifier.analyzeWallpaper(v.getContext(), wallpaper, new AiClassifier.OnClassificationCompleteListener() {
+            if (wallpaper.isFavorite && (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty())) {
+                AiClassifier.analyzeImage(v.getContext(), wallpaper.imageRes, new AiClassifier.OnLabelsReadyListener() {
                     @Override
-                    public void onComplete(Wallpaper updatedWallpaper) {
+                    public void onSuccess(java.util.List<AiLabelData> labels) {
+                        String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
+                        String finalCategory = CategoryMatcher.matchOrCreate(
+                                generatedCategory,
+                                WallpaperRepository.getExistingAiCategories()
+                        );
+
+                        wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels);
+                        wallpaper.aiCategory = finalCategory;
+
                         notifyItemChanged(position);
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        wallpaper.aiLabels = "Analysis failed";
+                        wallpaper.aiCategory = "Uncategorized";
                         notifyItemChanged(position);
                     }
                 });
