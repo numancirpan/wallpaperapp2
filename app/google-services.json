@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "313530926304",
+    "project_id": "walpaper-app-45813",
+    "storage_bucket": "walpaper-app-45813.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313530926304:android:ff30c17703ad0c50dabc85",
+        "android_client_info": {
+          "package_name": "com.example.wallpaperapp2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlHTkLzjD2m1l2UHrz6QhvTkmEn-tks6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
