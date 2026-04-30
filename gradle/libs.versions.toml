@@ -11,6 +11,8 @@ navigation = "2.8.5"
 recyclerview = "1.4.0"
 glide = "4.16.0"
 firebaseBom = "34.0.0"
+coreSplashscreen = "1.0.1"
+lottie = "6.4.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -27,6 +29,8 @@ glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "gl
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

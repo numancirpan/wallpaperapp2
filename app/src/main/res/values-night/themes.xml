@@ -4,4 +4,11 @@
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
+
+    <!-- Splash Screen Theme (Night) -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenBackground">#121212</item> <!-- Koyu arka plan -->
+        <item name="postSplashScreenTheme">@style/Theme.Wallpaperapp2</item>
+    </style>
 </resources>
