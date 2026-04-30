@@ -4,18 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 public class WallpaperRepository {
 
     public static List<Wallpaper> wallpaperList = new ArrayList<>();
 
     public static void initializeData() {
-        if (!wallpaperList.isEmpty()) return;
-
-        wallpaperList.add(new Wallpaper(1, R.drawable.wall1, "Green Dream"));
-        wallpaperList.add(new Wallpaper(2, R.drawable.wall2, "Pattern World"));
-        wallpaperList.add(new Wallpaper(3, R.drawable.wall3, "City Racing"));
-        wallpaperList.add(new Wallpaper(4, R.drawable.wall4, "Mystic Water"));
-        wallpaperList.add(new Wallpaper(5, R.drawable.wall5, ""));
+        if (!wallpaperList.isEmpty()) {
+            return;
+        }
     }
 
     public static List<Wallpaper> getFavoriteWallpapers() {
@@ -32,9 +29,12 @@ public class WallpaperRepository {
 
     public static List<Wallpaper> searchWallpapersByTitle(String query) {
         List<Wallpaper> filteredList = new ArrayList<>();
+        String normalized = query == null ? "" : query.toLowerCase();
 
         for (Wallpaper wallpaper : wallpaperList) {
-            boolean matchesQuery = wallpaper.title.toLowerCase().contains(query.toLowerCase());
+            boolean matchesQuery = wallpaper.title.toLowerCase().contains(normalized)
+                    || (wallpaper.aiCategory != null && wallpaper.aiCategory.toLowerCase().contains(normalized))
+                    || (wallpaper.aiLabels != null && wallpaper.aiLabels.toLowerCase().contains(normalized));
 
             if (matchesQuery) {
                 filteredList.add(wallpaper);
@@ -94,5 +94,12 @@ public class WallpaperRepository {
         }
 
         return categories;
+    }
+
+    public static void replaceAll(List<Wallpaper> newWallpapers) {
+        wallpaperList.clear();
+        if (newWallpapers != null) {
+            wallpaperList.addAll(newWallpapers);
+        }
     }
 }

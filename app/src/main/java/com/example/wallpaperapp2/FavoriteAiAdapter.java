@@ -10,6 +10,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.ViewHolder> {
@@ -37,7 +39,14 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Wallpaper wallpaper = list.get(position);
 
-        holder.imageFavorite.setImageResource(wallpaper.imageRes);
+        if (wallpaper.hasRemoteImage()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(wallpaper.imageUrl)
+                    .centerCrop()
+                    .into(holder.imageFavorite);
+        } else {
+            holder.imageFavorite.setImageResource(wallpaper.imageRes);
+        }
         holder.txtFavoriteTitle.setText(wallpaper.title);
 
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {

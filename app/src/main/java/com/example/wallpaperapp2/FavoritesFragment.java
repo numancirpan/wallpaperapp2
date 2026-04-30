@@ -1,6 +1,8 @@
 package com.example.wallpaperapp2;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,12 +13,17 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class FavoritesFragment extends Fragment {
 
     private LinearLayout favoritesContainer;
+    private LinearLayout favoritesGroupsContainer;
+    private TextInputEditText editFavoritesSearch;
 
     public FavoritesFragment() {
     }
@@ -27,6 +34,23 @@ public class FavoritesFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_favorites, container, false);
         favoritesContainer = view.findViewById(R.id.favoritesContainer);
+        favoritesGroupsContainer = view.findViewById(R.id.favoritesGroupsContainer);
+        editFavoritesSearch = view.findViewById(R.id.editFavoritesSearch);
+
+        editFavoritesSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                renderFavoriteGroups();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
 
         renderFavoriteGroups();
 
@@ -40,37 +64,30 @@ public class FavoritesFragment extends Fragment {
     }
 
     private void renderFavoriteGroups() {
-        if (favoritesContainer == null) return;
+        if (favoritesContainer == null || favoritesGroupsContainer == null) return;
 
-        favoritesContainer.removeAllViews();
-
-        TextView title = new TextView(requireContext());
-        title.setText("AI Categorized Favorites");
-        title.setTextSize(28);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        LinearLayout.LayoutParams titleParams =
-                new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                );
-        titleParams.bottomMargin = 16;
-        title.setLayoutParams(titleParams);
-        favoritesContainer.addView(title);
+        favoritesGroupsContainer.removeAllViews();
 
         Map<String, List<Wallpaper>> groupedFavorites =
                 WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
+        String query = editFavoritesSearch != null && editFavoritesSearch.getText() != null
+                ? editFavoritesSearch.getText().toString().trim().toLowerCase()
+                : "";
 
         if (groupedFavorites.isEmpty()) {
             TextView emptyText = new TextView(requireContext());
             emptyText.setText("No favorites yet.");
             emptyText.setTextSize(16);
-            favoritesContainer.addView(emptyText);
+            favoritesGroupsContainer.addView(emptyText);
             return;
         }
 
+        boolean anyResult = false;
         for (Map.Entry<String, List<Wallpaper>> entry : groupedFavorites.entrySet()) {
             String categoryName = entry.getKey();
-            List<Wallpaper> wallpapers = entry.getValue();
+            List<Wallpaper> wallpapers = filterByQuery(entry.getValue(), query);
+            if (wallpapers.isEmpty()) continue;
+            anyResult = true;
 
             TextView categoryTitle = new TextView(requireContext());
             categoryTitle.setText(categoryName);
@@ -86,7 +103,7 @@ public class FavoritesFragment extends Fragment {
             categoryParams.bottomMargin = 8;
             categoryTitle.setLayoutParams(categoryParams);
 
-            favoritesContainer.addView(categoryTitle);
+            favoritesGroupsContainer.addView(categoryTitle);
 
             RecyclerView recyclerView = new RecyclerView(requireContext());
             recyclerView.setLayoutManager(
@@ -101,7 +118,31 @@ public class FavoritesFragment extends Fragment {
                     );
             recyclerView.setLayoutParams(recyclerParams);
 
-            favoritesContainer.addView(recyclerView);
+            favoritesGroupsContainer.addView(recyclerView);
         }
+
+        if (!anyResult) {
+            TextView emptyText = new TextView(requireContext());
+            emptyText.setText("No favorite matches this search.");
+            emptyText.setTextSize(16);
+            favoritesGroupsContainer.addView(emptyText);
+        }
+    }
+
+    private List<Wallpaper> filterByQuery(List<Wallpaper> source, String query) {
+        if (query == null || query.isEmpty()) {
+            return source;
+        }
+
+        List<Wallpaper> filtered = new ArrayList<>();
+        for (Wallpaper wallpaper : source) {
+            boolean matches = wallpaper.title.toLowerCase().contains(query)
+                    || (wallpaper.aiCategory != null && wallpaper.aiCategory.toLowerCase().contains(query))
+                    || (wallpaper.aiLabels != null && wallpaper.aiLabels.toLowerCase().contains(query));
+            if (matches) {
+                filtered.add(wallpaper);
+            }
+        }
+        return filtered;
     }
 }

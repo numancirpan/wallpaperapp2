@@ -8,11 +8,13 @@ import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.Button;
 
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
@@ -22,6 +24,7 @@ public class SettingsFragment extends Fragment {
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
     private Spinner spinnerLanguage;
+    private Button btnLogout;
 
     private AppSettingsManager settingsManager;
 
@@ -40,6 +43,7 @@ public class SettingsFragment extends Fragment {
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
         radioThreeColumns = view.findViewById(R.id.radioThreeColumns);
         spinnerLanguage = view.findViewById(R.id.spinnerLanguage);
+        btnLogout = view.findViewById(R.id.btnLogout);
 
         settingsManager = new AppSettingsManager(requireContext());
 
@@ -113,6 +117,12 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onNothingSelected(android.widget.AdapterView<?> parent) {
             }
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            startActivity(new android.content.Intent(requireContext(), AuthActivity.class));
+            requireActivity().finish();
         });
     }
 }

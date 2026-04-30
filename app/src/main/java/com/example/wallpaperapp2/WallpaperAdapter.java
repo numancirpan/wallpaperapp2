@@ -11,6 +11,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.ViewHolder> {
@@ -38,7 +40,14 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Wallpaper wallpaper = list.get(position);
 
-        holder.imageView.setImageResource(wallpaper.imageRes);
+        if (wallpaper.hasRemoteImage()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(wallpaper.imageUrl)
+                    .centerCrop()
+                    .into(holder.imageView);
+        } else {
+            holder.imageView.setImageResource(wallpaper.imageRes);
+        }
         holder.txtWallpaperTitle.setText(wallpaper.title);
 
         if (wallpaper.isFavorite) {
@@ -49,9 +58,16 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
         holder.btnFavorite.setOnClickListener(v -> {
             wallpaper.isFavorite = !wallpaper.isFavorite;
+            if (wallpaper.isFavorite) {
+                FirebaseFavoritesStore.saveFavorite(wallpaper);
+            } else {
+                FirebaseFavoritesStore.removeFavorite(wallpaper);
+            }
+            AppSettingsManager settingsManager = new AppSettingsManager(v.getContext());
+            boolean aiAutoEnabled = settingsManager.isAiAutoCategorizeEnabled();
 
-            if (wallpaper.isFavorite && (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty())) {
-                AiClassifier.analyzeImage(v.getContext(), wallpaper.imageRes, new AiClassifier.OnLabelsReadyListener() {
+            if (aiAutoEnabled && wallpaper.isFavorite && (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty())) {
+                AiClassifier.OnLabelsReadyListener listener = new AiClassifier.OnLabelsReadyListener() {
                     @Override
                     public void onSuccess(java.util.List<AiLabelData> labels) {
                         String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
@@ -61,18 +77,33 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
                         );
 
                         wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels);
-                        wallpaper.aiCategory = finalCategory;
-
-                        notifyItemChanged(position);
+                        GeminiCategoryService.generateCategory(wallpaper.title, wallpaper.aiLabels, geminiCategory -> {
+                            String geminiMatched = CategoryMatcher.matchOrCreate(
+                                    geminiCategory,
+                                    WallpaperRepository.getExistingAiCategories()
+                            );
+                            wallpaper.aiCategory = geminiCategory == null || geminiCategory.trim().isEmpty()
+                                    ? finalCategory
+                                    : geminiMatched;
+                            FirebaseFavoritesStore.saveFavorite(wallpaper);
+                            holder.itemView.post(() -> notifyItemChanged(position));
+                        });
                     }
 
                     @Override
                     public void onError(Exception e) {
                         wallpaper.aiLabels = "Analysis failed";
                         wallpaper.aiCategory = "Uncategorized";
+                        FirebaseFavoritesStore.saveFavorite(wallpaper);
                         notifyItemChanged(position);
                     }
-                });
+                };
+
+                if (wallpaper.hasRemoteImage()) {
+                    AiClassifier.analyzeImageUrl(v.getContext(), wallpaper.imageUrl, listener);
+                } else {
+                    AiClassifier.analyzeImage(v.getContext(), wallpaper.imageRes, listener);
+                }
             } else {
                 notifyItemChanged(position);
             }

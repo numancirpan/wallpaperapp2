@@ -62,5 +62,19 @@
                 android:contentDescription="Favorite button" />
         </LinearLayout>
 
+        <Button
+            android:id="@+id/btnSetHomeWallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set as Home Screen"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/btnSetLockWallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set as Lock Screen"
+            android:layout_marginTop="8dp" />
+
     </LinearLayout>
 </ScrollView>
