@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -14,7 +13,7 @@
             android:id="@+id/txtSettingsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Settings"
+            android:text="@string/settings"
             android:textSize="28sp"
             android:textStyle="bold"
             android:layout_marginBottom="20dp" />
@@ -23,13 +22,13 @@
             android:id="@+id/switchDarkMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Dark Mode"
+            android:text="@string/dark_mode"
             android:layout_marginBottom="16dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Grid Columns"
+            android:text="@string/grid_columns"
             android:textStyle="bold"
             android:textSize="18sp"
             android:layout_marginBottom="8dp" />
@@ -45,20 +44,20 @@
                 android:id="@+id/radioTwoColumns"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2 Columns"
+                android:text="@string/two_columns"
                 android:layout_marginEnd="16dp" />
 
             <RadioButton
                 android:id="@+id/radioThreeColumns"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3 Columns" />
+                android:text="@string/three_columns" />
         </RadioGroup>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Language"
+            android:text="@string/language"
             android:textStyle="bold"
             android:textSize="18sp"
             android:layout_marginBottom="8dp" />
@@ -69,18 +68,11 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp" />
 
-        <TextView
-            android:id="@+id/txtLanguageInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Language selection is currently a placeholder and will be connected to real app localization later."
-            android:textSize="14sp" />
-
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Logout"
+            android:text="@string/logout"
             android:layout_marginTop="20dp" />
 
     </LinearLayout>
