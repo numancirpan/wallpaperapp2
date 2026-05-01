@@ -28,35 +28,53 @@ public class DynamicCategoryGenerator {
 
     static {
         CATEGORY_KEYWORDS.put("Workspace", Arrays.asList(
-                "laptop", "computer", "keyboard", "desk", "table", "notebook", "pen", "writing",
-                "paper", "office", "workspace", "work", "study", "mobile phone", "phone", "screen", "cup"
+                "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing",
+                "paper", "office", "workspace", "work", "study", "mobile phone", "phone", "screen"
+        ));
+        CATEGORY_KEYWORDS.put("Cafe", Arrays.asList(
+                "coffee", "cup", "mug", "table", "tableware", "chair", "cafe", "restaurant", "drink", "espresso"
+        ));
+        CATEGORY_KEYWORDS.put("Interior", Arrays.asList(
+                "chair", "table", "furniture", "room", "interior", "window", "wall", "home", "floor", "lamp"
         ));
         CATEGORY_KEYWORDS.put("Beach", Arrays.asList(
-                "beach", "sea", "ocean", "coast", "shore", "sand", "wave", "water", "rock", "sunset", "sunrise"
+                "beach", "sea", "ocean", "coast", "shore", "sand", "wave", "water", "rock", "sunset", "sunrise", "cliff"
         ));
         CATEGORY_KEYWORDS.put("Water Scenes", Arrays.asList(
-                "waterfall", "river", "lake", "water", "stream", "sea", "ocean", "coast"
+                "waterfall", "river", "lake", "water", "stream", "sea", "ocean", "coast", "reflection"
         ));
         CATEGORY_KEYWORDS.put("Nature", Arrays.asList(
-                "forest", "tree", "mountain", "landscape", "plant", "grass", "flower", "prairie", "field", "meadow", "sky"
+                "forest", "tree", "mountain", "landscape", "plant", "grass", "flower", "prairie", "field", "meadow", "leaf", "moss"
         ));
         CATEGORY_KEYWORDS.put("Urban", Arrays.asList(
-                "city", "street", "building", "architecture", "road", "urban", "traffic"
+                "city", "street", "road", "urban", "traffic", "sidewalk", "crosswalk", "car"
+        ));
+        CATEGORY_KEYWORDS.put("Architecture", Arrays.asList(
+                "building", "architecture", "house", "bridge", "tower", "facade", "roof", "door", "window"
         ));
         CATEGORY_KEYWORDS.put("Vehicles", Arrays.asList(
-                "car", "vehicle", "race", "racing", "motorcycle", "automotive", "wheel"
+                "car", "vehicle", "race", "racing", "motorcycle", "automotive", "wheel", "tire", "windshield", "bus", "train"
         ));
         CATEGORY_KEYWORDS.put("Animals", Arrays.asList(
-                "dog", "cat", "bird", "animal", "wildlife", "fish", "horse", "pet"
+                "dog", "cat", "bird", "animal", "wildlife", "fish", "horse", "pet", "fur", "snout", "nose"
+        ));
+        CATEGORY_KEYWORDS.put("Texture", Arrays.asList(
+                "texture", "pattern", "surface", "water drop", "droplet", "macro", "close-up", "fabric", "wood", "stone", "rough"
+        ));
+        CATEGORY_KEYWORDS.put("Lights", Arrays.asList(
+                "light", "lights", "bokeh", "blur", "neon", "glow", "color", "night", "circle", "lamp"
+        ));
+        CATEGORY_KEYWORDS.put("Abstract", Arrays.asList(
+                "abstract", "pattern", "blur", "color", "gradient", "shape", "design", "bokeh"
+        ));
+        CATEGORY_KEYWORDS.put("Art", Arrays.asList(
+                "poster", "illustration", "graphics", "graphic", "design", "art", "drawing", "painting", "mural"
+        ));
+        CATEGORY_KEYWORDS.put("People", Arrays.asList(
+                "person", "people", "face", "portrait", "smile", "human", "man", "woman"
         ));
         CATEGORY_KEYWORDS.put("Space", Arrays.asList(
                 "space", "planet", "moon", "star", "galaxy", "astronomy"
-        ));
-        CATEGORY_KEYWORDS.put("Art", Arrays.asList(
-                "poster", "illustration", "graphics", "graphic", "design", "pattern", "abstract", "art", "drawing"
-        ));
-        CATEGORY_KEYWORDS.put("People", Arrays.asList(
-                "person", "people", "face", "portrait", "smile", "human"
         ));
     }
 
@@ -88,6 +106,7 @@ public class DynamicCategoryGenerator {
             if (cleaned.isEmpty()) continue;
             if (GENERIC_LABELS.contains(lower)) continue;
             if (DETAIL_LABELS.contains(lower)) continue;
+            if (isContradictoryAnimalLabel(displayLabels, lower)) continue;
             if (!containsIgnoreCase(displayLabels, cleaned)) displayLabels.add(capitalize(cleaned));
             if (displayLabels.size() == 5) break;
         }
@@ -113,16 +132,31 @@ public class DynamicCategoryGenerator {
         }
 
         if (containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper")) {
-            scores.put("Workspace", scores.get("Workspace") + 8);
+            scores.put("Workspace", scores.get("Workspace") + 10);
         }
         if (containsAny(labels, "mobile phone", "phone") && containsAny(labels, "laptop", "computer", "desk", "notebook")) {
-            scores.put("Workspace", scores.get("Workspace") + 8);
+            scores.put("Workspace", scores.get("Workspace") + 10);
+        }
+        if (containsAny(labels, "coffee", "cup", "mug", "tableware") && containsAny(labels, "table", "chair", "restaurant", "cafe")) {
+            scores.put("Cafe", scores.get("Cafe") + 10);
+        }
+        if (containsAny(labels, "chair") && containsAny(labels, "table", "tableware", "building", "window")) {
+            scores.put("Cafe", scores.get("Cafe") + 8);
         }
         if (containsAny(labels, "beach", "sand", "coast", "shore")) {
-            scores.put("Beach", scores.get("Beach") + 7);
+            scores.put("Beach", scores.get("Beach") + 8);
         }
-        if (containsAny(labels, "field", "prairie", "meadow")) {
-            scores.put("Nature", scores.get("Nature") + 7);
+        if (containsAny(labels, "field", "prairie", "meadow", "moss", "leaf")) {
+            scores.put("Nature", scores.get("Nature") + 8);
+        }
+        if (containsAny(labels, "droplet", "water drop", "macro", "surface")) {
+            scores.put("Texture", scores.get("Texture") + 8);
+        }
+        if (containsAny(labels, "bokeh", "blur", "neon", "glow") || containsAny(labels, "light", "lights") && containsAny(labels, "color", "night", "blur")) {
+            scores.put("Lights", scores.get("Lights") + 8);
+        }
+        if (containsAny(labels, "cat", "dog", "fur", "snout", "nose")) {
+            scores.put("Animals", scores.get("Animals") + 8);
         }
 
         String bestCategory = null;
@@ -206,21 +240,27 @@ public class DynamicCategoryGenerator {
     }
 
     private static int keywordWeight(String keyword) {
-        if (keyword.equals("laptop") || keyword.equals("computer") || keyword.equals("beach") || keyword.equals("forest") || keyword.equals("car")) return 5;
-        if (keyword.equals("desk") || keyword.equals("keyboard") || keyword.equals("coast") || keyword.equals("field") || keyword.equals("prairie")) return 4;
+        if (keyword.equals("laptop") || keyword.equals("computer") || keyword.equals("beach") || keyword.equals("forest") || keyword.equals("car") || keyword.equals("cat")) return 5;
+        if (keyword.equals("desk") || keyword.equals("keyboard") || keyword.equals("coast") || keyword.equals("field") || keyword.equals("prairie") || keyword.equals("coffee") || keyword.equals("chair")) return 4;
         return 2;
     }
 
     private static String familyOf(String category) {
         String c = category.toLowerCase(Locale.ROOT);
         if (c.contains("work") || c.contains("office") || c.contains("tech") || c.contains("computer") || c.contains("laptop")) return "workspace";
+        if (c.contains("cafe") || c.contains("coffee") || c.contains("restaurant")) return "cafe";
+        if (c.contains("interior") || c.contains("furniture") || c.contains("chair")) return "interior";
         if (c.contains("beach") || c.contains("coast") || c.contains("sea") || c.contains("ocean") || c.contains("water")) return "beach";
         if (c.contains("nature") || c.contains("field") || c.contains("prairie") || c.contains("forest") || c.contains("mountain")) return "nature";
-        if (c.contains("urban") || c.contains("city") || c.contains("street") || c.contains("architecture")) return "urban";
+        if (c.contains("urban") || c.contains("city") || c.contains("street")) return "urban";
+        if (c.contains("architecture") || c.contains("building")) return "architecture";
         if (c.contains("vehicle") || c.contains("car") || c.contains("motor")) return "vehicles";
-        if (c.contains("animal")) return "animals";
+        if (c.contains("animal") || c.contains("cat") || c.contains("dog")) return "animals";
+        if (c.contains("texture") || c.contains("pattern")) return "texture";
+        if (c.contains("light") || c.contains("bokeh")) return "lights";
+        if (c.contains("abstract")) return "abstract";
         if (c.contains("space")) return "space";
-        if (c.contains("art") || c.contains("abstract") || c.contains("design")) return "art";
+        if (c.contains("art") || c.contains("design")) return "art";
         if (c.contains("people") || c.contains("person") || c.contains("portrait")) return "people";
         return c;
     }
@@ -239,7 +279,17 @@ public class DynamicCategoryGenerator {
         String lower = label.toLowerCase(Locale.ROOT);
         if (lower.contains("mobile phone") || lower.equals("phone")) return "Workspace";
         if (lower.contains("rock") || lower.contains("sand")) return "Beach";
+        if (lower.contains("chair")) return "Interior";
+        if (lower.contains("pattern")) return "Texture";
         return capitalize(toSingular(label));
+    }
+
+    private static boolean isContradictoryAnimalLabel(List<String> selected, String candidate) {
+        boolean hasCat = containsIgnoreCase(selected, "Cat");
+        boolean hasDog = containsIgnoreCase(selected, "Dog");
+        if (hasCat && candidate.equals("dog")) return true;
+        if (hasDog && candidate.equals("cat")) return true;
+        return false;
     }
 
     private static boolean containsIgnoreCase(List<String> source, String value) {
