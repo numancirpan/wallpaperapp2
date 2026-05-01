@@ -1,0 +1,30 @@
+<resources>
+    <string-array name="language_names">
+        <item>English</item>
+        <item>Türkçe</item>
+    </string-array>
+
+    <string-array name="language_codes">
+        <item>en</item>
+        <item>tr</item>
+    </string-array>
+
+    <string-array name="ai_category_names">
+        <item>@string/category_workspace</item>
+        <item>@string/category_cafe</item>
+        <item>@string/category_interior</item>
+        <item>@string/category_beach</item>
+        <item>@string/category_water_scenes</item>
+        <item>@string/category_nature</item>
+        <item>@string/category_urban</item>
+        <item>@string/category_architecture</item>
+        <item>@string/category_vehicles</item>
+        <item>@string/category_animals</item>
+        <item>@string/category_texture</item>
+        <item>@string/category_lights</item>
+        <item>@string/category_abstract</item>
+        <item>@string/category_art</item>
+        <item>@string/category_people</item>
+        <item>@string/category_space</item>
+    </string-array>
+</resources>
