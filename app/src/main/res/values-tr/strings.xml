@@ -79,4 +79,6 @@
     <string name="category_art">Sanat</string>
     <string name="category_people">İnsanlar</string>
     <string name="category_space">Uzay</string>
+    <string name="category_fashion">Moda</string>
+    <string name="category_monochrome">Tek Renk</string>
 </resources>
