@@ -52,6 +52,7 @@ public class WallpaperRepository {
         }
         return null;
     }
+
     public static Map<String, List<Wallpaper>> getFavoriteWallpapersGroupedByCategory() {
         Map<String, List<Wallpaper>> groupedMap = new LinkedHashMap<>();
 
@@ -96,10 +97,37 @@ public class WallpaperRepository {
         return categories;
     }
 
+    public static void applyFavoriteData(Map<Integer, Map<String, Object>> favoritesById) {
+        if (favoritesById == null || favoritesById.isEmpty()) return;
+
+        for (Map.Entry<Integer, Map<String, Object>> entry : favoritesById.entrySet()) {
+            int id = entry.getKey();
+            Map<String, Object> data = entry.getValue();
+            if (data == null) continue;
+
+            Wallpaper wallpaper = getWallpaperById(id);
+            if (wallpaper == null) {
+                String imageUrl = safeString(data.get("imageUrl"));
+                String title = safeString(data.get("title"));
+                if (title.isEmpty()) title = "Wallpaper";
+                wallpaper = new Wallpaper(id, imageUrl, title);
+                wallpaperList.add(wallpaper);
+            }
+
+            wallpaper.isFavorite = true;
+            wallpaper.aiCategory = safeString(data.get("aiCategory"));
+            wallpaper.aiLabels = safeString(data.get("aiLabels"));
+        }
+    }
+
     public static void replaceAll(List<Wallpaper> newWallpapers) {
         wallpaperList.clear();
         if (newWallpapers != null) {
             wallpaperList.addAll(newWallpapers);
         }
+    }
+
+    private static String safeString(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 }

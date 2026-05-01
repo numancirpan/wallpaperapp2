@@ -24,6 +24,7 @@ public class FavoritesFragment extends Fragment {
     private LinearLayout favoritesContainer;
     private LinearLayout favoritesGroupsContainer;
     private TextInputEditText editFavoritesSearch;
+    private boolean isLoadingFavorites = false;
 
     public FavoritesFragment() {
     }
@@ -52,15 +53,41 @@ public class FavoritesFragment extends Fragment {
             }
         });
 
-        renderFavoriteGroups();
-
+        loadCloudFavoritesThenRender();
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        renderFavoriteGroups();
+        loadCloudFavoritesThenRender();
+    }
+
+    private void loadCloudFavoritesThenRender() {
+        if (favoritesContainer == null || favoritesGroupsContainer == null) return;
+        if (isLoadingFavorites) return;
+
+        isLoadingFavorites = true;
+        showLoadingStateIfEmpty();
+
+        FirebaseFavoritesStore.fetchFavorites(favoritesById -> {
+            WallpaperRepository.applyFavoriteData(favoritesById);
+            isLoadingFavorites = false;
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(this::renderFavoriteGroups);
+        });
+    }
+
+    private void showLoadingStateIfEmpty() {
+        if (!WallpaperRepository.getFavoriteWallpapersGroupedByCategory().isEmpty()) {
+            renderFavoriteGroups();
+            return;
+        }
+        favoritesGroupsContainer.removeAllViews();
+        TextView loadingText = new TextView(requireContext());
+        loadingText.setText("Loading favorites...");
+        loadingText.setTextSize(16);
+        favoritesGroupsContainer.addView(loadingText);
     }
 
     private void renderFavoriteGroups() {
@@ -76,7 +103,7 @@ public class FavoritesFragment extends Fragment {
 
         if (groupedFavorites.isEmpty()) {
             TextView emptyText = new TextView(requireContext());
-            emptyText.setText("No favorites yet.");
+            emptyText.setText(isLoadingFavorites ? "Loading favorites..." : "No favorites yet.");
             emptyText.setTextSize(16);
             favoritesGroupsContainer.addView(emptyText);
             return;
