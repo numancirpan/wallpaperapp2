@@ -49,8 +49,9 @@ public class GeminiCategoryService {
             List<String> existingCategories,
             @NonNull Callback callback
     ) {
-        if (BuildConfig.GEMINI_API_KEY == null || BuildConfig.GEMINI_API_KEY.trim().isEmpty()) {
-            callback.onResult(new AnalysisResult("Uncategorized", "Gemini API key missing"));
+        String apiKey = BuildConfig.GEMINI_API_KEY == null ? "" : BuildConfig.GEMINI_API_KEY.trim();
+        if (apiKey.isEmpty()) {
+            callback.onResult(new AnalysisResult("Uncategorized", "Gemini API key missing - check local.properties and rebuild"));
             return;
         }
 
@@ -65,7 +66,7 @@ public class GeminiCategoryService {
 
                 String base64Image = bitmapToBase64(resizeBitmap(bitmap, 768));
                 String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
-                        + BuildConfig.GEMINI_API_KEY;
+                        + apiKey;
 
                 connection = (HttpURLConnection) new URL(endpoint).openConnection();
                 connection.setConnectTimeout(15000);
@@ -99,7 +100,7 @@ public class GeminiCategoryService {
                 String response = readStream(stream);
 
                 if (responseCode < 200 || responseCode >= 300) {
-                    callback.onResult(new AnalysisResult("Uncategorized", "Gemini analysis failed"));
+                    callback.onResult(new AnalysisResult("Uncategorized", buildHttpErrorMessage(responseCode, response)));
                     return;
                 }
 
@@ -107,7 +108,7 @@ public class GeminiCategoryService {
                 AnalysisResult result = parseAnalysis(rawText, existingCategories);
                 callback.onResult(result);
             } catch (Exception e) {
-                callback.onResult(new AnalysisResult("Uncategorized", "Gemini analysis failed"));
+                callback.onResult(new AnalysisResult("Uncategorized", "Gemini exception: " + shortMessage(e.getMessage())));
             } finally {
                 if (connection != null) {
                     connection.disconnect();
@@ -194,10 +195,35 @@ public class GeminiCategoryService {
                 }
             }
 
+            if (labels.isEmpty()) {
+                labels.add("No labels returned");
+            }
+
             return new AnalysisResult(category, String.join(", ", labels));
         } catch (Exception e) {
-            return new AnalysisResult("Uncategorized", "Gemini analysis failed");
+            return new AnalysisResult("Uncategorized", "Gemini parse failed: " + shortMessage(e.getMessage()));
         }
+    }
+
+    private static String buildHttpErrorMessage(int code, String response) {
+        String message = "";
+        try {
+            JSONObject json = new JSONObject(response);
+            JSONObject error = json.optJSONObject("error");
+            if (error != null) {
+                message = error.optString("message", "");
+            }
+        } catch (Exception ignored) {
+            message = response == null ? "" : response;
+        }
+
+        return "Gemini HTTP " + code + ": " + shortMessage(message);
+    }
+
+    private static String shortMessage(String message) {
+        if (message == null || message.trim().isEmpty()) return "Unknown error";
+        String cleaned = message.replace("\n", " ").replace("\r", " ").trim();
+        return cleaned.length() > 90 ? cleaned.substring(0, 90) + "..." : cleaned;
     }
 
     private static String cleanJsonText(String raw) {
