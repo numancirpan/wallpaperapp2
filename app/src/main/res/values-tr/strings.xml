@@ -1,0 +1,82 @@
+<resources>
+    <string name="app_name">Wallpaper Uygulaması</string>
+    <string name="discover_wallpapers">Duvar Kağıtlarını Keşfet</string>
+    <string name="search_wallpapers">Duvar kağıdı ara</string>
+    <string name="ai_categorized_favorites">AI ile Kategorilenen Favoriler</string>
+    <string name="search_favorites">Başlık/kategori/etikete göre favori ara</string>
+    <string name="settings">Ayarlar</string>
+    <string name="dark_mode">Karanlık Mod</string>
+    <string name="grid_columns">Izgara Sütunları</string>
+    <string name="two_columns">2 Sütun</string>
+    <string name="three_columns">3 Sütun</string>
+    <string name="language">Dil</string>
+    <string name="logout">Çıkış Yap</string>
+
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_favorites">Favoriler</string>
+    <string name="nav_settings">Ayarlar</string>
+
+    <string name="auth_title">Wallpaper Uygulaması Giriş</string>
+    <string name="email">E-posta</string>
+    <string name="password">Şifre</string>
+    <string name="login">Giriş Yap</string>
+    <string name="register">Kayıt Ol</string>
+    <string name="no_account_register">Hesabın yok mu? Kayıt ol</string>
+    <string name="already_have_account_login">Zaten hesabın var mı? Giriş yap</string>
+    <string name="please_wait">Lütfen bekle...</string>
+    <string name="invalid_email_password">Geçerli e-posta ve en az 6 karakterli şifre gir</string>
+    <string name="network_error_emulator">Emülatör ağ hatası. İnternet ve Google Play imajını kontrol et.</string>
+    <string name="auth_failed">Kimlik doğrulama başarısız: %1$s</string>
+    <string name="invalid_email_format">Geçersiz e-posta formatı.</string>
+    <string name="user_not_found">Kullanıcı bulunamadı. Önce kayıt ol.</string>
+    <string name="wrong_password">Şifre yanlış.</string>
+    <string name="email_already_registered">Bu e-posta zaten kayıtlı.</string>
+    <string name="weak_password">Şifre çok zayıf (en az 6 karakter).</string>
+    <string name="enable_email_provider">Firebase Authentication içinde Email/Password sağlayıcısını etkinleştir.</string>
+    <string name="firebase_config_issue">Firebase yapılandırma sorunu. google-services.json ve paket adını kontrol et.</string>
+    <string name="network_error">Ağ hatası. İnternet bağlantını kontrol et.</string>
+    <string name="auth_error_code">Kimlik doğrulama hatası: %1$s</string>
+
+    <string name="wallpaper_preview">Duvar Kağıdı Önizleme</string>
+    <string name="photo_by">Fotoğraf: %1$s</string>
+    <string name="ai_category_prefix">AI Kategorisi: %1$s</string>
+    <string name="ai_labels_prefix">AI Etiketleri: %1$s</string>
+    <string name="not_analyzed_yet">Henüz analiz edilmedi</string>
+    <string name="not_available">Mevcut değil</string>
+    <string name="set_home_screen">Ana Ekran Yap</string>
+    <string name="set_lock_screen">Kilit Ekranı Yap</string>
+    <string name="setting_wallpaper">Duvar kağıdı ayarlanıyor...</string>
+    <string name="wallpaper_set_successfully">Duvar kağıdı başarıyla ayarlandı</string>
+    <string name="wallpaper_set_failed">Duvar kağıdı ayarlanamadı: %1$s</string>
+
+    <string name="loading_favorites">Favoriler yükleniyor...</string>
+    <string name="no_favorites_yet">Henüz favori yok.</string>
+    <string name="no_favorite_matches">Bu aramayla eşleşen favori yok.</string>
+    <string name="api_fetch_failed_cached">API başarısız oldu, önbellekteki veriler gösteriliyor</string>
+
+    <string name="checking_ai_cache">AI önbelleği kontrol ediliyor</string>
+    <string name="gemini_analysis_in_progress">Gemini analizi devam ediyor</string>
+    <string name="using_on_device_fallback">Cihaz üstü AI yedeği kullanılıyor</string>
+    <string name="on_device_analysis_failed">Cihaz üstü analiz başarısız oldu</string>
+    <string name="visual_wallpaper_content">Görsel duvar kağıdı içeriği</string>
+    <string name="on_device_suffix">%1$s (cihaz üstü)</string>
+    <string name="uncategorized">Kategorisiz</string>
+    <string name="analyzing">Analiz ediliyor</string>
+
+    <string name="category_workspace">Çalışma Alanı</string>
+    <string name="category_cafe">Kafe</string>
+    <string name="category_interior">İç Mekan</string>
+    <string name="category_beach">Sahil</string>
+    <string name="category_water_scenes">Su Manzaraları</string>
+    <string name="category_nature">Doğa</string>
+    <string name="category_urban">Şehir</string>
+    <string name="category_architecture">Mimari</string>
+    <string name="category_vehicles">Araçlar</string>
+    <string name="category_animals">Hayvanlar</string>
+    <string name="category_texture">Doku</string>
+    <string name="category_lights">Işıklar</string>
+    <string name="category_abstract">Soyut</string>
+    <string name="category_art">Sanat</string>
+    <string name="category_people">İnsanlar</string>
+    <string name="category_space">Uzay</string>
+</resources>
