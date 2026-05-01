@@ -31,8 +31,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_wallpaper, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_wallpaper, parent, false);
         return new ViewHolder(view);
     }
 
@@ -41,69 +40,45 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         Wallpaper wallpaper = list.get(position);
 
         if (wallpaper.hasRemoteImage()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(wallpaper.imageUrl)
-                    .centerCrop()
-                    .into(holder.imageView);
+            Glide.with(holder.itemView.getContext()).load(wallpaper.imageUrl).centerCrop().into(holder.imageView);
         } else {
             holder.imageView.setImageResource(wallpaper.imageRes);
         }
-        holder.txtWallpaperTitle.setText(wallpaper.title);
 
-        if (wallpaper.isFavorite) {
-            holder.btnFavorite.setImageResource(android.R.drawable.btn_star_big_on);
-        } else {
-            holder.btnFavorite.setImageResource(android.R.drawable.btn_star_big_off);
-        }
+        holder.txtWallpaperTitle.setVisibility(View.GONE);
+        holder.btnFavorite.setImageResource(wallpaper.isFavorite
+                ? android.R.drawable.btn_star_big_on
+                : android.R.drawable.btn_star_big_off);
 
         holder.btnFavorite.setOnClickListener(v -> {
             wallpaper.isFavorite = !wallpaper.isFavorite;
-            if (wallpaper.isFavorite) {
-                FirebaseFavoritesStore.saveFavorite(wallpaper);
-            } else {
+
+            if (!wallpaper.isFavorite) {
                 FirebaseFavoritesStore.removeFavorite(wallpaper);
+                notifyItemChanged(position);
+                return;
             }
-            AppSettingsManager settingsManager = new AppSettingsManager(v.getContext());
-            boolean aiAutoEnabled = settingsManager.isAiAutoCategorizeEnabled();
 
-            if (aiAutoEnabled && wallpaper.isFavorite && (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty())) {
-                AiClassifier.OnLabelsReadyListener listener = new AiClassifier.OnLabelsReadyListener() {
-                    @Override
-                    public void onSuccess(java.util.List<AiLabelData> labels) {
-                        String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
-                        String finalCategory = CategoryMatcher.matchOrCreate(
-                                generatedCategory,
-                                WallpaperRepository.getExistingAiCategories()
-                        );
+            FirebaseFavoritesStore.saveFavorite(wallpaper);
+            boolean aiAutoEnabled = new AppSettingsManager(v.getContext()).isAiAutoCategorizeEnabled();
 
-                        wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels);
-                        GeminiCategoryService.generateCategory(wallpaper.title, wallpaper.aiLabels, geminiCategory -> {
-                            String geminiMatched = CategoryMatcher.matchOrCreate(
-                                    geminiCategory,
-                                    WallpaperRepository.getExistingAiCategories()
-                            );
-                            wallpaper.aiCategory = geminiCategory == null || geminiCategory.trim().isEmpty()
-                                    ? finalCategory
-                                    : geminiMatched;
+            if (aiAutoEnabled && needsAnalysis(wallpaper)) {
+                wallpaper.aiCategory = "Analyzing";
+                wallpaper.aiLabels = "Image analysis in progress";
+                FirebaseFavoritesStore.saveFavorite(wallpaper);
+                notifyItemChanged(position);
+
+                GeminiCategoryService.analyzeWallpaper(
+                        v.getContext(),
+                        wallpaper,
+                        WallpaperRepository.getExistingAiCategories(),
+                        result -> {
+                            wallpaper.aiCategory = result.category;
+                            wallpaper.aiLabels = result.labelsCsv;
                             FirebaseFavoritesStore.saveFavorite(wallpaper);
                             holder.itemView.post(() -> notifyItemChanged(position));
-                        });
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        wallpaper.aiLabels = "Analysis failed";
-                        wallpaper.aiCategory = "Uncategorized";
-                        FirebaseFavoritesStore.saveFavorite(wallpaper);
-                        notifyItemChanged(position);
-                    }
-                };
-
-                if (wallpaper.hasRemoteImage()) {
-                    AiClassifier.analyzeImageUrl(v.getContext(), wallpaper.imageUrl, listener);
-                } else {
-                    AiClassifier.analyzeImage(v.getContext(), wallpaper.imageRes, listener);
-                }
+                        }
+                );
             } else {
                 notifyItemChanged(position);
             }
@@ -114,6 +89,13 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             intent.putExtra("wallpaper_id", wallpaper.id);
             v.getContext().startActivity(intent);
         });
+    }
+
+    private boolean needsAnalysis(Wallpaper wallpaper) {
+        return wallpaper.aiCategory == null
+                || wallpaper.aiCategory.trim().isEmpty()
+                || wallpaper.aiCategory.equalsIgnoreCase("Not Analyzed Yet")
+                || wallpaper.aiCategory.equalsIgnoreCase("Analyzing");
     }
 
     @Override
