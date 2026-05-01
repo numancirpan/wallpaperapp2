@@ -62,11 +62,10 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             }
 
             FirebaseFavoritesStore.saveFavorite(wallpaper);
-            boolean aiAutoEnabled = new AppSettingsManager(v.getContext()).isAiAutoCategorizeEnabled();
 
-            if (aiAutoEnabled && needsAnalysis(wallpaper)) {
+            if (needsAnalysis(wallpaper)) {
                 wallpaper.aiCategory = "Analyzing";
-                wallpaper.aiLabels = "Checking AI cache";
+                wallpaper.aiLabels = v.getContext().getString(R.string.checking_ai_cache);
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 notifyItemChanged(position);
 
@@ -79,7 +78,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
                         return;
                     }
 
-                    wallpaper.aiLabels = "Gemini analysis in progress";
+                    wallpaper.aiLabels = v.getContext().getString(R.string.gemini_analysis_in_progress);
                     FirebaseFavoritesStore.saveFavorite(wallpaper);
                     holder.itemView.post(() -> notifyItemChanged(position));
 
@@ -115,7 +114,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
     private void runOnDeviceFallback(ViewHolder holder, Wallpaper wallpaper, int position) {
         wallpaper.aiCategory = "Analyzing";
-        wallpaper.aiLabels = "Using on-device AI fallback";
+        wallpaper.aiLabels = holder.itemView.getContext().getString(R.string.using_on_device_fallback);
         FirebaseFavoritesStore.saveFavorite(wallpaper);
         holder.itemView.post(() -> notifyItemChanged(position));
 
@@ -127,7 +126,10 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
                         WallpaperRepository.getExistingAiCategories()
                 );
                 wallpaper.aiCategory = finalCategory;
-                wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels) + " (on-device)";
+                wallpaper.aiLabels = holder.itemView.getContext().getString(
+                        R.string.on_device_suffix,
+                        DynamicCategoryGenerator.labelsToDisplay(labels)
+                );
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 FirebaseFavoritesStore.saveAiCache(wallpaper);
                 holder.itemView.post(() -> notifyItemChanged(position));
@@ -136,7 +138,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             @Override
             public void onError(Exception e) {
                 wallpaper.aiCategory = "Uncategorized";
-                wallpaper.aiLabels = "On-device analysis failed";
+                wallpaper.aiLabels = holder.itemView.getContext().getString(R.string.on_device_analysis_failed);
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 holder.itemView.post(() -> notifyItemChanged(position));
             }
