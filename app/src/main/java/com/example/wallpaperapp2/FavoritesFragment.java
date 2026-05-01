@@ -85,7 +85,7 @@ public class FavoritesFragment extends Fragment {
         }
         favoritesGroupsContainer.removeAllViews();
         TextView loadingText = new TextView(requireContext());
-        loadingText.setText("Loading favorites...");
+        loadingText.setText(R.string.loading_favorites);
         loadingText.setTextSize(16);
         favoritesGroupsContainer.addView(loadingText);
     }
@@ -103,7 +103,7 @@ public class FavoritesFragment extends Fragment {
 
         if (groupedFavorites.isEmpty()) {
             TextView emptyText = new TextView(requireContext());
-            emptyText.setText(isLoadingFavorites ? "Loading favorites..." : "No favorites yet.");
+            emptyText.setText(isLoadingFavorites ? R.string.loading_favorites : R.string.no_favorites_yet);
             emptyText.setTextSize(16);
             favoritesGroupsContainer.addView(emptyText);
             return;
@@ -150,7 +150,7 @@ public class FavoritesFragment extends Fragment {
 
         if (!anyResult) {
             TextView emptyText = new TextView(requireContext());
-            emptyText.setText("No favorite matches this search.");
+            emptyText.setText(R.string.no_favorite_matches);
             emptyText.setTextSize(16);
             favoritesGroupsContainer.addView(emptyText);
         }
