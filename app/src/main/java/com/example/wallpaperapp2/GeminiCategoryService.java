@@ -1,15 +1,25 @@
 package com.example.wallpaperapp2;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+
+import androidx.annotation.NonNull;
+
+import com.bumptech.glide.Glide;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -18,56 +28,62 @@ import java.util.concurrent.Executors;
 public class GeminiCategoryService {
 
     public interface Callback {
-        void onResult(String category);
+        void onResult(AnalysisResult result);
+    }
+
+    public static class AnalysisResult {
+        public final String category;
+        public final String labelsCsv;
+
+        public AnalysisResult(String category, String labelsCsv) {
+            this.category = category == null ? "Uncategorized" : category.trim();
+            this.labelsCsv = labelsCsv == null ? "" : labelsCsv.trim();
+        }
     }
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
-    private static final List<String> ALLOWED_CATEGORIES = Arrays.asList(
-            "Nature",
-            "City",
-            "Cars",
-            "Anime",
-            "Abstract",
-            "Animals",
-            "Space",
-            "Technology",
-            "People",
-            "Art",
-            "Dark",
-            "Minimal"
-    );
 
-    public static void generateCategory(String title, String labelsCsv, Callback callback) {
+    public static void analyzeWallpaper(
+            @NonNull Context context,
+            @NonNull Wallpaper wallpaper,
+            List<String> existingCategories,
+            @NonNull Callback callback
+    ) {
         if (BuildConfig.GEMINI_API_KEY == null || BuildConfig.GEMINI_API_KEY.trim().isEmpty()) {
-            callback.onResult("");
+            callback.onResult(new AnalysisResult("Uncategorized", "Gemini API key missing"));
             return;
         }
 
         EXECUTOR.execute(() -> {
             HttpURLConnection connection = null;
             try {
+                Bitmap bitmap = loadBitmap(context, wallpaper);
+                if (bitmap == null) {
+                    callback.onResult(new AnalysisResult("Uncategorized", "Image could not be loaded"));
+                    return;
+                }
+
+                String base64Image = bitmapToBase64(resizeBitmap(bitmap, 768));
                 String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
                         + BuildConfig.GEMINI_API_KEY;
+
                 connection = (HttpURLConnection) new URL(endpoint).openConnection();
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(20000);
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
-
-                String prompt = "You are a strict wallpaper categorizer.\n"
-                        + "Allowed categories: " + String.join(", ", ALLOWED_CATEGORIES) + ".\n"
-                        + "Return exactly one category from allowed list only.\n"
-                        + "Do not explain, do not add punctuation, do not output extra words.\n"
-                        + "If uncertain, return Nature.\n"
-                        + "Title: " + safe(title) + "\n"
-                        + "Labels: " + safe(labelsCsv);
 
                 JSONObject root = new JSONObject();
                 JSONArray contents = new JSONArray();
                 JSONObject content = new JSONObject();
                 JSONArray parts = new JSONArray();
-                parts.put(new JSONObject().put("text", prompt));
+
+                parts.put(new JSONObject().put("text", buildPrompt(wallpaper, existingCategories)));
+                parts.put(new JSONObject().put("inline_data", new JSONObject()
+                        .put("mime_type", "image/jpeg")
+                        .put("data", base64Image)));
+
                 content.put("parts", parts);
                 contents.put(content);
                 root.put("contents", contents);
@@ -81,32 +97,164 @@ public class GeminiCategoryService {
                 InputStream stream = responseCode >= 200 && responseCode < 300
                         ? connection.getInputStream() : connection.getErrorStream();
                 String response = readStream(stream);
+
                 if (responseCode < 200 || responseCode >= 300) {
-                    callback.onResult("");
+                    callback.onResult(new AnalysisResult("Uncategorized", "Gemini analysis failed"));
                     return;
                 }
 
-                JSONObject json = new JSONObject(response);
-                JSONArray candidates = json.optJSONArray("candidates");
-                if (candidates == null || candidates.length() == 0) {
-                    callback.onResult("");
-                    return;
-                }
-
-                JSONObject first = candidates.getJSONObject(0);
-                String raw = first.getJSONObject("content")
-                        .getJSONArray("parts")
-                        .getJSONObject(0)
-                        .optString("text", "");
-                callback.onResult(normalizeToAllowedCategory(raw));
+                String rawText = extractGeminiText(response);
+                AnalysisResult result = parseAnalysis(rawText, existingCategories);
+                callback.onResult(result);
             } catch (Exception e) {
-                callback.onResult("");
+                callback.onResult(new AnalysisResult("Uncategorized", "Gemini analysis failed"));
             } finally {
                 if (connection != null) {
                     connection.disconnect();
                 }
             }
         });
+    }
+
+    private static String buildPrompt(Wallpaper wallpaper, List<String> existingCategories) {
+        String categoriesText = existingCategories == null || existingCategories.isEmpty()
+                ? "None"
+                : String.join(", ", existingCategories);
+
+        return "Analyze this wallpaper image visually. Ignore photographer names, author names, and random titles unless they describe the image.\n"
+                + "Existing app categories: " + categoriesText + "\n"
+                + "Return valid JSON only, with no markdown and no explanation.\n"
+                + "Format: {\"category\":\"Category Name\",\"labels\":[\"label one\",\"label two\",\"label three\"]}\n"
+                + "Rules:\n"
+                + "1. Labels must be based on what is visible in the image. Produce 4 to 7 short visual labels.\n"
+                + "2. Category must be broad, reusable, Title Case, and 1 to 3 words.\n"
+                + "3. If an existing category strongly fits, use that existing category exactly.\n"
+                + "4. If no existing category fits, create a new broad category that future similar wallpapers can join.\n"
+                + "5. Do not create weird over-specific categories such as 'Musical Instrument Cup' or categories based on tiny objects.\n"
+                + "6. Prefer useful wallpaper categories such as Nature, Water Scenes, Technology, Urban, Architecture, Animals, Vehicles, Food, Space, Abstract, Minimal, Dark, People, Art, or similar broad names.\n"
+                + "Known author/title text from API, usually not useful: " + safe(wallpaper.title);
+    }
+
+    private static Bitmap loadBitmap(Context context, Wallpaper wallpaper) throws Exception {
+        if (wallpaper.hasRemoteImage()) {
+            return Glide.with(context.getApplicationContext())
+                    .asBitmap()
+                    .load(wallpaper.imageUrl)
+                    .submit(768, 768)
+                    .get();
+        }
+        return BitmapFactory.decodeResource(context.getResources(), wallpaper.imageRes);
+    }
+
+    private static Bitmap resizeBitmap(Bitmap bitmap, int maxSize) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        if (width <= maxSize && height <= maxSize) {
+            return bitmap;
+        }
+
+        float ratio = Math.min((float) maxSize / width, (float) maxSize / height);
+        int newWidth = Math.max(1, Math.round(width * ratio));
+        int newHeight = Math.max(1, Math.round(height * ratio));
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+    }
+
+    private static String bitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 82, outputStream);
+        return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP);
+    }
+
+    private static String extractGeminiText(String response) throws Exception {
+        JSONObject json = new JSONObject(response);
+        JSONArray candidates = json.optJSONArray("candidates");
+        if (candidates == null || candidates.length() == 0) return "";
+        JSONObject first = candidates.getJSONObject(0);
+        return first.getJSONObject("content")
+                .getJSONArray("parts")
+                .getJSONObject(0)
+                .optString("text", "");
+    }
+
+    private static AnalysisResult parseAnalysis(String raw, List<String> existingCategories) {
+        try {
+            String cleaned = cleanJsonText(raw);
+            JSONObject json = new JSONObject(cleaned);
+            String category = normalizeCategory(json.optString("category", "Uncategorized"), existingCategories);
+            JSONArray labelsArray = json.optJSONArray("labels");
+            List<String> labels = new ArrayList<>();
+
+            if (labelsArray != null) {
+                for (int i = 0; i < labelsArray.length(); i++) {
+                    String label = cleanLabel(labelsArray.optString(i, ""));
+                    if (!label.isEmpty() && !containsIgnoreCase(labels, label)) {
+                        labels.add(label);
+                    }
+                    if (labels.size() == 7) break;
+                }
+            }
+
+            return new AnalysisResult(category, String.join(", ", labels));
+        } catch (Exception e) {
+            return new AnalysisResult("Uncategorized", "Gemini analysis failed");
+        }
+    }
+
+    private static String cleanJsonText(String raw) {
+        if (raw == null) return "{}";
+        String cleaned = raw.trim();
+        if (cleaned.startsWith("```")) {
+            cleaned = cleaned.replace("```json", "").replace("```", "").trim();
+        }
+        int start = cleaned.indexOf('{');
+        int end = cleaned.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return cleaned.substring(start, end + 1);
+        }
+        return cleaned;
+    }
+
+    private static String normalizeCategory(String rawCategory, List<String> existingCategories) {
+        String cleaned = rawCategory == null ? "" : rawCategory.replaceAll("[^a-zA-Z0-9 &-]", " ").trim();
+        cleaned = cleaned.replaceAll("\\s+", " ");
+        if (cleaned.isEmpty()) return "Uncategorized";
+
+        if (existingCategories != null) {
+            for (String existing : existingCategories) {
+                if (existing != null && existing.equalsIgnoreCase(cleaned)) {
+                    return existing;
+                }
+            }
+        }
+
+        return toTitleCase(cleaned);
+    }
+
+    private static String cleanLabel(String rawLabel) {
+        String cleaned = rawLabel == null ? "" : rawLabel.replaceAll("[^a-zA-Z0-9 &-]", " ").trim();
+        cleaned = cleaned.replaceAll("\\s+", " ");
+        if (cleaned.length() > 28) cleaned = cleaned.substring(0, 28).trim();
+        return toTitleCase(cleaned);
+    }
+
+    private static boolean containsIgnoreCase(List<String> source, String value) {
+        for (String item : source) {
+            if (item.equalsIgnoreCase(value)) return true;
+        }
+        return false;
+    }
+
+    private static String toTitleCase(String text) {
+        if (text == null || text.trim().isEmpty()) return "";
+        String[] parts = text.trim().toLowerCase(Locale.ROOT).split(" ");
+        StringBuilder builder = new StringBuilder();
+        for (String part : parts) {
+            if (part.isEmpty()) continue;
+            if (builder.length() > 0) builder.append(" ");
+            builder.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+            if (part.length() > 1) builder.append(part.substring(1));
+        }
+        return builder.toString();
     }
 
     private static String readStream(InputStream stream) throws Exception {
@@ -119,44 +267,6 @@ public class GeminiCategoryService {
         }
         reader.close();
         return builder.toString();
-    }
-
-    private static String normalizeToAllowedCategory(String raw) {
-        if (raw == null) return "";
-        String cleaned = raw.replace("\n", " ")
-                .replace(".", " ")
-                .replace(":", " ")
-                .replace("-", " ")
-                .trim();
-        if (cleaned.isEmpty()) return "";
-
-        for (String allowed : ALLOWED_CATEGORIES) {
-            if (allowed.equalsIgnoreCase(cleaned)) {
-                return allowed;
-            }
-        }
-
-        String lower = cleaned.toLowerCase(Locale.ROOT);
-        for (String allowed : ALLOWED_CATEGORIES) {
-            if (lower.contains(allowed.toLowerCase(Locale.ROOT))) {
-                return allowed;
-            }
-        }
-
-        if (lower.contains("car") || lower.contains("vehicle") || lower.contains("race")) return "Cars";
-        if (lower.contains("city") || lower.contains("urban") || lower.contains("street")) return "City";
-        if (lower.contains("animal") || lower.contains("cat") || lower.contains("dog")) return "Animals";
-        if (lower.contains("space") || lower.contains("galaxy") || lower.contains("planet")) return "Space";
-        if (lower.contains("anime") || lower.contains("manga") || lower.contains("cartoon")) return "Anime";
-        if (lower.contains("person") || lower.contains("portrait") || lower.contains("face")) return "People";
-        if (lower.contains("tech") || lower.contains("device") || lower.contains("computer")) return "Technology";
-        if (lower.contains("abstract") || lower.contains("pattern")) return "Abstract";
-        if (lower.contains("art") || lower.contains("illustration")) return "Art";
-        if (lower.contains("dark") || lower.contains("night")) return "Dark";
-        if (lower.contains("minimal") || lower.contains("simple")) return "Minimal";
-        if (lower.contains("nature") || lower.contains("forest") || lower.contains("mountain")) return "Nature";
-
-        return "";
     }
 
     private static String safe(String text) {
