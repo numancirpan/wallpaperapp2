@@ -10,8 +10,9 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Button;
 
-import androidx.fragment.app.Fragment;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,6 +27,7 @@ public class SettingsFragment extends Fragment {
     private Button btnLogout;
 
     private AppSettingsManager settingsManager;
+    private boolean isInitializingLanguage = true;
 
     public SettingsFragment() {
     }
@@ -53,11 +55,10 @@ public class SettingsFragment extends Fragment {
     }
 
     private void setupLanguageSpinner() {
-        String[] languages = {"English", "Turkish"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 requireContext(),
-                android.R.layout.simple_spinner_item,
-                languages
+                R.array.language_names,
+                android.R.layout.simple_spinner_item
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLanguage.setAdapter(adapter);
@@ -73,12 +74,17 @@ public class SettingsFragment extends Fragment {
             radioTwoColumns.setChecked(true);
         }
 
-        String savedLanguage = settingsManager.getLanguage();
-        if (savedLanguage.equals("Turkish")) {
-            spinnerLanguage.setSelection(1);
-        } else {
-            spinnerLanguage.setSelection(0);
+        String savedLanguageCode = settingsManager.getLanguageCode();
+        String[] languageCodes = getResources().getStringArray(R.array.language_codes);
+        int selectedIndex = 0;
+        for (int i = 0; i < languageCodes.length; i++) {
+            if (languageCodes[i].equals(savedLanguageCode)) {
+                selectedIndex = i;
+                break;
+            }
         }
+        spinnerLanguage.setSelection(selectedIndex);
+        isInitializingLanguage = false;
     }
 
     private void registerListeners() {
@@ -103,8 +109,18 @@ public class SettingsFragment extends Fragment {
         spinnerLanguage.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                String selectedLanguage = parent.getItemAtPosition(position).toString();
-                settingsManager.setLanguage(selectedLanguage);
+                if (isInitializingLanguage) return;
+
+                String[] languageCodes = getResources().getStringArray(R.array.language_codes);
+                if (position < 0 || position >= languageCodes.length) return;
+
+                String selectedLanguageCode = languageCodes[position];
+                if (selectedLanguageCode.equals(settingsManager.getLanguageCode())) return;
+
+                settingsManager.setLanguageCode(selectedLanguageCode);
+                AppCompatDelegate.setApplicationLocales(
+                        LocaleListCompat.forLanguageTags(selectedLanguageCode)
+                );
             }
 
             @Override
