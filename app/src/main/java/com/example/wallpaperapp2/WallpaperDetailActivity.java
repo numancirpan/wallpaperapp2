@@ -52,8 +52,8 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
         if (wallpaper != null) {
             renderImage();
-            txtTitle.setText("Wallpaper Preview");
-            txtPhotographer.setText("Photo by " + wallpaper.title);
+            txtTitle.setText(R.string.wallpaper_preview);
+            txtPhotographer.setText(getString(R.string.photo_by, wallpaper.title));
             updateAiTexts();
             updateFavoriteIcon();
             bindWallpaperActions();
@@ -86,9 +86,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             }
 
             FirebaseFavoritesStore.saveFavorite(wallpaper);
-            boolean aiAutoEnabled = new AppSettingsManager(this).isAiAutoCategorizeEnabled();
-
-            if (aiAutoEnabled && needsAnalysis()) {
+            if (needsAnalysis()) {
                 analyzeFavoriteFromDetail();
             } else {
                 updateAiTexts();
@@ -98,7 +96,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
     private void analyzeFavoriteFromDetail() {
         wallpaper.aiCategory = "Analyzing";
-        wallpaper.aiLabels = "Checking AI cache";
+        wallpaper.aiLabels = getString(R.string.checking_ai_cache);
         FirebaseFavoritesStore.saveFavorite(wallpaper);
         updateAiTexts();
 
@@ -111,7 +109,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            wallpaper.aiLabels = "Gemini analysis in progress";
+            wallpaper.aiLabels = getString(R.string.gemini_analysis_in_progress);
             FirebaseFavoritesStore.saveFavorite(wallpaper);
             runOnUiThread(this::updateUiSafe);
 
@@ -137,7 +135,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
     private void runOnDeviceFallback() {
         wallpaper.aiCategory = "Analyzing";
-        wallpaper.aiLabels = "Using on-device AI fallback";
+        wallpaper.aiLabels = getString(R.string.using_on_device_fallback);
         FirebaseFavoritesStore.saveFavorite(wallpaper);
         runOnUiThread(this::updateUiSafe);
 
@@ -148,7 +146,10 @@ public class WallpaperDetailActivity extends AppCompatActivity {
                         labels,
                         WallpaperRepository.getExistingAiCategories()
                 );
-                wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels) + " (on-device)";
+                wallpaper.aiLabels = getString(
+                        R.string.on_device_suffix,
+                        DynamicCategoryGenerator.labelsToDisplay(labels)
+                );
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 FirebaseFavoritesStore.saveAiCache(wallpaper);
                 runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
@@ -157,7 +158,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             @Override
             public void onError(Exception e) {
                 wallpaper.aiCategory = "Uncategorized";
-                wallpaper.aiLabels = "On-device analysis failed";
+                wallpaper.aiLabels = getString(R.string.on_device_analysis_failed);
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
             }
@@ -178,7 +179,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private void setWallpaper(boolean lockScreen) {
         btnSetHomeWallpaper.setEnabled(false);
         btnSetLockWallpaper.setEnabled(false);
-        Toast.makeText(this, "Setting wallpaper...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.setting_wallpaper, Toast.LENGTH_SHORT).show();
 
         backgroundExecutor.execute(() -> {
             try {
@@ -203,13 +204,13 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> Toast.makeText(
                         this,
-                        "Wallpaper set successfully",
+                        R.string.wallpaper_set_successfully,
                         Toast.LENGTH_SHORT
                 ).show());
             } catch (Exception e) {
                 runOnUiThread(() -> Toast.makeText(
                         this,
-                        "Wallpaper set failed: " + e.getMessage(),
+                        getString(R.string.wallpaper_set_failed, e.getMessage()),
                         Toast.LENGTH_SHORT
                 ).show());
             } finally {
@@ -235,15 +236,18 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
     private void updateAiTexts() {
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
-            txtAiCategory.setText("AI Category: Not analyzed yet");
+            txtAiCategory.setText(getString(R.string.ai_category_prefix, getString(R.string.not_analyzed_yet)));
         } else {
-            txtAiCategory.setText("AI Category: " + wallpaper.aiCategory);
+            txtAiCategory.setText(getString(
+                    R.string.ai_category_prefix,
+                    CategoryDisplayMapper.toDisplayName(this, wallpaper.aiCategory)
+            ));
         }
 
         if (wallpaper.aiLabels == null || wallpaper.aiLabels.isEmpty()) {
-            txtAiLabels.setText("AI Labels: Not available");
+            txtAiLabels.setText(getString(R.string.ai_labels_prefix, getString(R.string.not_available)));
         } else {
-            txtAiLabels.setText("AI Labels: " + wallpaper.aiLabels);
+            txtAiLabels.setText(getString(R.string.ai_labels_prefix, wallpaper.aiLabels));
         }
     }
 
