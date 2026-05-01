@@ -32,9 +32,18 @@
                     android:id="@+id/txtDetailTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Wallpaper Title"
+                    android:text="Wallpaper Preview"
                     android:textSize="24sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtPhotographer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Photo by Photographer"
+                    android:textSize="13sp"
+                    android:alpha="0.72"
+                    android:layout_marginTop="4dp" />
 
                 <TextView
                     android:id="@+id/txtDetailAiCategory"
@@ -42,7 +51,7 @@
                     android:layout_height="wrap_content"
                     android:text="AI Category: Not analyzed yet"
                     android:textSize="16sp"
-                    android:layout_marginTop="8dp" />
+                    android:layout_marginTop="12dp" />
 
                 <TextView
                     android:id="@+id/txtDetailAiLabels"
