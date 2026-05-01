@@ -50,15 +50,32 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         holder.txtFavoriteTitle.setText(wallpaper.title);
 
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
-            holder.txtFavoriteAiCategory.setText("AI Category: Not analyzed yet");
+            holder.txtFavoriteAiCategory.setText(
+                    holder.itemView.getContext().getString(
+                            R.string.ai_category_prefix,
+                            holder.itemView.getContext().getString(R.string.not_analyzed_yet)
+                    )
+            );
         } else {
-            holder.txtFavoriteAiCategory.setText("AI Category: " + wallpaper.aiCategory);
+            holder.txtFavoriteAiCategory.setText(
+                    holder.itemView.getContext().getString(
+                            R.string.ai_category_prefix,
+                            CategoryDisplayMapper.toDisplayName(holder.itemView.getContext(), wallpaper.aiCategory)
+                    )
+            );
         }
 
         if (wallpaper.aiLabels == null || wallpaper.aiLabels.isEmpty()) {
-            holder.txtFavoriteAiLabels.setText("AI Labels: Not available");
+            holder.txtFavoriteAiLabels.setText(
+                    holder.itemView.getContext().getString(
+                            R.string.ai_labels_prefix,
+                            holder.itemView.getContext().getString(R.string.not_available)
+                    )
+            );
         } else {
-            holder.txtFavoriteAiLabels.setText("AI Labels: " + wallpaper.aiLabels);
+            holder.txtFavoriteAiLabels.setText(
+                    holder.itemView.getContext().getString(R.string.ai_labels_prefix, wallpaper.aiLabels)
+            );
         }
 
         holder.itemView.setOnClickListener(v -> {
