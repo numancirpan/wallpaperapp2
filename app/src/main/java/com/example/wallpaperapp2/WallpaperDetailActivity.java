@@ -218,9 +218,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     }
 
     private void updateFavoriteIcon() {
-        btnFavorite.setIconResource(wallpaper.isFavorite
-                ? android.R.drawable.btn_star_big_on
-                : android.R.drawable.btn_star_big_off);
+        FavoriteButtonStyler.apply(btnFavorite, wallpaper.isFavorite);
     }
 
     private void updateAiTexts() {
