@@ -19,7 +19,6 @@ import com.google.firebase.auth.FirebaseAuth;
 public class SettingsFragment extends Fragment {
 
     private MaterialSwitch switchDarkMode;
-    private MaterialSwitch switchAiAuto;
     private RadioGroup radioGroupColumns;
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
@@ -38,7 +37,6 @@ public class SettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
         switchDarkMode = view.findViewById(R.id.switchDarkMode);
-        switchAiAuto = view.findViewById(R.id.switchAiAuto);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
         radioThreeColumns = view.findViewById(R.id.radioThreeColumns);
@@ -67,7 +65,6 @@ public class SettingsFragment extends Fragment {
 
     private void loadSavedSettings() {
         switchDarkMode.setChecked(settingsManager.isDarkModeEnabled());
-        switchAiAuto.setChecked(settingsManager.isAiAutoCategorizeEnabled());
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -93,10 +90,6 @@ public class SettingsFragment extends Fragment {
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
-        });
-
-        switchAiAuto.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            settingsManager.setAiAutoCategorize(isChecked);
         });
 
         radioGroupColumns.setOnCheckedChangeListener((group, checkedId) -> {
