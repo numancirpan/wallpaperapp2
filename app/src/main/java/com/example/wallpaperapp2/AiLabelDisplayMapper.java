@@ -64,6 +64,7 @@ public class AiLabelDisplayMapper {
             case "desk": return "Masa";
             case "table": return "Masa";
             case "tableware": return "Sofra Eşyası";
+            case "saucer": return "Tabak";
             case "computer": return "Bilgisayar";
             case "laptop": return "Dizüstü Bilgisayar";
             case "keyboard": return "Klavye";
@@ -80,7 +81,13 @@ public class AiLabelDisplayMapper {
             case "leather": return "Deri";
             case "chair": return "Sandalye";
             case "building": return "Bina";
+            case "wall": return "Duvar";
+            case "bench": return "Bank";
             case "pattern": return "Desen";
+            case "monochrome": return "Tek Renk";
+            case "fork": return "Çatal";
+            case "cutlery": return "Çatal Bıçak";
+            case "wing": return "Kanat";
             case "beach": return "Sahil";
             case "rock": return "Kaya";
             case "sky": return "Gökyüzü";
@@ -102,8 +109,12 @@ public class AiLabelDisplayMapper {
             case "plant": return "Bitki";
             case "flower": return "Çiçek";
             case "road": return "Yol";
+            case "asphalt": return "Asfalt";
             case "grass": return "Çimen";
             case "tree": return "Ağaç";
+            case "branch": return "Dal";
+            case "twig": return "İnce Dal";
+            case "insect": return "Böcek";
             case "vehicle": return "Araç";
             case "wheel": return "Tekerlek";
             case "tire": return "Lastik";
@@ -115,6 +126,13 @@ public class AiLabelDisplayMapper {
             case "snout": return "Burun";
             case "textile": return "Tekstil";
             case "toy": return "Oyuncak";
+            case "shoe": return "Ayakkabı";
+            case "shoes": return "Ayakkabılar";
+            case "foot": return "Ayak";
+            case "flesh": return "Ten Rengi";
+            case "curtain": return "Perde";
+            case "sneakers": return "Spor Ayakkabı";
+            case "footwear": return "Ayakkabı";
             case "light": return "Işık";
             case "lights": return "Işıklar";
             case "blur": return "Bulanıklık";
