@@ -21,7 +21,7 @@ public class DynamicCategoryGenerator {
     private static final Set<String> DETAIL_LABELS = new HashSet<>(Arrays.asList(
             "hand", "nail", "eyelash", "jewellery", "jewelry", "ring", "finger", "wrist",
             "skin", "arm", "metal", "watch", "human body", "close-up", "thumb",
-            "musical instrument", "string instrument", "guitar accessory"
+            "musical instrument", "string instrument", "guitar accessory", "toy"
     ));
 
     private static final Map<String, List<String>> CATEGORY_KEYWORDS = new LinkedHashMap<>();
@@ -29,13 +29,16 @@ public class DynamicCategoryGenerator {
     static {
         CATEGORY_KEYWORDS.put("Workspace", Arrays.asList(
                 "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing",
-                "paper", "office", "workspace", "work", "study", "mobile phone", "phone", "screen"
+                "paper", "office", "workspace", "work", "study", "mobile phone", "phone", "screen", "book"
         ));
         CATEGORY_KEYWORDS.put("Cafe", Arrays.asList(
-                "coffee", "cup", "mug", "table", "tableware", "chair", "cafe", "restaurant", "drink", "espresso"
+                "coffee", "cup", "mug", "table", "tableware", "cafe", "restaurant", "drink", "espresso", "saucer"
         ));
         CATEGORY_KEYWORDS.put("Interior", Arrays.asList(
-                "chair", "table", "furniture", "room", "interior", "window", "wall", "home", "floor", "lamp"
+                "chair", "table", "furniture", "room", "interior", "window", "wall", "home", "floor", "lamp", "bench"
+        ));
+        CATEGORY_KEYWORDS.put("Fashion", Arrays.asList(
+                "shoe", "shoes", "footwear", "sneakers", "heel", "high heel", "dress", "fashion", "clothing", "curtain", "fabric", "flesh", "foot"
         ));
         CATEGORY_KEYWORDS.put("Beach", Arrays.asList(
                 "beach", "sea", "ocean", "coast", "shore", "sand", "wave", "water", "rock", "sunset", "sunrise", "cliff"
@@ -44,10 +47,10 @@ public class DynamicCategoryGenerator {
                 "waterfall", "river", "lake", "water", "stream", "sea", "ocean", "coast", "reflection"
         ));
         CATEGORY_KEYWORDS.put("Nature", Arrays.asList(
-                "forest", "tree", "mountain", "landscape", "plant", "grass", "flower", "prairie", "field", "meadow", "leaf", "moss"
+                "forest", "tree", "mountain", "landscape", "plant", "grass", "flower", "prairie", "field", "meadow", "leaf", "moss", "branch", "twig", "insect"
         ));
         CATEGORY_KEYWORDS.put("Urban", Arrays.asList(
-                "city", "street", "road", "urban", "traffic", "sidewalk", "crosswalk", "car"
+                "city", "street", "road", "urban", "traffic", "sidewalk", "crosswalk", "car", "asphalt"
         ));
         CATEGORY_KEYWORDS.put("Architecture", Arrays.asList(
                 "building", "architecture", "house", "bridge", "tower", "facade", "roof", "door", "window"
@@ -59,7 +62,10 @@ public class DynamicCategoryGenerator {
                 "dog", "cat", "bird", "animal", "wildlife", "fish", "horse", "pet", "fur", "snout", "nose"
         ));
         CATEGORY_KEYWORDS.put("Texture", Arrays.asList(
-                "texture", "pattern", "surface", "water drop", "droplet", "macro", "close-up", "fabric", "wood", "stone", "rough"
+                "texture", "pattern", "surface", "water drop", "droplet", "macro", "close-up", "fabric", "wood", "stone", "rough", "asphalt", "wall", "monochrome"
+        ));
+        CATEGORY_KEYWORDS.put("Monochrome", Arrays.asList(
+                "monochrome", "black", "white", "dark", "shadow", "fork", "cutlery", "wing"
         ));
         CATEGORY_KEYWORDS.put("Lights", Arrays.asList(
                 "light", "lights", "bokeh", "blur", "neon", "glow", "color", "night", "circle", "lamp"
@@ -131,14 +137,17 @@ public class DynamicCategoryGenerator {
             scores.put(entry.getKey(), score);
         }
 
-        if (containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper")) {
+        if (containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper", "book")) {
             scores.put("Workspace", scores.get("Workspace") + 10);
         }
         if (containsAny(labels, "mobile phone", "phone") && containsAny(labels, "laptop", "computer", "desk", "notebook")) {
             scores.put("Workspace", scores.get("Workspace") + 10);
         }
-        if (containsAny(labels, "coffee", "cup", "mug", "tableware") && containsAny(labels, "table", "chair", "restaurant", "cafe")) {
+        if (containsAny(labels, "coffee", "cup", "mug", "tableware") && containsAny(labels, "table", "chair", "restaurant", "cafe", "saucer")) {
             scores.put("Cafe", scores.get("Cafe") + 10);
+        }
+        if (containsAny(labels, "shoe", "shoes", "footwear", "sneakers", "heel", "foot") && containsAny(labels, "curtain", "fabric", "flesh", "wall")) {
+            scores.put("Fashion", scores.get("Fashion") + 12);
         }
         if (containsAny(labels, "chair") && containsAny(labels, "table", "tableware", "building", "window")) {
             scores.put("Cafe", scores.get("Cafe") + 8);
@@ -146,11 +155,14 @@ public class DynamicCategoryGenerator {
         if (containsAny(labels, "beach", "sand", "coast", "shore")) {
             scores.put("Beach", scores.get("Beach") + 8);
         }
-        if (containsAny(labels, "field", "prairie", "meadow", "moss", "leaf")) {
-            scores.put("Nature", scores.get("Nature") + 8);
+        if (containsAny(labels, "field", "prairie", "meadow", "moss", "leaf", "branch", "twig", "flower", "insect")) {
+            scores.put("Nature", scores.get("Nature") + 9);
         }
-        if (containsAny(labels, "droplet", "water drop", "macro", "surface")) {
+        if (containsAny(labels, "droplet", "water drop", "macro", "surface", "asphalt", "wall")) {
             scores.put("Texture", scores.get("Texture") + 8);
+        }
+        if (containsAny(labels, "monochrome") || containsAny(labels, "fork", "cutlery") && containsAny(labels, "dark", "shadow", "wing")) {
+            scores.put("Monochrome", scores.get("Monochrome") + 10);
         }
         if (containsAny(labels, "bokeh", "blur", "neon", "glow") || containsAny(labels, "light", "lights") && containsAny(labels, "color", "night", "blur")) {
             scores.put("Lights", scores.get("Lights") + 8);
@@ -240,8 +252,8 @@ public class DynamicCategoryGenerator {
     }
 
     private static int keywordWeight(String keyword) {
-        if (keyword.equals("laptop") || keyword.equals("computer") || keyword.equals("beach") || keyword.equals("forest") || keyword.equals("car") || keyword.equals("cat")) return 5;
-        if (keyword.equals("desk") || keyword.equals("keyboard") || keyword.equals("coast") || keyword.equals("field") || keyword.equals("prairie") || keyword.equals("coffee") || keyword.equals("chair")) return 4;
+        if (keyword.equals("laptop") || keyword.equals("computer") || keyword.equals("beach") || keyword.equals("forest") || keyword.equals("car") || keyword.equals("cat") || keyword.equals("shoe")) return 5;
+        if (keyword.equals("desk") || keyword.equals("keyboard") || keyword.equals("coast") || keyword.equals("field") || keyword.equals("prairie") || keyword.equals("coffee") || keyword.equals("chair") || keyword.equals("branch") || keyword.equals("asphalt")) return 4;
         return 2;
     }
 
@@ -250,13 +262,15 @@ public class DynamicCategoryGenerator {
         if (c.contains("work") || c.contains("office") || c.contains("tech") || c.contains("computer") || c.contains("laptop")) return "workspace";
         if (c.contains("cafe") || c.contains("coffee") || c.contains("restaurant")) return "cafe";
         if (c.contains("interior") || c.contains("furniture") || c.contains("chair")) return "interior";
+        if (c.contains("fashion") || c.contains("shoe") || c.contains("footwear")) return "fashion";
         if (c.contains("beach") || c.contains("coast") || c.contains("sea") || c.contains("ocean") || c.contains("water")) return "beach";
-        if (c.contains("nature") || c.contains("field") || c.contains("prairie") || c.contains("forest") || c.contains("mountain")) return "nature";
+        if (c.contains("nature") || c.contains("field") || c.contains("prairie") || c.contains("forest") || c.contains("mountain") || c.contains("branch")) return "nature";
         if (c.contains("urban") || c.contains("city") || c.contains("street")) return "urban";
         if (c.contains("architecture") || c.contains("building")) return "architecture";
         if (c.contains("vehicle") || c.contains("car") || c.contains("motor")) return "vehicles";
         if (c.contains("animal") || c.contains("cat") || c.contains("dog")) return "animals";
-        if (c.contains("texture") || c.contains("pattern")) return "texture";
+        if (c.contains("texture") || c.contains("pattern") || c.contains("asphalt")) return "texture";
+        if (c.contains("monochrome")) return "monochrome";
         if (c.contains("light") || c.contains("bokeh")) return "lights";
         if (c.contains("abstract")) return "abstract";
         if (c.contains("space")) return "space";
@@ -280,6 +294,10 @@ public class DynamicCategoryGenerator {
         if (lower.contains("mobile phone") || lower.equals("phone")) return "Workspace";
         if (lower.contains("rock") || lower.contains("sand")) return "Beach";
         if (lower.contains("chair")) return "Interior";
+        if (lower.contains("shoe") || lower.contains("foot") || lower.contains("sneaker")) return "Fashion";
+        if (lower.contains("branch") || lower.contains("twig") || lower.contains("flower") || lower.contains("insect")) return "Nature";
+        if (lower.contains("asphalt") || lower.contains("wall")) return "Texture";
+        if (lower.contains("monochrome")) return "Monochrome";
         if (lower.contains("pattern")) return "Texture";
         return capitalize(toSingular(label));
     }
