@@ -1,5 +1,82 @@
 <resources>
-    <string name="app_name">wallpaperapp2</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name">Wallpaper App</string>
+    <string name="discover_wallpapers">Discover Wallpapers</string>
+    <string name="search_wallpapers">Search wallpapers</string>
+    <string name="ai_categorized_favorites">AI Categorized Favorites</string>
+    <string name="search_favorites">Search favorites by title/category/labels</string>
+    <string name="settings">Settings</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="grid_columns">Grid Columns</string>
+    <string name="two_columns">2 Columns</string>
+    <string name="three_columns">3 Columns</string>
+    <string name="language">Language</string>
+    <string name="logout">Logout</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="auth_title">Wallpaper App Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="no_account_register">No account? Register</string>
+    <string name="already_have_account_login">Already have an account? Login</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="invalid_email_password">Enter valid email and password (min 6)</string>
+    <string name="network_error_emulator">Network error on emulator. Check emulator internet and Google Play image.</string>
+    <string name="auth_failed">Authentication failed: %1$s</string>
+    <string name="invalid_email_format">Invalid email format.</string>
+    <string name="user_not_found">User not found. Register first.</string>
+    <string name="wrong_password">Wrong password.</string>
+    <string name="email_already_registered">This email is already registered.</string>
+    <string name="weak_password">Password is too weak (min 6).</string>
+    <string name="enable_email_provider">Enable Email/Password provider in Firebase Authentication.</string>
+    <string name="firebase_config_issue">Firebase configuration issue. Check google-services.json and package name.</string>
+    <string name="network_error">Network error. Check internet connection.</string>
+    <string name="auth_error_code">Authentication error: %1$s</string>
+
+    <string name="wallpaper_preview">Wallpaper Preview</string>
+    <string name="photo_by">Photo by %1$s</string>
+    <string name="ai_category_prefix">AI Category: %1$s</string>
+    <string name="ai_labels_prefix">AI Labels: %1$s</string>
+    <string name="not_analyzed_yet">Not analyzed yet</string>
+    <string name="not_available">Not available</string>
+    <string name="set_home_screen">Set as Home Screen</string>
+    <string name="set_lock_screen">Set as Lock Screen</string>
+    <string name="setting_wallpaper">Setting wallpaper...</string>
+    <string name="wallpaper_set_successfully">Wallpaper set successfully</string>
+    <string name="wallpaper_set_failed">Wallpaper set failed: %1$s</string>
+
+    <string name="loading_favorites">Loading favorites...</string>
+    <string name="no_favorites_yet">No favorites yet.</string>
+    <string name="no_favorite_matches">No favorite matches this search.</string>
+    <string name="api_fetch_failed_cached">API fetch failed, showing cached data</string>
+
+    <string name="checking_ai_cache">Checking AI cache</string>
+    <string name="gemini_analysis_in_progress">Gemini analysis in progress</string>
+    <string name="using_on_device_fallback">Using on-device AI fallback</string>
+    <string name="on_device_analysis_failed">On-device analysis failed</string>
+    <string name="visual_wallpaper_content">Visual wallpaper content</string>
+    <string name="on_device_suffix">%1$s (on-device)</string>
+    <string name="uncategorized">Uncategorized</string>
+    <string name="analyzing">Analyzing</string>
+
+    <string name="category_workspace">Workspace</string>
+    <string name="category_cafe">Cafe</string>
+    <string name="category_interior">Interior</string>
+    <string name="category_beach">Beach</string>
+    <string name="category_water_scenes">Water Scenes</string>
+    <string name="category_nature">Nature</string>
+    <string name="category_urban">Urban</string>
+    <string name="category_architecture">Architecture</string>
+    <string name="category_vehicles">Vehicles</string>
+    <string name="category_animals">Animals</string>
+    <string name="category_texture">Texture</string>
+    <string name="category_lights">Lights</string>
+    <string name="category_abstract">Abstract</string>
+    <string name="category_art">Art</string>
+    <string name="category_people">People</string>
+    <string name="category_space">Space</string>
 </resources>
