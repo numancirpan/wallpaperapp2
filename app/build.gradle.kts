@@ -1,6 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
+fun readConfigValue(name: String, fallback: String = ""): String {
+    return (project.findProperty(name) as String?)
+        ?: localProperties.getProperty(name)
+        ?: System.getenv(name)
+        ?: fallback
 }
 
 android {
@@ -17,9 +32,13 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        val wallpaperApiUrl = project.findProperty("WALLPAPER_API_URL") as String?
-                ?: "https://picsum.photos/v2/list?page=1&limit=60"
-        val geminiApiKey = project.findProperty("GEMINI_API_KEY") as String? ?: ""
+
+        val wallpaperApiUrl = readConfigValue(
+            "WALLPAPER_API_URL",
+            "https://picsum.photos/v2/list?page=1&limit=60"
+        )
+        val geminiApiKey = readConfigValue("GEMINI_API_KEY")
+
         buildConfigField("String", "WALLPAPER_API_URL", "\"$wallpaperApiUrl\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
@@ -48,9 +67,6 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
-    implementation(libs.constraintlayout)
-    implementation(libs.appcompat)
-    implementation(libs.material)
     implementation(libs.constraintlayout)
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
