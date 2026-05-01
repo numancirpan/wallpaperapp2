@@ -14,6 +14,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class WallpaperDetailActivity extends AppCompatActivity {
 
     private ImageView imageWallpaper;
@@ -26,6 +29,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private Button btnSetLockWallpaper;
 
     private Wallpaper wallpaper;
+    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,43 +57,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             updateAiTexts();
             updateFavoriteIcon();
             bindWallpaperActions();
-
-            btnFavorite.setOnClickListener(v -> {
-                wallpaper.isFavorite = !wallpaper.isFavorite;
-                updateFavoriteIcon();
-
-                if (!wallpaper.isFavorite) {
-                    wallpaper.aiCategory = "";
-                    wallpaper.aiLabels = "";
-                    FirebaseFavoritesStore.removeFavorite(wallpaper);
-                    updateAiTexts();
-                    return;
-                }
-
-                FirebaseFavoritesStore.saveFavorite(wallpaper);
-                boolean aiAutoEnabled = new AppSettingsManager(this).isAiAutoCategorizeEnabled();
-
-                if (aiAutoEnabled && needsAnalysis()) {
-                    wallpaper.aiCategory = "Analyzing";
-                    wallpaper.aiLabels = "Image analysis in progress";
-                    FirebaseFavoritesStore.saveFavorite(wallpaper);
-                    updateAiTexts();
-
-                    GeminiCategoryService.analyzeWallpaper(
-                            this,
-                            wallpaper,
-                            WallpaperRepository.getExistingAiCategories(),
-                            result -> {
-                                wallpaper.aiCategory = result.category;
-                                wallpaper.aiLabels = result.labelsCsv;
-                                FirebaseFavoritesStore.saveFavorite(wallpaper);
-                                runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
-                            }
-                    );
-                } else {
-                    updateAiTexts();
-                }
-            });
+            bindFavoriteAction();
         }
     }
 
@@ -104,44 +72,157 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         }
     }
 
+    private void bindFavoriteAction() {
+        btnFavorite.setOnClickListener(v -> {
+            wallpaper.isFavorite = !wallpaper.isFavorite;
+            updateFavoriteIcon();
+
+            if (!wallpaper.isFavorite) {
+                wallpaper.aiCategory = "";
+                wallpaper.aiLabels = "";
+                FirebaseFavoritesStore.removeFavorite(wallpaper);
+                updateAiTexts();
+                return;
+            }
+
+            FirebaseFavoritesStore.saveFavorite(wallpaper);
+            boolean aiAutoEnabled = new AppSettingsManager(this).isAiAutoCategorizeEnabled();
+
+            if (aiAutoEnabled && needsAnalysis()) {
+                analyzeFavoriteFromDetail();
+            } else {
+                updateAiTexts();
+            }
+        });
+    }
+
+    private void analyzeFavoriteFromDetail() {
+        wallpaper.aiCategory = "Analyzing";
+        wallpaper.aiLabels = "Checking AI cache";
+        FirebaseFavoritesStore.saveFavorite(wallpaper);
+        updateAiTexts();
+
+        FirebaseFavoritesStore.fetchAiCache(wallpaper, (found, category, labels) -> {
+            if (found) {
+                wallpaper.aiCategory = category;
+                wallpaper.aiLabels = labels;
+                FirebaseFavoritesStore.saveFavorite(wallpaper);
+                runOnUiThread(this::updateUiSafe);
+                return;
+            }
+
+            wallpaper.aiLabels = "Gemini analysis in progress";
+            FirebaseFavoritesStore.saveFavorite(wallpaper);
+            runOnUiThread(this::updateUiSafe);
+
+            GeminiCategoryService.analyzeWallpaper(
+                    this,
+                    wallpaper,
+                    WallpaperRepository.getExistingAiCategories(),
+                    result -> {
+                        wallpaper.aiCategory = result.category;
+                        wallpaper.aiLabels = result.labelsCsv;
+
+                        if (FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels)) {
+                            FirebaseFavoritesStore.saveFavorite(wallpaper);
+                            FirebaseFavoritesStore.saveAiCache(wallpaper);
+                            runOnUiThread(this::updateUiSafe);
+                        } else {
+                            runOnDeviceFallback();
+                        }
+                    }
+            );
+        });
+    }
+
+    private void runOnDeviceFallback() {
+        wallpaper.aiCategory = "Analyzing";
+        wallpaper.aiLabels = "Using on-device AI fallback";
+        FirebaseFavoritesStore.saveFavorite(wallpaper);
+        runOnUiThread(this::updateUiSafe);
+
+        AiClassifier.OnLabelsReadyListener listener = new AiClassifier.OnLabelsReadyListener() {
+            @Override
+            public void onSuccess(java.util.List<AiLabelData> labels) {
+                wallpaper.aiCategory = DynamicCategoryGenerator.generateCategory(
+                        labels,
+                        WallpaperRepository.getExistingAiCategories()
+                );
+                wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels) + " (on-device)";
+                FirebaseFavoritesStore.saveFavorite(wallpaper);
+                FirebaseFavoritesStore.saveAiCache(wallpaper);
+                runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                wallpaper.aiCategory = "Uncategorized";
+                wallpaper.aiLabels = "On-device analysis failed";
+                FirebaseFavoritesStore.saveFavorite(wallpaper);
+                runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
+            }
+        };
+
+        if (wallpaper.hasRemoteImage()) {
+            AiClassifier.analyzeImageUrl(this, wallpaper.imageUrl, listener);
+        } else {
+            AiClassifier.analyzeImage(this, wallpaper.imageRes, listener);
+        }
+    }
+
     private void bindWallpaperActions() {
         btnSetHomeWallpaper.setOnClickListener(v -> setWallpaper(false));
         btnSetLockWallpaper.setOnClickListener(v -> setWallpaper(true));
     }
 
     private void setWallpaper(boolean lockScreen) {
-        try {
-            Bitmap bitmap;
-            if (wallpaper.hasRemoteImage()) {
-                bitmap = Glide.with(this).asBitmap().load(wallpaper.imageUrl).submit().get();
-            } else {
-                bitmap = ((android.graphics.drawable.BitmapDrawable) imageWallpaper.getDrawable()).getBitmap();
-            }
+        btnSetHomeWallpaper.setEnabled(false);
+        btnSetLockWallpaper.setEnabled(false);
+        Toast.makeText(this, "Setting wallpaper...", Toast.LENGTH_SHORT).show();
 
-            WallpaperManager manager = WallpaperManager.getInstance(this);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                manager.setBitmap(bitmap, null, true,
-                        lockScreen ? WallpaperManager.FLAG_LOCK : WallpaperManager.FLAG_SYSTEM);
-            } else {
-                manager.setBitmap(bitmap);
+        backgroundExecutor.execute(() -> {
+            try {
+                Bitmap bitmap;
+                if (wallpaper.hasRemoteImage()) {
+                    bitmap = Glide.with(getApplicationContext())
+                            .asBitmap()
+                            .load(wallpaper.imageUrl)
+                            .submit()
+                            .get();
+                } else {
+                    bitmap = ((android.graphics.drawable.BitmapDrawable) imageWallpaper.getDrawable()).getBitmap();
+                }
+
+                WallpaperManager manager = WallpaperManager.getInstance(getApplicationContext());
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    manager.setBitmap(bitmap, null, true,
+                            lockScreen ? WallpaperManager.FLAG_LOCK : WallpaperManager.FLAG_SYSTEM);
+                } else {
+                    manager.setBitmap(bitmap);
+                }
+
+                runOnUiThread(() -> Toast.makeText(
+                        this,
+                        "Wallpaper set successfully",
+                        Toast.LENGTH_SHORT
+                ).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(
+                        this,
+                        "Wallpaper set failed: " + e.getMessage(),
+                        Toast.LENGTH_SHORT
+                ).show());
+            } finally {
+                runOnUiThread(() -> {
+                    btnSetHomeWallpaper.setEnabled(true);
+                    btnSetLockWallpaper.setEnabled(true);
+                });
             }
-            Toast.makeText(this, "Wallpaper set successfully", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Wallpaper set failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        });
     }
 
     private boolean needsAnalysis() {
-        String category = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory.trim();
-        String labels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels.trim();
-
-        return category.isEmpty()
-                || category.equalsIgnoreCase("Not Analyzed Yet")
-                || category.equalsIgnoreCase("Analyzing")
-                || category.equalsIgnoreCase("Uncategorized")
-                || labels.equalsIgnoreCase("Gemini API key missing")
-                || labels.equalsIgnoreCase("Gemini analysis failed")
-                || labels.equalsIgnoreCase("Image could not be loaded");
+        return !FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels);
     }
 
     private void updateFavoriteIcon() {
@@ -169,5 +250,11 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private void updateUiSafe() {
         updateAiTexts();
         updateFavoriteIcon();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        backgroundExecutor.shutdownNow();
     }
 }
