@@ -18,6 +18,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
     private ImageView imageWallpaper;
     private TextView txtTitle;
+    private TextView txtPhotographer;
     private TextView txtAiCategory;
     private TextView txtAiLabels;
     private ImageButton btnFavorite;
@@ -33,6 +34,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
         imageWallpaper = findViewById(R.id.imageWallpaper);
         txtTitle = findViewById(R.id.txtDetailTitle);
+        txtPhotographer = findViewById(R.id.txtPhotographer);
         txtAiCategory = findViewById(R.id.txtDetailAiCategory);
         txtAiLabels = findViewById(R.id.txtDetailAiLabels);
         btnFavorite = findViewById(R.id.btnDetailFavorite);
@@ -46,7 +48,8 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
         if (wallpaper != null) {
             renderImage();
-            txtTitle.setText(wallpaper.title);
+            txtTitle.setText("Wallpaper Preview");
+            txtPhotographer.setText("Photo by " + wallpaper.title);
             updateAiTexts();
             updateFavoriteIcon();
             bindWallpaperActions();
@@ -54,54 +57,33 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             btnFavorite.setOnClickListener(v -> {
                 wallpaper.isFavorite = !wallpaper.isFavorite;
                 updateFavoriteIcon();
-                if (wallpaper.isFavorite) {
-                    FirebaseFavoritesStore.saveFavorite(wallpaper);
-                } else {
+
+                if (!wallpaper.isFavorite) {
                     FirebaseFavoritesStore.removeFavorite(wallpaper);
+                    updateAiTexts();
+                    return;
                 }
+
+                FirebaseFavoritesStore.saveFavorite(wallpaper);
                 boolean aiAutoEnabled = new AppSettingsManager(this).isAiAutoCategorizeEnabled();
 
-                if (aiAutoEnabled && wallpaper.isFavorite && (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty())) {
-                    txtAiCategory.setText("AI Category: Analyzing...");
-                    txtAiLabels.setText("AI Labels: Processing...");
+                if (aiAutoEnabled && needsAnalysis()) {
+                    wallpaper.aiCategory = "Analyzing";
+                    wallpaper.aiLabels = "Image analysis in progress";
+                    FirebaseFavoritesStore.saveFavorite(wallpaper);
+                    updateAiTexts();
 
-                    AiClassifier.OnLabelsReadyListener listener = new AiClassifier.OnLabelsReadyListener() {
-                        @Override
-                        public void onSuccess(java.util.List<AiLabelData> labels) {
-                            String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
-                            String finalCategory = CategoryMatcher.matchOrCreate(
-                                    generatedCategory,
-                                    WallpaperRepository.getExistingAiCategories()
-                            );
-
-                            wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels);
-                            GeminiCategoryService.generateCategory(wallpaper.title, wallpaper.aiLabels, geminiCategory -> {
-                                String geminiMatched = CategoryMatcher.matchOrCreate(
-                                        geminiCategory,
-                                        WallpaperRepository.getExistingAiCategories()
-                                );
-                                wallpaper.aiCategory = geminiCategory == null || geminiCategory.trim().isEmpty()
-                                        ? finalCategory
-                                        : geminiMatched;
+                    GeminiCategoryService.analyzeWallpaper(
+                            this,
+                            wallpaper,
+                            WallpaperRepository.getExistingAiCategories(),
+                            result -> {
+                                wallpaper.aiCategory = result.category;
+                                wallpaper.aiLabels = result.labelsCsv;
                                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                                 runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
-                            });
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            wallpaper.aiCategory = "Uncategorized";
-                            wallpaper.aiLabels = "Analysis failed";
-                            FirebaseFavoritesStore.saveFavorite(wallpaper);
-                            runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
-                        }
-                    };
-
-                    if (wallpaper.hasRemoteImage()) {
-                        AiClassifier.analyzeImageUrl(this, wallpaper.imageUrl, listener);
-                    } else {
-                        AiClassifier.analyzeImage(this, wallpaper.imageRes, listener);
-                    }
+                            }
+                    );
                 } else {
                     updateAiTexts();
                 }
@@ -131,8 +113,6 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             if (wallpaper.hasRemoteImage()) {
                 bitmap = Glide.with(this).asBitmap().load(wallpaper.imageUrl).submit().get();
             } else {
-                imageWallpaper.setDrawingCacheEnabled(true);
-                imageWallpaper.buildDrawingCache(true);
                 bitmap = ((android.graphics.drawable.BitmapDrawable) imageWallpaper.getDrawable()).getBitmap();
             }
 
@@ -147,6 +127,13 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(this, "Wallpaper set failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private boolean needsAnalysis() {
+        return wallpaper.aiCategory == null
+                || wallpaper.aiCategory.trim().isEmpty()
+                || wallpaper.aiCategory.equalsIgnoreCase("Not Analyzed Yet")
+                || wallpaper.aiCategory.equalsIgnoreCase("Analyzing");
     }
 
     private void updateFavoriteIcon() {
@@ -175,6 +162,4 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         updateAiTexts();
         updateFavoriteIcon();
     }
-
-
 }
