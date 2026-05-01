@@ -3,6 +3,7 @@ package com.example.wallpaperapp2;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class WallpaperRepository {
@@ -59,10 +60,8 @@ public class WallpaperRepository {
         for (Wallpaper wallpaper : wallpaperList) {
             if (!wallpaper.isFavorite) continue;
 
-            String category = wallpaper.aiCategory;
-            if (category == null || category.trim().isEmpty()) {
-                category = "Not Analyzed Yet";
-            }
+            String category = normalizeCategoryKey(wallpaper.aiCategory);
+            wallpaper.aiCategory = category;
 
             if (!groupedMap.containsKey(category)) {
                 groupedMap.put(category, new ArrayList<>());
@@ -79,18 +78,19 @@ public class WallpaperRepository {
 
         for (Wallpaper wallpaper : wallpaperList) {
             if (!wallpaper.isFavorite) continue;
-            if (wallpaper.aiCategory == null || wallpaper.aiCategory.trim().isEmpty()) continue;
+            String normalized = normalizeCategoryKey(wallpaper.aiCategory);
+            if (normalized.trim().isEmpty()) continue;
 
             boolean exists = false;
             for (String category : categories) {
-                if (category.equalsIgnoreCase(wallpaper.aiCategory)) {
+                if (category.equalsIgnoreCase(normalized)) {
                     exists = true;
                     break;
                 }
             }
 
             if (!exists) {
-                categories.add(wallpaper.aiCategory);
+                categories.add(normalized);
             }
         }
 
@@ -115,7 +115,7 @@ public class WallpaperRepository {
             }
 
             wallpaper.isFavorite = true;
-            wallpaper.aiCategory = safeString(data.get("aiCategory"));
+            wallpaper.aiCategory = normalizeCategoryKey(safeString(data.get("aiCategory")));
             wallpaper.aiLabels = safeString(data.get("aiLabels"));
         }
     }
@@ -125,6 +125,35 @@ public class WallpaperRepository {
         if (newWallpapers != null) {
             wallpaperList.addAll(newWallpapers);
         }
+    }
+
+    public static String normalizeCategoryKey(String rawCategory) {
+        if (rawCategory == null || rawCategory.trim().isEmpty()) return "Uncategorized";
+
+        String c = rawCategory.trim().toLowerCase(Locale.ROOT);
+
+        if (c.equals("çalışma alanı") || c.equals("workspace")) return "Workspace";
+        if (c.equals("kafe") || c.equals("cafe")) return "Interior";
+        if (c.equals("iç mekan") || c.equals("iç mekân") || c.equals("interior")) return "Interior";
+        if (c.equals("sahil") || c.equals("beach")) return "Beach";
+        if (c.equals("su manzaraları") || c.equals("water scenes")) return "Water Scenes";
+        if (c.equals("doğa") || c.equals("nature") || c.equals("branch") || c.equals("flesh")) return "Nature";
+        if (c.equals("şehir") || c.equals("urban")) return "Urban";
+        if (c.equals("mimari") || c.equals("architecture")) return "Architecture";
+        if (c.equals("araçlar") || c.equals("vehicles")) return "Vehicles";
+        if (c.equals("hayvanlar") || c.equals("animals")) return "Animals";
+        if (c.equals("doku") || c.equals("texture") || c.equals("asphalt")) return "Texture";
+        if (c.equals("ışıklar") || c.equals("lights")) return "Lights";
+        if (c.equals("soyut") || c.equals("abstract")) return "Abstract";
+        if (c.equals("sanat") || c.equals("art")) return "Art";
+        if (c.equals("insanlar") || c.equals("people")) return "People";
+        if (c.equals("uzay") || c.equals("space")) return "Space";
+        if (c.equals("moda") || c.equals("fashion") || c.equals("shoe") || c.equals("foot")) return "Fashion";
+        if (c.equals("tek renk") || c.equals("monochrome")) return "Monochrome";
+        if (c.equals("uncategorized") || c.equals("kategorisiz")) return "Uncategorized";
+        if (c.equals("analyzing") || c.equals("analiz ediliyor")) return "Analyzing";
+
+        return rawCategory.trim();
     }
 
     private static String safeString(Object value) {
