@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
@@ -48,6 +49,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             holder.imageFavorite.setImageResource(wallpaper.imageRes);
         }
         holder.txtFavoriteTitle.setText(wallpaper.title);
+        FavoriteButtonStyler.apply(holder.btnFavoriteRemove, true);
 
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
             holder.txtFavoriteAiCategory.setText(
@@ -81,6 +83,20 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             );
         }
 
+        holder.btnFavoriteRemove.setOnClickListener(v -> {
+            wallpaper.isFavorite = false;
+            wallpaper.aiCategory = "";
+            wallpaper.aiLabels = "";
+            FirebaseFavoritesStore.removeFavorite(wallpaper);
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION) {
+                list.remove(adapterPosition);
+                notifyItemRemoved(adapterPosition);
+            } else {
+                notifyDataSetChanged();
+            }
+        });
+
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), WallpaperDetailActivity.class);
             intent.putExtra("wallpaper_id", wallpaper.id);
@@ -95,6 +111,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageFavorite;
+        MaterialButton btnFavoriteRemove;
         TextView txtFavoriteTitle;
         TextView txtFavoriteAiCategory;
         TextView txtFavoriteAiLabels;
@@ -102,6 +119,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             imageFavorite = itemView.findViewById(R.id.imageFavorite);
+            btnFavoriteRemove = itemView.findViewById(R.id.btnFavoriteRemove);
             txtFavoriteTitle = itemView.findViewById(R.id.txtFavoriteTitle);
             txtFavoriteAiCategory = itemView.findViewById(R.id.txtFavoriteAiCategory);
             txtFavoriteAiLabels = itemView.findViewById(R.id.txtFavoriteAiLabels);
