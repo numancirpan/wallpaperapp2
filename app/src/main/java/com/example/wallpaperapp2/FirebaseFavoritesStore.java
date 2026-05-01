@@ -68,9 +68,7 @@ public class FirebaseFavoritesStore {
                     snapshot.getDocuments().forEach(doc -> {
                         Object idValue = doc.get("id");
                         int id = idValue instanceof Number ? ((Number) idValue).intValue() : -1;
-                        if (id > -1) {
-                            mapped.put(id, doc.getData());
-                        }
+                        if (id > -1) mapped.put(id, doc.getData());
                     });
                     callback.onLoaded(mapped);
                 })
@@ -123,15 +121,20 @@ public class FirebaseFavoritesStore {
     public static boolean isUsableAiData(String category, String labels) {
         String c = category == null ? "" : category.trim();
         String l = labels == null ? "" : labels.trim();
+        String lowerC = c.toLowerCase();
+        String lowerL = l.toLowerCase();
 
         if (c.isEmpty() || l.isEmpty()) return false;
-        if (c.equalsIgnoreCase("Uncategorized")) return false;
-        if (c.equalsIgnoreCase("Analyzing")) return false;
-        if (l.toLowerCase().contains("gemini http")) return false;
-        if (l.toLowerCase().contains("gemini api key")) return false;
-        if (l.toLowerCase().contains("gemini analysis failed")) return false;
-        if (l.toLowerCase().contains("image analysis in progress")) return false;
-        if (l.toLowerCase().contains("image could not be loaded")) return false;
+        if (lowerC.equals("uncategorized") || lowerC.equals("analyzing")) return false;
+        if (lowerL.contains("gemini http")) return false;
+        if (lowerL.contains("gemini api key")) return false;
+        if (lowerL.contains("gemini analysis failed")) return false;
+        if (lowerL.contains("image analysis in progress")) return false;
+        if (lowerL.contains("image could not be loaded")) return false;
+        if (lowerL.contains("on-device analysis failed")) return false;
+
+        if (lowerC.contains("hand") || lowerC.contains("nail") || lowerC.contains("musical instrument")) return false;
+        if (lowerC.equals("beach rock") || lowerC.equals("field prairie") || lowerC.equals("mobile phone nail")) return false;
         return true;
     }
 
