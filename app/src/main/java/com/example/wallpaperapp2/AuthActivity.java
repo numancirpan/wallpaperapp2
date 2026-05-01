@@ -46,11 +46,11 @@ public class AuthActivity extends AppCompatActivity {
 
     private void updateModeUi() {
         if (isLoginMode) {
-            btnAction.setText("Login");
-            txtToggleMode.setText("No account? Register");
+            btnAction.setText(R.string.login);
+            txtToggleMode.setText(R.string.no_account_register);
         } else {
-            btnAction.setText("Register");
-            txtToggleMode.setText("Already have an account? Login");
+            btnAction.setText(R.string.register);
+            txtToggleMode.setText(R.string.already_have_account_login);
         }
     }
 
@@ -59,7 +59,7 @@ public class AuthActivity extends AppCompatActivity {
         String password = editPassword.getText() == null ? "" : editPassword.getText().toString().trim();
 
         if (email.isEmpty() || password.length() < 6) {
-            Toast.makeText(this, "Enter valid email and password (min 6)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.invalid_email_password, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -91,41 +91,45 @@ public class AuthActivity extends AppCompatActivity {
     private void setLoading(boolean loading) {
         btnAction.setEnabled(!loading);
         txtToggleMode.setEnabled(!loading);
-        btnAction.setText(loading ? "Please wait..." : (isLoginMode ? "Login" : "Register"));
+        if (loading) {
+            btnAction.setText(R.string.please_wait);
+        } else {
+            btnAction.setText(isLoginMode ? R.string.login : R.string.register);
+        }
     }
 
     private String mapAuthError(Exception error) {
         if (error instanceof FirebaseNetworkException) {
-            return "Network error on emulator. Check emulator internet and Google Play image.";
+            return getString(R.string.network_error_emulator);
         }
 
         if (!(error instanceof FirebaseAuthException)) {
             String raw = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
-            return "Authentication failed: " + raw;
+            return getString(R.string.auth_failed, raw);
         }
 
         String code = ((FirebaseAuthException) error).getErrorCode();
         switch (code) {
             case "ERROR_INVALID_EMAIL":
-                return "Invalid email format.";
+                return getString(R.string.invalid_email_format);
             case "ERROR_USER_NOT_FOUND":
-                return "User not found. Register first.";
+                return getString(R.string.user_not_found);
             case "ERROR_WRONG_PASSWORD":
-                return "Wrong password.";
+                return getString(R.string.wrong_password);
             case "ERROR_EMAIL_ALREADY_IN_USE":
-                return "This email is already registered.";
+                return getString(R.string.email_already_registered);
             case "ERROR_WEAK_PASSWORD":
-                return "Password is too weak (min 6).";
+                return getString(R.string.weak_password);
             case "ERROR_OPERATION_NOT_ALLOWED":
-                return "Enable Email/Password provider in Firebase Authentication.";
+                return getString(R.string.enable_email_provider);
             case "ERROR_APP_NOT_AUTHORIZED":
             case "ERROR_INVALID_API_KEY":
             case "ERROR_CONFIG_NOT_FOUND":
-                return "Firebase configuration issue. Check google-services.json and package name.";
+                return getString(R.string.firebase_config_issue);
             case "ERROR_NETWORK_REQUEST_FAILED":
-                return "Network error. Check internet connection.";
+                return getString(R.string.network_error);
             default:
-                return "Authentication error: " + code;
+                return getString(R.string.auth_error_code, code);
         }
     }
 
