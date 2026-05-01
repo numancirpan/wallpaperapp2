@@ -14,9 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class HomeFragment extends Fragment {
 
@@ -24,7 +22,6 @@ public class HomeFragment extends Fragment {
     WallpaperAdapter adapter;
     List<Wallpaper> list;
     TextInputEditText editSearch;
-    private final Set<Integer> aiAnalysisInProgressIds = new HashSet<>();
 
     public HomeFragment() {
     }
@@ -57,7 +54,6 @@ public class HomeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 filterWallpapers();
-                triggerAiSearchIndexing();
             }
 
             @Override
@@ -112,67 +108,8 @@ public class HomeFragment extends Fragment {
             query = editSearch.getText().toString().trim();
         }
 
-        List<Wallpaper> filteredList =
-                WallpaperRepository.searchWallpapersByTitle(query);
-
+        List<Wallpaper> filteredList = WallpaperRepository.searchWallpapersByTitle(query);
         adapter.updateList(filteredList);
-    }
-
-    private void triggerAiSearchIndexing() {
-        if (!isAdded() || editSearch.getText() == null) return;
-        String query = editSearch.getText().toString().trim();
-        if (query.isEmpty()) return;
-
-        int startedCount = 0;
-        for (Wallpaper wallpaper : WallpaperRepository.wallpaperList) {
-            if (startedCount >= 12) break;
-            if (wallpaper.aiCategory != null && !wallpaper.aiCategory.trim().isEmpty()) continue;
-            if (aiAnalysisInProgressIds.contains(wallpaper.id)) continue;
-
-            aiAnalysisInProgressIds.add(wallpaper.id);
-            startedCount++;
-            analyzeWallpaperForSearch(wallpaper);
-        }
-    }
-
-    private void analyzeWallpaperForSearch(Wallpaper wallpaper) {
-        AiClassifier.OnLabelsReadyListener listener = new AiClassifier.OnLabelsReadyListener() {
-            @Override
-            public void onSuccess(List<AiLabelData> labels) {
-                String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
-                String matchedCategory = CategoryMatcher.matchOrCreate(
-                        generatedCategory,
-                        WallpaperRepository.getExistingAiCategories()
-                );
-                wallpaper.aiLabels = DynamicCategoryGenerator.labelsToDisplay(labels);
-
-                GeminiCategoryService.generateCategory(wallpaper.title, wallpaper.aiLabels, geminiCategory -> {
-                    String finalCategory = geminiCategory == null || geminiCategory.trim().isEmpty()
-                            ? matchedCategory
-                            : CategoryMatcher.matchOrCreate(geminiCategory, WallpaperRepository.getExistingAiCategories());
-
-                    wallpaper.aiCategory = finalCategory;
-                    aiAnalysisInProgressIds.remove(wallpaper.id);
-                    if (!isAdded()) return;
-                    requireActivity().runOnUiThread(this::refreshSearchResults);
-                });
-            }
-
-            @Override
-            public void onError(Exception e) {
-                aiAnalysisInProgressIds.remove(wallpaper.id);
-            }
-
-            private void refreshSearchResults() {
-                filterWallpapers();
-            }
-        };
-
-        if (wallpaper.hasRemoteImage()) {
-            AiClassifier.analyzeImageUrl(requireContext(), wallpaper.imageUrl, listener);
-        } else {
-            AiClassifier.analyzeImage(requireContext(), wallpaper.imageRes, listener);
-        }
     }
 
     @Override
