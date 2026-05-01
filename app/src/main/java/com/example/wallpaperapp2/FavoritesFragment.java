@@ -117,7 +117,7 @@ public class FavoritesFragment extends Fragment {
             anyResult = true;
 
             TextView categoryTitle = new TextView(requireContext());
-            categoryTitle.setText(categoryName);
+            categoryTitle.setText(CategoryDisplayMapper.toDisplayName(requireContext(), categoryName));
             categoryTitle.setTextSize(20);
             categoryTitle.setTypeface(null, android.graphics.Typeface.BOLD);
 
