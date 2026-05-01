@@ -74,7 +74,10 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             );
         } else {
             holder.txtFavoriteAiLabels.setText(
-                    holder.itemView.getContext().getString(R.string.ai_labels_prefix, wallpaper.aiLabels)
+                    holder.itemView.getContext().getString(
+                            R.string.ai_labels_prefix,
+                            AiLabelDisplayMapper.toDisplayLabels(holder.itemView.getContext(), wallpaper.aiLabels)
+                    )
             );
         }
 
