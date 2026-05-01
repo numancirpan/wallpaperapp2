@@ -122,9 +122,8 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         AiClassifier.OnLabelsReadyListener listener = new AiClassifier.OnLabelsReadyListener() {
             @Override
             public void onSuccess(java.util.List<AiLabelData> labels) {
-                String generatedCategory = DynamicCategoryGenerator.generateCategory(labels);
-                String finalCategory = CategoryMatcher.matchOrCreate(
-                        generatedCategory,
+                String finalCategory = DynamicCategoryGenerator.generateCategory(
+                        labels,
                         WallpaperRepository.getExistingAiCategories()
                 );
                 wallpaper.aiCategory = finalCategory;
