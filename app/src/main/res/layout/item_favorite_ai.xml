@@ -15,7 +15,7 @@
         android:id="@+id/txtFavoriteTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Wallpaper Title"
+        android:text="@string/wallpaper_preview"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_marginTop="8dp" />
@@ -24,7 +24,7 @@
         android:id="@+id/txtFavoriteAiCategory"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="AI Category: Nature"
+        android:text="@string/not_analyzed_yet"
         android:textSize="13sp"
         android:layout_marginTop="4dp" />
 
@@ -32,7 +32,7 @@
         android:id="@+id/txtFavoriteAiLabels"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="AI Labels: forest, green"
+        android:text="@string/not_available"
         android:textSize="13sp"
         android:layout_marginTop="2dp"
         android:maxLines="2" />
