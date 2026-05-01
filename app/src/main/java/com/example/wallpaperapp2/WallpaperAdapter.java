@@ -66,21 +66,36 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
             if (aiAutoEnabled && needsAnalysis(wallpaper)) {
                 wallpaper.aiCategory = "Analyzing";
-                wallpaper.aiLabels = "Image analysis in progress";
+                wallpaper.aiLabels = "Checking AI cache";
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 notifyItemChanged(position);
 
-                GeminiCategoryService.analyzeWallpaper(
-                        v.getContext(),
-                        wallpaper,
-                        WallpaperRepository.getExistingAiCategories(),
-                        result -> {
-                            wallpaper.aiCategory = result.category;
-                            wallpaper.aiLabels = result.labelsCsv;
-                            FirebaseFavoritesStore.saveFavorite(wallpaper);
-                            holder.itemView.post(() -> notifyItemChanged(position));
-                        }
-                );
+                FirebaseFavoritesStore.fetchAiCache(wallpaper, (found, category, labels) -> {
+                    if (found) {
+                        wallpaper.aiCategory = category;
+                        wallpaper.aiLabels = labels;
+                        FirebaseFavoritesStore.saveFavorite(wallpaper);
+                        holder.itemView.post(() -> notifyItemChanged(position));
+                        return;
+                    }
+
+                    wallpaper.aiLabels = "Image analysis in progress";
+                    FirebaseFavoritesStore.saveFavorite(wallpaper);
+                    holder.itemView.post(() -> notifyItemChanged(position));
+
+                    GeminiCategoryService.analyzeWallpaper(
+                            v.getContext(),
+                            wallpaper,
+                            WallpaperRepository.getExistingAiCategories(),
+                            result -> {
+                                wallpaper.aiCategory = result.category;
+                                wallpaper.aiLabels = result.labelsCsv;
+                                FirebaseFavoritesStore.saveFavorite(wallpaper);
+                                FirebaseFavoritesStore.saveAiCache(wallpaper);
+                                holder.itemView.post(() -> notifyItemChanged(position));
+                            }
+                    );
+                });
             } else {
                 notifyItemChanged(position);
             }
@@ -94,16 +109,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     }
 
     private boolean needsAnalysis(Wallpaper wallpaper) {
-        String category = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory.trim();
-        String labels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels.trim();
-
-        return category.isEmpty()
-                || category.equalsIgnoreCase("Not Analyzed Yet")
-                || category.equalsIgnoreCase("Analyzing")
-                || category.equalsIgnoreCase("Uncategorized")
-                || labels.equalsIgnoreCase("Gemini API key missing")
-                || labels.equalsIgnoreCase("Gemini analysis failed")
-                || labels.equalsIgnoreCase("Image could not be loaded");
+        return !FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels);
     }
 
     @Override
