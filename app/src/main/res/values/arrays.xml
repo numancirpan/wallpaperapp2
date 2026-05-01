@@ -26,5 +26,7 @@
         <item>@string/category_art</item>
         <item>@string/category_people</item>
         <item>@string/category_space</item>
+        <item>@string/category_fashion</item>
+        <item>@string/category_monochrome</item>
     </string-array>
 </resources>
