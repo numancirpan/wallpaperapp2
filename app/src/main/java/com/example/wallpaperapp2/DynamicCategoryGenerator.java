@@ -10,8 +10,13 @@ import java.util.Set;
 public class DynamicCategoryGenerator {
 
     private static final Set<String> GENERIC_LABELS = new HashSet<>(Arrays.asList(
-            "sky", "plant", "food", "font", "material", "line", "slope",
-            "rectangle", "tree", "landscape", "object", "organism", "terrestrial plant"
+            "font", "material", "line", "slope", "rectangle", "object", "organism",
+            "terrestrial plant", "product", "gesture", "event", "fun", "room", "flooring"
+    ));
+
+    private static final Set<String> DETAIL_LABELS = new HashSet<>(Arrays.asList(
+            "hand", "nail", "eyelash", "jewellery", "jewelry", "ring", "finger", "wrist",
+            "skin", "arm", "metal", "watch", "human body", "close-up", "thumb"
     ));
 
     public static String generateCategory(List<AiLabelData> labels) {
@@ -19,59 +24,83 @@ public class DynamicCategoryGenerator {
             return "Uncategorized";
         }
 
-        List<String> meaningful = getMeaningfulLabels(labels);
+        List<String> normalized = normalizeLabels(labels);
 
-        if (meaningful.isEmpty()) {
-            return capitalize(cleanLabel(labels.get(0).text));
+        if (containsAny(normalized, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper", "office", "mobile phone", "phone")) {
+            return "Workspace";
         }
 
-        String first = meaningful.get(0);
-
-        // çok temel insanlaştırma
-        if (equalsAny(first, "person", "people", "face", "portrait", "smile", "human")) {
-            return "People";
+        if (containsAny(normalized, "beach", "sea", "ocean", "coast", "shore", "sand", "wave", "sunset", "sunrise")) {
+            if (containsAny(normalized, "sunset", "sunrise")) {
+                return "Beach Sunset";
+            }
+            return "Beach";
         }
 
-        if (equalsAny(first, "dog", "cat", "bird", "frog", "animal", "wildlife")) {
-            return capitalize(toSingular(first));
+        if (containsAny(normalized, "waterfall", "river", "lake", "water", "stream")) {
+            return "Water Scenes";
         }
 
-        if (equalsAny(first, "car", "vehicle", "race", "racing")) {
-            return "Motorsports";
+        if (containsAny(normalized, "forest", "tree", "mountain", "landscape", "plant", "grass", "flower", "sky")) {
+            return "Nature";
         }
 
-        if (equalsAny(first, "poster", "illustration", "graphics", "graphic", "design", "pattern", "abstract")) {
-            return "Graphic Design";
-        }
-
-        if (equalsAny(first, "city", "street", "building", "architecture", "road", "urban")) {
+        if (containsAny(normalized, "city", "street", "building", "architecture", "road", "urban")) {
             return "Urban";
         }
 
-        if (meaningful.size() >= 2) {
-            String second = meaningful.get(1);
-
-            // çok yakın confidence varsa iki kelimeli kategori üret
-            return capitalize(toSingular(first)) + " " + capitalize(toSingular(second));
+        if (containsAny(normalized, "car", "vehicle", "race", "racing", "motorcycle")) {
+            return "Vehicles";
         }
 
-        return capitalize(toSingular(first));
+        if (containsAny(normalized, "dog", "cat", "bird", "animal", "wildlife", "fish", "horse")) {
+            return "Animals";
+        }
+
+        if (containsAny(normalized, "space", "planet", "moon", "star", "galaxy")) {
+            return "Space";
+        }
+
+        if (containsAny(normalized, "poster", "illustration", "graphics", "graphic", "design", "pattern", "abstract", "art")) {
+            return "Art";
+        }
+
+        if (containsAny(normalized, "person", "people", "face", "portrait", "smile", "human")) {
+            return "People";
+        }
+
+        List<String> meaningful = getMeaningfulLabels(labels);
+        if (meaningful.isEmpty()) {
+            return "Uncategorized";
+        }
+
+        if (meaningful.size() >= 2) {
+            return capitalize(toSingular(meaningful.get(0))) + " " + capitalize(toSingular(meaningful.get(1)));
+        }
+
+        return capitalize(toSingular(meaningful.get(0)));
     }
 
     public static String labelsToDisplay(List<AiLabelData> labels) {
         if (labels == null || labels.isEmpty()) return "Not available";
 
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < labels.size(); i++) {
-            builder.append(cleanLabel(labels.get(i).text));
-
-            if (i < labels.size() - 1) {
-                builder.append(", ");
+        List<String> displayLabels = new ArrayList<>();
+        for (AiLabelData label : labels) {
+            String cleaned = cleanLabel(label.text);
+            if (cleaned.isEmpty()) continue;
+            if (GENERIC_LABELS.contains(cleaned.toLowerCase(Locale.ROOT))) continue;
+            if (DETAIL_LABELS.contains(cleaned.toLowerCase(Locale.ROOT)) && displayLabels.size() >= 2) continue;
+            if (!containsIgnoreCase(displayLabels, cleaned)) {
+                displayLabels.add(cleaned);
             }
+            if (displayLabels.size() == 5) break;
         }
 
-        return builder.toString();
+        if (displayLabels.isEmpty()) {
+            return "Visual wallpaper content";
+        }
+
+        return String.join(", ", displayLabels);
     }
 
     private static List<String> getMeaningfulLabels(List<AiLabelData> labels) {
@@ -79,9 +108,11 @@ public class DynamicCategoryGenerator {
 
         for (AiLabelData labelData : labels) {
             String cleaned = cleanLabel(labelData.text);
+            String lower = cleaned.toLowerCase(Locale.ROOT);
 
             if (cleaned.isEmpty()) continue;
-            if (GENERIC_LABELS.contains(cleaned.toLowerCase(Locale.ROOT))) continue;
+            if (GENERIC_LABELS.contains(lower)) continue;
+            if (DETAIL_LABELS.contains(lower)) continue;
 
             result.add(cleaned);
 
@@ -91,6 +122,36 @@ public class DynamicCategoryGenerator {
         }
 
         return result;
+    }
+
+    private static List<String> normalizeLabels(List<AiLabelData> labels) {
+        List<String> normalized = new ArrayList<>();
+        for (AiLabelData labelData : labels) {
+            String cleaned = cleanLabel(labelData.text).toLowerCase(Locale.ROOT);
+            if (!cleaned.isEmpty()) {
+                normalized.add(cleaned);
+            }
+        }
+        return normalized;
+    }
+
+    private static boolean containsAny(List<String> labels, String... keywords) {
+        for (String label : labels) {
+            for (String keyword : keywords) {
+                String k = keyword.toLowerCase(Locale.ROOT);
+                if (label.equals(k) || label.contains(k) || k.contains(label)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsIgnoreCase(List<String> source, String value) {
+        for (String item : source) {
+            if (item.equalsIgnoreCase(value)) return true;
+        }
+        return false;
     }
 
     private static String cleanLabel(String text) {
@@ -116,15 +177,6 @@ public class DynamicCategoryGenerator {
         }
 
         return w;
-    }
-
-    private static boolean equalsAny(String value, String... options) {
-        for (String option : options) {
-            if (value.equalsIgnoreCase(option)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static String capitalize(String text) {
