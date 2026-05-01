@@ -7,4 +7,8 @@
     <color name="chip_unselected_bg">#00000000</color>
     <color name="chip_unselected_text">#3A2E4F</color>
     <color name="chip_stroke">#8A7AA6</color>
+    <color name="favorite_active_bg">#C7B2FF</color>
+    <color name="favorite_active_icon">#3A2368</color>
+    <color name="favorite_inactive_bg">#33FFFFFF</color>
+    <color name="favorite_inactive_icon">#E8DEF8</color>
 </resources>
