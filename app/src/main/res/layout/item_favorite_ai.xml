@@ -1,39 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="160dp"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="180dp"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:layout_marginEnd="12dp">
+    android:layout_marginEnd="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:strokeWidth="1dp">
 
-    <ImageView
-        android:id="@+id/imageFavorite"
-        android:layout_width="160dp"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop" />
-
-    <TextView
-        android:id="@+id/txtFavoriteTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/wallpaper_preview"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginTop="8dp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/txtFavoriteAiCategory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/not_analyzed_yet"
-        android:textSize="13sp"
-        android:layout_marginTop="4dp" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="210dp">
 
-    <TextView
-        android:id="@+id/txtFavoriteAiLabels"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/not_available"
-        android:textSize="13sp"
-        android:layout_marginTop="2dp"
-        android:maxLines="2" />
-</LinearLayout>
+            <ImageView
+                android:id="@+id/imageFavorite"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/wallpaper_preview"
+                android:scaleType="centerCrop" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFavoriteRemove"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="8dp"
+                android:contentDescription="@string/nav_favorites"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                app:cornerRadius="21dp"
+                app:icon="@android:drawable/btn_star_big_on"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/txtFavoriteTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/wallpaper_preview"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtFavoriteAiCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/not_analyzed_yet"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtFavoriteAiLabels"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxLines="3"
+                android:text="@string/not_available"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
