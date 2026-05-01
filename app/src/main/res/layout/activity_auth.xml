@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Wallpaper App Login"
+        android:text="@string/auth_title"
         android:textStyle="bold"
         android:textSize="26sp"
         android:layout_marginBottom="20dp" />
@@ -17,7 +17,7 @@
         android:id="@+id/editEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email"
+        android:hint="@string/email"
         android:inputType="textEmailAddress"
         android:layout_marginBottom="12dp" />
 
@@ -25,7 +25,7 @@
         android:id="@+id/editPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Password"
+        android:hint="@string/password"
         android:inputType="textPassword"
         android:layout_marginBottom="16dp" />
 
@@ -33,13 +33,13 @@
         android:id="@+id/btnAuthAction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Login" />
+        android:text="@string/login" />
 
     <TextView
         android:id="@+id/txtToggleMode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No account? Register"
+        android:text="@string/no_account_register"
         android:textSize="15sp"
         android:layout_marginTop="16dp" />
 
