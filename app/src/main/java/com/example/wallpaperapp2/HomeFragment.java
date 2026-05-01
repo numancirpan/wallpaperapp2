@@ -79,7 +79,7 @@ public class HomeFragment extends Fragment {
             public void onError(Exception exception) {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "API fetch failed, showing cached data", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), R.string.api_fetch_failed_cached, Toast.LENGTH_SHORT).show()
                 );
             }
         });
@@ -87,15 +87,7 @@ public class HomeFragment extends Fragment {
 
     private void restoreCloudFavoritesAndRender() {
         FirebaseFavoritesStore.fetchFavorites(favoritesById -> {
-            for (Wallpaper wallpaper : WallpaperRepository.wallpaperList) {
-                java.util.Map<String, Object> data = favoritesById.get(wallpaper.id);
-                if (data == null) continue;
-                wallpaper.isFavorite = true;
-                Object category = data.get("aiCategory");
-                Object labels = data.get("aiLabels");
-                wallpaper.aiCategory = category == null ? "" : String.valueOf(category);
-                wallpaper.aiLabels = labels == null ? "" : String.valueOf(labels);
-            }
+            WallpaperRepository.applyFavoriteData(favoritesById);
             if (!isAdded()) return;
             requireActivity().runOnUiThread(this::filterWallpapers);
         });
