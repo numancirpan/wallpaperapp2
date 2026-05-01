@@ -32,7 +32,7 @@
                     android:id="@+id/txtDetailTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Wallpaper Preview"
+                    android:text="@string/wallpaper_preview"
                     android:textSize="24sp"
                     android:textStyle="bold" />
 
@@ -40,7 +40,7 @@
                     android:id="@+id/txtPhotographer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Photo by Photographer"
+                    android:text="@string/photo_by"
                     android:textSize="13sp"
                     android:alpha="0.72"
                     android:layout_marginTop="4dp" />
@@ -49,7 +49,7 @@
                     android:id="@+id/txtDetailAiCategory"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AI Category: Not analyzed yet"
+                    android:text="@string/not_analyzed_yet"
                     android:textSize="16sp"
                     android:layout_marginTop="12dp" />
 
@@ -57,7 +57,7 @@
                     android:id="@+id/txtDetailAiLabels"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AI Labels: Not available"
+                    android:text="@string/not_available"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp" />
             </LinearLayout>
@@ -68,21 +68,21 @@
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
                 android:src="@android:drawable/btn_star_big_off"
-                android:contentDescription="Favorite button" />
+                android:contentDescription="@string/nav_favorites" />
         </LinearLayout>
 
         <Button
             android:id="@+id/btnSetHomeWallpaper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Set as Home Screen"
+            android:text="@string/set_home_screen"
             android:layout_marginTop="16dp" />
 
         <Button
             android:id="@+id/btnSetLockWallpaper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Set as Lock Screen"
+            android:text="@string/set_lock_screen"
             android:layout_marginTop="8dp" />
 
     </LinearLayout>
