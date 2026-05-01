@@ -43,6 +43,14 @@ public class CategoryDisplayMapper {
                 return context.getString(R.string.category_people);
             case "space":
                 return context.getString(R.string.category_space);
+            case "fashion":
+                return context.getString(R.string.category_fashion);
+            case "monochrome":
+                return context.getString(R.string.category_monochrome);
+            case "branch":
+                return context.getString(R.string.category_nature);
+            case "asphalt":
+                return context.getString(R.string.category_texture);
             case "uncategorized":
                 return context.getString(R.string.uncategorized);
             case "analyzing":
