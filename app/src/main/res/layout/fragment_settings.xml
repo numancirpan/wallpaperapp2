@@ -26,13 +26,6 @@
             android:text="Dark Mode"
             android:layout_marginBottom="16dp" />
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switchAiAuto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="AI Auto Categorize"
-            android:layout_marginBottom="20dp" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
