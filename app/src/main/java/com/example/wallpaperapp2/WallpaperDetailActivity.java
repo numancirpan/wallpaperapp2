@@ -4,15 +4,14 @@ import android.os.Bundle;
 import android.app.WallpaperManager;
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.widget.ImageButton;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,9 +23,9 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private TextView txtPhotographer;
     private TextView txtAiCategory;
     private TextView txtAiLabels;
-    private ImageButton btnFavorite;
-    private Button btnSetHomeWallpaper;
-    private Button btnSetLockWallpaper;
+    private MaterialButton btnFavorite;
+    private MaterialButton btnSetHomeWallpaper;
+    private MaterialButton btnSetLockWallpaper;
 
     private Wallpaper wallpaper;
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
@@ -179,7 +178,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private void setWallpaper(boolean lockScreen) {
         btnSetHomeWallpaper.setEnabled(false);
         btnSetLockWallpaper.setEnabled(false);
-        Toast.makeText(this, R.string.setting_wallpaper, Toast.LENGTH_SHORT).show();
+        showMessage(getString(R.string.setting_wallpaper));
 
         backgroundExecutor.execute(() -> {
             try {
@@ -202,17 +201,9 @@ public class WallpaperDetailActivity extends AppCompatActivity {
                     manager.setBitmap(bitmap);
                 }
 
-                runOnUiThread(() -> Toast.makeText(
-                        this,
-                        R.string.wallpaper_set_successfully,
-                        Toast.LENGTH_SHORT
-                ).show());
+                runOnUiThread(() -> showMessage(getString(R.string.wallpaper_set_successfully)));
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(
-                        this,
-                        getString(R.string.wallpaper_set_failed, e.getMessage()),
-                        Toast.LENGTH_SHORT
-                ).show());
+                runOnUiThread(() -> showMessage(getString(R.string.wallpaper_set_failed, e.getMessage())));
             } finally {
                 runOnUiThread(() -> {
                     btnSetHomeWallpaper.setEnabled(true);
@@ -227,11 +218,9 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     }
 
     private void updateFavoriteIcon() {
-        if (wallpaper.isFavorite) {
-            btnFavorite.setImageResource(android.R.drawable.btn_star_big_on);
-        } else {
-            btnFavorite.setImageResource(android.R.drawable.btn_star_big_off);
-        }
+        btnFavorite.setIconResource(wallpaper.isFavorite
+                ? android.R.drawable.btn_star_big_on
+                : android.R.drawable.btn_star_big_off);
     }
 
     private void updateAiTexts() {
@@ -247,8 +236,15 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         if (wallpaper.aiLabels == null || wallpaper.aiLabels.isEmpty()) {
             txtAiLabels.setText(getString(R.string.ai_labels_prefix, getString(R.string.not_available)));
         } else {
-            txtAiLabels.setText(getString(R.string.ai_labels_prefix, wallpaper.aiLabels));
+            txtAiLabels.setText(getString(
+                    R.string.ai_labels_prefix,
+                    AiLabelDisplayMapper.toDisplayLabels(this, wallpaper.aiLabels)
+            ));
         }
+    }
+
+    private void showMessage(String message) {
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT).show();
     }
 
     private void updateUiSafe() {
