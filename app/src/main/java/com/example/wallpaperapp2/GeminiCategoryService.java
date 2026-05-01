@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +43,12 @@ public class GeminiCategoryService {
     }
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final List<String> MODEL_CANDIDATES = Arrays.asList(
+            "gemini-2.0-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash",
+            "gemini-pro-vision"
+    );
 
     public static void analyzeWallpaper(
             @NonNull Context context,
@@ -56,7 +63,6 @@ public class GeminiCategoryService {
         }
 
         EXECUTOR.execute(() -> {
-            HttpURLConnection connection = null;
             try {
                 Bitmap bitmap = loadBitmap(context, wallpaper);
                 if (bitmap == null) {
@@ -65,56 +71,81 @@ public class GeminiCategoryService {
                 }
 
                 String base64Image = bitmapToBase64(resizeBitmap(bitmap, 768));
-                String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
-                        + apiKey;
+                String requestBody = buildRequestBody(wallpaper, existingCategories, base64Image).toString();
+                String lastError = "Unknown Gemini error";
 
-                connection = (HttpURLConnection) new URL(endpoint).openConnection();
-                connection.setConnectTimeout(15000);
-                connection.setReadTimeout(20000);
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setDoOutput(true);
+                for (String modelName : MODEL_CANDIDATES) {
+                    GeminiHttpResult httpResult = callGemini(apiKey, modelName, requestBody);
 
-                JSONObject root = new JSONObject();
-                JSONArray contents = new JSONArray();
-                JSONObject content = new JSONObject();
-                JSONArray parts = new JSONArray();
+                    if (httpResult.success) {
+                        String rawText = extractGeminiText(httpResult.response);
+                        AnalysisResult result = parseAnalysis(rawText, existingCategories);
+                        callback.onResult(result);
+                        return;
+                    }
 
-                parts.put(new JSONObject().put("text", buildPrompt(wallpaper, existingCategories)));
-                parts.put(new JSONObject().put("inline_data", new JSONObject()
-                        .put("mime_type", "image/jpeg")
-                        .put("data", base64Image)));
-
-                content.put("parts", parts);
-                contents.put(content);
-                root.put("contents", contents);
-
-                DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
-                outputStream.write(root.toString().getBytes());
-                outputStream.flush();
-                outputStream.close();
-
-                int responseCode = connection.getResponseCode();
-                InputStream stream = responseCode >= 200 && responseCode < 300
-                        ? connection.getInputStream() : connection.getErrorStream();
-                String response = readStream(stream);
-
-                if (responseCode < 200 || responseCode >= 300) {
-                    callback.onResult(new AnalysisResult("Uncategorized", buildHttpErrorMessage(responseCode, response)));
-                    return;
+                    lastError = buildHttpErrorMessage(httpResult.responseCode, httpResult.response);
+                    boolean canTryNextModel = httpResult.responseCode == 404 || httpResult.responseCode == 400;
+                    if (!canTryNextModel) {
+                        callback.onResult(new AnalysisResult("Uncategorized", lastError));
+                        return;
+                    }
                 }
 
-                String rawText = extractGeminiText(response);
-                AnalysisResult result = parseAnalysis(rawText, existingCategories);
-                callback.onResult(result);
+                callback.onResult(new AnalysisResult("Uncategorized", lastError));
             } catch (Exception e) {
                 callback.onResult(new AnalysisResult("Uncategorized", "Gemini exception: " + shortMessage(e.getMessage())));
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
             }
         });
+    }
+
+    private static GeminiHttpResult callGemini(String apiKey, String modelName, String requestBody) throws Exception {
+        HttpURLConnection connection = null;
+        try {
+            String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/"
+                    + modelName
+                    + ":generateContent?key="
+                    + apiKey;
+
+            connection = (HttpURLConnection) new URL(endpoint).openConnection();
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(20000);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+
+            DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
+            outputStream.write(requestBody.getBytes());
+            outputStream.flush();
+            outputStream.close();
+
+            int responseCode = connection.getResponseCode();
+            InputStream stream = responseCode >= 200 && responseCode < 300
+                    ? connection.getInputStream() : connection.getErrorStream();
+            String response = readStream(stream);
+            return new GeminiHttpResult(responseCode >= 200 && responseCode < 300, responseCode, response);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private static JSONObject buildRequestBody(Wallpaper wallpaper, List<String> existingCategories, String base64Image) throws Exception {
+        JSONObject root = new JSONObject();
+        JSONArray contents = new JSONArray();
+        JSONObject content = new JSONObject();
+        JSONArray parts = new JSONArray();
+
+        parts.put(new JSONObject().put("text", buildPrompt(wallpaper, existingCategories)));
+        parts.put(new JSONObject().put("inline_data", new JSONObject()
+                .put("mime_type", "image/jpeg")
+                .put("data", base64Image)));
+
+        content.put("parts", parts);
+        contents.put(content);
+        root.put("contents", contents);
+        return root;
     }
 
     private static String buildPrompt(Wallpaper wallpaper, List<String> existingCategories) {
@@ -297,5 +328,17 @@ public class GeminiCategoryService {
 
     private static String safe(String text) {
         return text == null ? "" : text.trim();
+    }
+
+    private static class GeminiHttpResult {
+        final boolean success;
+        final int responseCode;
+        final String response;
+
+        GeminiHttpResult(boolean success, int responseCode, String response) {
+            this.success = success;
+            this.responseCode = responseCode;
+            this.response = response;
+        }
     }
 }
