@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
@@ -46,12 +46,11 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         }
 
         holder.txtWallpaperTitle.setVisibility(View.GONE);
-        holder.btnFavorite.setImageResource(wallpaper.isFavorite
-                ? android.R.drawable.btn_star_big_on
-                : android.R.drawable.btn_star_big_off);
+        FavoriteButtonStyler.apply(holder.btnFavorite, wallpaper.isFavorite);
 
         holder.btnFavorite.setOnClickListener(v -> {
             wallpaper.isFavorite = !wallpaper.isFavorite;
+            FavoriteButtonStyler.apply(holder.btnFavorite, wallpaper.isFavorite);
 
             if (!wallpaper.isFavorite) {
                 wallpaper.aiCategory = "";
@@ -162,7 +161,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        ImageButton btnFavorite;
+        MaterialButton btnFavorite;
         TextView txtWallpaperTitle;
 
         public ViewHolder(@NonNull View itemView) {
