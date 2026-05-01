@@ -54,6 +54,8 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             wallpaper.isFavorite = !wallpaper.isFavorite;
 
             if (!wallpaper.isFavorite) {
+                wallpaper.aiCategory = "";
+                wallpaper.aiLabels = "";
                 FirebaseFavoritesStore.removeFavorite(wallpaper);
                 notifyItemChanged(position);
                 return;
@@ -92,10 +94,16 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     }
 
     private boolean needsAnalysis(Wallpaper wallpaper) {
-        return wallpaper.aiCategory == null
-                || wallpaper.aiCategory.trim().isEmpty()
-                || wallpaper.aiCategory.equalsIgnoreCase("Not Analyzed Yet")
-                || wallpaper.aiCategory.equalsIgnoreCase("Analyzing");
+        String category = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory.trim();
+        String labels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels.trim();
+
+        return category.isEmpty()
+                || category.equalsIgnoreCase("Not Analyzed Yet")
+                || category.equalsIgnoreCase("Analyzing")
+                || category.equalsIgnoreCase("Uncategorized")
+                || labels.equalsIgnoreCase("Gemini API key missing")
+                || labels.equalsIgnoreCase("Gemini analysis failed")
+                || labels.equalsIgnoreCase("Image could not be loaded");
     }
 
     @Override
