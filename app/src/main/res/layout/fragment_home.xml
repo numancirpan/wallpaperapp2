@@ -10,7 +10,7 @@
         android:id="@+id/txtTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Discover Wallpapers"
+        android:text="@string/discover_wallpapers"
         android:textSize="28sp"
         android:textStyle="bold"
         android:layout_marginBottom="12dp" />
@@ -20,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:hint="Search wallpapers">
+        android:hint="@string/search_wallpapers">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editSearch"
