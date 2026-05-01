@@ -79,4 +79,6 @@
     <string name="category_art">Art</string>
     <string name="category_people">People</string>
     <string name="category_space">Space</string>
+    <string name="category_fashion">Fashion</string>
+    <string name="category_monochrome">Monochrome</string>
 </resources>
