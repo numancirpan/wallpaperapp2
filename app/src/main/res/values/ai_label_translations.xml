@@ -1,25 +1,27 @@
 <resources>
     <string-array name="ai_label_translation_keys">
-        <item>cup</item><item>desk</item><item>table</item><item>tableware</item><item>saucer</item><item>computer</item><item>laptop</item><item>keyboard</item><item>coffee</item>
+        <item>hand</item><item>nail</item><item>cup</item><item>desk</item><item>table</item><item>tableware</item><item>saucer</item><item>computer</item><item>laptop</item><item>keyboard</item><item>coffee</item>
         <item>mobile phone</item><item>phone</item><item>notebook</item><item>paper</item><item>pen</item><item>writing</item><item>shelf</item><item>lipstick</item><item>jacket</item><item>leather</item>
         <item>chair</item><item>building</item><item>wall</item><item>bench</item><item>pattern</item><item>monochrome</item><item>fork</item><item>cutlery</item><item>wing</item>
         <item>beach</item><item>rock</item><item>sky</item><item>vacation</item><item>leisure</item><item>mountain</item><item>cliff</item><item>bird</item><item>water</item><item>waterfall</item>
-        <item>river</item><item>lake</item><item>sea</item><item>ocean</item><item>sand</item><item>forest</item><item>field</item><item>prairie</item><item>plant</item><item>flower</item>
+        <item>river</item><item>lake</item><item>sea</item><item>ocean</item><item>sand</item><item>forest</item><item>jungle</item><item>field</item><item>prairie</item><item>plant</item><item>flower</item>
         <item>road</item><item>asphalt</item><item>grass</item><item>tree</item><item>branch</item><item>twig</item><item>insect</item><item>vehicle</item><item>wheel</item><item>tire</item>
         <item>car</item><item>windshield</item><item>cat</item><item>dog</item><item>fur</item><item>snout</item><item>textile</item><item>toy</item><item>shoe</item><item>shoes</item>
-        <item>foot</item><item>flesh</item><item>curtain</item><item>sneakers</item><item>footwear</item><item>light</item><item>lights</item><item>blur</item><item>bokeh</item><item>color</item>
+        <item>sandal</item><item>foot</item><item>flesh</item><item>curtain</item><item>sneakers</item><item>footwear</item><item>light</item><item>lights</item><item>blur</item><item>bokeh</item><item>color</item>
         <item>texture</item><item>surface</item><item>droplet</item><item>water drop</item><item>macro</item><item>architecture</item><item>city</item><item>street</item><item>person</item><item>people</item><item>portrait</item>
+        <item>book</item><item>animal</item>
     </string-array>
 
     <string-array name="ai_label_translation_values_tr">
-        <item>Bardak</item><item>Masa</item><item>Masa</item><item>Sofra Eşyası</item><item>Tabak</item><item>Bilgisayar</item><item>Dizüstü Bilgisayar</item><item>Klavye</item><item>Kahve</item>
+        <item>El</item><item>Tırnak</item><item>Bardak</item><item>Masa</item><item>Masa</item><item>Sofra Eşyası</item><item>Tabak</item><item>Bilgisayar</item><item>Dizüstü Bilgisayar</item><item>Klavye</item><item>Kahve</item>
         <item>Telefon</item><item>Telefon</item><item>Defter</item><item>Kağıt</item><item>Kalem</item><item>Yazı</item><item>Raf</item><item>Ruj</item><item>Ceket</item><item>Deri</item>
         <item>Sandalye</item><item>Bina</item><item>Duvar</item><item>Bank</item><item>Desen</item><item>Tek Renk</item><item>Çatal</item><item>Çatal Bıçak</item><item>Kanat</item>
         <item>Sahil</item><item>Kaya</item><item>Gökyüzü</item><item>Tatil</item><item>Dinlenme</item><item>Dağ</item><item>Uçurum</item><item>Kuş</item><item>Su</item><item>Şelale</item>
-        <item>Nehir</item><item>Göl</item><item>Deniz</item><item>Okyanus</item><item>Kum</item><item>Orman</item><item>Tarla</item><item>Çayır</item><item>Bitki</item><item>Çiçek</item>
+        <item>Nehir</item><item>Göl</item><item>Deniz</item><item>Okyanus</item><item>Kum</item><item>Orman</item><item>Orman</item><item>Tarla</item><item>Çayır</item><item>Bitki</item><item>Çiçek</item>
         <item>Yol</item><item>Asfalt</item><item>Çimen</item><item>Ağaç</item><item>Dal</item><item>İnce Dal</item><item>Böcek</item><item>Araç</item><item>Tekerlek</item><item>Lastik</item>
         <item>Araba</item><item>Ön Cam</item><item>Kedi</item><item>Köpek</item><item>Kürk</item><item>Burun</item><item>Tekstil</item><item>Oyuncak</item><item>Ayakkabı</item><item>Ayakkabılar</item>
-        <item>Ayak</item><item>Ten Rengi</item><item>Perde</item><item>Spor Ayakkabı</item><item>Ayakkabı</item><item>Işık</item><item>Işıklar</item><item>Bulanıklık</item><item>Bokeh</item><item>Renk</item>
+        <item>Sandalet</item><item>Ayak</item><item>Ten Rengi</item><item>Perde</item><item>Spor Ayakkabı</item><item>Ayakkabı</item><item>Işık</item><item>Işıklar</item><item>Bulanıklık</item><item>Bokeh</item><item>Renk</item>
         <item>Doku</item><item>Yüzey</item><item>Su Damlası</item><item>Su Damlası</item><item>Makro</item><item>Mimari</item><item>Şehir</item><item>Sokak</item><item>İnsan</item><item>İnsanlar</item><item>Portre</item>
+        <item>Kitap</item><item>Hayvan</item>
     </string-array>
 </resources>
