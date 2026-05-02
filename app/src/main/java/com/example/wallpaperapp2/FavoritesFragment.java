@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -25,6 +26,9 @@ public class FavoritesFragment extends Fragment {
 
     private LinearLayout favoritesContainer;
     private LinearLayout favoritesGroupsContainer;
+    private MaterialCardView cardFavoritesEmptyState;
+    private TextView txtFavoritesEmptyTitle;
+    private TextView txtFavoritesEmptyDescription;
     private TextInputEditText editFavoritesSearch;
     private boolean isLoadingFavorites = false;
     private ListenerRegistration favoritesListener;
@@ -39,6 +43,9 @@ public class FavoritesFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_favorites, container, false);
         favoritesContainer = view.findViewById(R.id.favoritesContainer);
         favoritesGroupsContainer = view.findViewById(R.id.favoritesGroupsContainer);
+        cardFavoritesEmptyState = view.findViewById(R.id.cardFavoritesEmptyState);
+        txtFavoritesEmptyTitle = view.findViewById(R.id.txtFavoritesEmptyTitle);
+        txtFavoritesEmptyDescription = view.findViewById(R.id.txtFavoritesEmptyDescription);
         editFavoritesSearch = view.findViewById(R.id.editFavoritesSearch);
 
         editFavoritesSearch.addTextChangedListener(new TextWatcher() {
@@ -106,16 +113,14 @@ public class FavoritesFragment extends Fragment {
             return;
         }
         favoritesGroupsContainer.removeAllViews();
-        TextView loadingText = new TextView(requireContext());
-        loadingText.setText(R.string.loading_favorites);
-        loadingText.setTextSize(16);
-        favoritesGroupsContainer.addView(loadingText);
+        showEmptyState(R.string.loading_favorites, R.string.no_favorites_yet_description);
     }
 
     private void renderFavoriteGroups() {
         if (favoritesContainer == null || favoritesGroupsContainer == null) return;
 
         favoritesGroupsContainer.removeAllViews();
+        hideEmptyState();
 
         Map<String, List<Wallpaper>> groupedFavorites =
                 WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
@@ -124,10 +129,10 @@ public class FavoritesFragment extends Fragment {
                 : "";
 
         if (groupedFavorites.isEmpty()) {
-            TextView emptyText = new TextView(requireContext());
-            emptyText.setText(isLoadingFavorites ? R.string.loading_favorites : R.string.no_favorites_yet);
-            emptyText.setTextSize(16);
-            favoritesGroupsContainer.addView(emptyText);
+            showEmptyState(
+                    isLoadingFavorites ? R.string.loading_favorites : R.string.no_favorites_yet,
+                    R.string.no_favorites_yet_description
+            );
             return;
         }
 
@@ -171,10 +176,20 @@ public class FavoritesFragment extends Fragment {
         }
 
         if (!anyResult) {
-            TextView emptyText = new TextView(requireContext());
-            emptyText.setText(R.string.no_favorite_matches);
-            emptyText.setTextSize(16);
-            favoritesGroupsContainer.addView(emptyText);
+            showEmptyState(R.string.no_favorite_matches, R.string.no_favorite_matches_description);
+        }
+    }
+
+    private void showEmptyState(int titleRes, int descriptionRes) {
+        if (cardFavoritesEmptyState == null) return;
+        txtFavoritesEmptyTitle.setText(titleRes);
+        txtFavoritesEmptyDescription.setText(descriptionRes);
+        cardFavoritesEmptyState.setVisibility(View.VISIBLE);
+    }
+
+    private void hideEmptyState() {
+        if (cardFavoritesEmptyState != null) {
+            cardFavoritesEmptyState.setVisibility(View.GONE);
         }
     }
 
