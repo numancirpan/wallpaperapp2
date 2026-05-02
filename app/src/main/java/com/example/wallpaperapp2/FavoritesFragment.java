@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class FavoritesFragment extends Fragment {
     private LinearLayout favoritesGroupsContainer;
     private TextInputEditText editFavoritesSearch;
     private boolean isLoadingFavorites = false;
+    private ListenerRegistration favoritesListener;
 
     public FavoritesFragment() {
     }
@@ -54,29 +56,48 @@ public class FavoritesFragment extends Fragment {
             }
         });
 
-        loadCloudFavoritesThenRender();
+        startFavoritesListener();
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        loadCloudFavoritesThenRender();
+        startFavoritesListener();
     }
 
-    private void loadCloudFavoritesThenRender() {
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopFavoritesListener();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        stopFavoritesListener();
+    }
+
+    private void startFavoritesListener() {
         if (favoritesContainer == null || favoritesGroupsContainer == null) return;
-        if (isLoadingFavorites) return;
+        if (favoritesListener != null) return;
 
         isLoadingFavorites = true;
         showLoadingStateIfEmpty();
 
-        FirebaseFavoritesStore.fetchFavorites(favoritesById -> {
+        favoritesListener = FirebaseFavoritesStore.listenFavorites(favoritesById -> {
             WallpaperRepository.applyFavoriteData(favoritesById);
             isLoadingFavorites = false;
             if (!isAdded()) return;
             requireActivity().runOnUiThread(this::renderFavoriteGroups);
         });
+    }
+
+    private void stopFavoritesListener() {
+        if (favoritesListener != null) {
+            favoritesListener.remove();
+            favoritesListener = null;
+        }
     }
 
     private void showLoadingStateIfEmpty() {
