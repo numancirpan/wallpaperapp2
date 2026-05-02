@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 import java.util.List;
 
@@ -50,6 +51,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         }
         holder.txtFavoriteTitle.setText(wallpaper.title);
         FavoriteButtonStyler.apply(holder.btnFavoriteRemove, true);
+        holder.progressFavoriteAnalysis.setVisibility(isAnalyzing(wallpaper) ? View.VISIBLE : View.GONE);
 
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
             holder.txtFavoriteAiCategory.setText(
@@ -104,6 +106,18 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         });
     }
 
+    private boolean isAnalyzing(Wallpaper wallpaper) {
+        if (wallpaper == null) return false;
+        String category = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory.toLowerCase();
+        String labels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels.toLowerCase();
+        return category.contains("analyzing")
+                || category.contains("analiz")
+                || labels.contains("progress")
+                || labels.contains("devam")
+                || labels.contains("cache")
+                || labels.contains("önbellek");
+    }
+
     @Override
     public int getItemCount() {
         return list.size();
@@ -112,6 +126,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageFavorite;
         MaterialButton btnFavoriteRemove;
+        CircularProgressIndicator progressFavoriteAnalysis;
         TextView txtFavoriteTitle;
         TextView txtFavoriteAiCategory;
         TextView txtFavoriteAiLabels;
@@ -120,6 +135,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             super(itemView);
             imageFavorite = itemView.findViewById(R.id.imageFavorite);
             btnFavoriteRemove = itemView.findViewById(R.id.btnFavoriteRemove);
+            progressFavoriteAnalysis = itemView.findViewById(R.id.progressFavoriteAnalysis);
             txtFavoriteTitle = itemView.findViewById(R.id.txtFavoriteTitle);
             txtFavoriteAiCategory = itemView.findViewById(R.id.txtFavoriteAiCategory);
             txtFavoriteAiLabels = itemView.findViewById(R.id.txtFavoriteAiLabels);
