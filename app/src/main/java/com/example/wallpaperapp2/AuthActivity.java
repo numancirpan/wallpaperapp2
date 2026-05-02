@@ -2,13 +2,14 @@ package com.example.wallpaperapp2;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,10 +18,13 @@ import com.google.firebase.auth.FirebaseAuthException;
 public class AuthActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
-    private EditText editEmail;
-    private EditText editPassword;
-    private Button btnAction;
+    private TextInputLayout layoutEmail;
+    private TextInputLayout layoutPassword;
+    private TextInputEditText editEmail;
+    private TextInputEditText editPassword;
+    private MaterialButton btnAction;
     private TextView txtToggleMode;
+    private TextView txtAuthSubtitle;
     private boolean isLoginMode = true;
 
     @Override
@@ -30,16 +34,20 @@ public class AuthActivity extends AppCompatActivity {
 
         FirebaseApp.initializeApp(this);
         auth = FirebaseAuth.getInstance();
+        layoutEmail = findViewById(R.id.layoutEmail);
+        layoutPassword = findViewById(R.id.layoutPassword);
         editEmail = findViewById(R.id.editEmail);
         editPassword = findViewById(R.id.editPassword);
         btnAction = findViewById(R.id.btnAuthAction);
         txtToggleMode = findViewById(R.id.txtToggleMode);
+        txtAuthSubtitle = findViewById(R.id.txtAuthSubtitle);
 
         updateModeUi();
 
         btnAction.setOnClickListener(v -> authenticate());
         txtToggleMode.setOnClickListener(v -> {
             isLoginMode = !isLoginMode;
+            clearInputErrors();
             updateModeUi();
         });
     }
@@ -48,23 +56,32 @@ public class AuthActivity extends AppCompatActivity {
         if (isLoginMode) {
             btnAction.setText(R.string.login);
             txtToggleMode.setText(R.string.no_account_register);
+            txtAuthSubtitle.setText(R.string.auth_subtitle_login);
         } else {
             btnAction.setText(R.string.register);
             txtToggleMode.setText(R.string.already_have_account_login);
+            txtAuthSubtitle.setText(R.string.auth_subtitle_register);
         }
     }
 
     private void authenticate() {
+        clearInputErrors();
+
         String email = editEmail.getText() == null ? "" : editEmail.getText().toString().trim();
         String password = editPassword.getText() == null ? "" : editPassword.getText().toString().trim();
 
-        if (email.isEmpty() || password.length() < 6) {
-            Toast.makeText(this, R.string.invalid_email_password, Toast.LENGTH_SHORT).show();
+        if (email.isEmpty()) {
+            layoutEmail.setError(getString(R.string.invalid_email_format));
             return;
         }
 
+        if (password.length() < 6) {
+            layoutPassword.setError(getString(R.string.weak_password));
+            return;
+        }
+
+        setLoading(true);
         if (isLoginMode) {
-            setLoading(true);
             auth.signInWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
                         setLoading(false);
@@ -72,10 +89,9 @@ public class AuthActivity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> {
                         setLoading(false);
-                        Toast.makeText(this, mapAuthError(e), Toast.LENGTH_LONG).show();
+                        showMessage(mapAuthError(e));
                     });
         } else {
-            setLoading(true);
             auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
                         setLoading(false);
@@ -83,14 +99,21 @@ public class AuthActivity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> {
                         setLoading(false);
-                        Toast.makeText(this, mapAuthError(e), Toast.LENGTH_LONG).show();
+                        showMessage(mapAuthError(e));
                     });
         }
+    }
+
+    private void clearInputErrors() {
+        if (layoutEmail != null) layoutEmail.setError(null);
+        if (layoutPassword != null) layoutPassword.setError(null);
     }
 
     private void setLoading(boolean loading) {
         btnAction.setEnabled(!loading);
         txtToggleMode.setEnabled(!loading);
+        editEmail.setEnabled(!loading);
+        editPassword.setEnabled(!loading);
         if (loading) {
             btnAction.setText(R.string.please_wait);
         } else {
@@ -131,6 +154,10 @@ public class AuthActivity extends AppCompatActivity {
             default:
                 return getString(R.string.auth_error_code, code);
         }
+    }
+
+    private void showMessage(String message) {
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
     }
 
     private void openMain() {
