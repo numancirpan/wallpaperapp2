@@ -5,12 +5,21 @@
     <string name="ai_categorized_favorites">AI Categorized Favorites</string>
     <string name="search_favorites">Search favorites by title/category/labels</string>
     <string name="settings">Settings</string>
+    <string name="settings_subtitle">Customize your wallpaper experience.</string>
+    <string name="appearance_settings">Appearance</string>
+    <string name="layout_settings">Layout</string>
+    <string name="language_settings">Language</string>
+    <string name="account_settings">Account</string>
     <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_description">Use a darker interface for comfortable viewing.</string>
     <string name="grid_columns">Grid Columns</string>
+    <string name="grid_columns_description">Choose how many wallpapers appear in each row on the home screen.</string>
     <string name="two_columns">2 Columns</string>
     <string name="three_columns">3 Columns</string>
     <string name="language">Language</string>
+    <string name="language_description">Change the display language of the app.</string>
     <string name="logout">Logout</string>
+    <string name="logout_description">Sign out from Firebase and return to the login screen.</string>
 
     <string name="nav_home">Home</string>
     <string name="nav_favorites">Favorites</string>
@@ -53,7 +62,9 @@
 
     <string name="loading_favorites">Loading favorites...</string>
     <string name="no_favorites_yet">No favorites yet.</string>
+    <string name="no_favorites_yet_description">Tap the star on any wallpaper to build your AI categorized collection.</string>
     <string name="no_favorite_matches">No favorite matches this search.</string>
+    <string name="no_favorite_matches_description">Try searching by visible category names or AI labels.</string>
     <string name="api_fetch_failed_cached">API fetch failed, showing cached data</string>
 
     <string name="checking_ai_cache">Checking AI cache</string>
@@ -64,6 +75,7 @@
     <string name="on_device_suffix">%1$s (analyzed with ML Kit)</string>
     <string name="uncategorized">Uncategorized</string>
     <string name="analyzing">Analyzing</string>
+    <string name="analysis_in_progress">Analysis in progress</string>
 
     <string name="category_workspace">Workspace</string>
     <string name="category_cafe">Cafe</string>
