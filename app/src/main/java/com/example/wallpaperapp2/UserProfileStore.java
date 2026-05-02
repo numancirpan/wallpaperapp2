@@ -1,11 +1,15 @@
 package com.example.wallpaperapp2;
 
+import android.net.Uri;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,35 +71,52 @@ public class UserProfileStore {
                 .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
     }
 
-    public static void updateCoverFromWallpaper(Wallpaper wallpaper, ActionCallback callback) {
+    public static void updateProfilePhotoFromWallpaper(Wallpaper wallpaper, ActionCallback callback) {
         if (wallpaper == null) {
             callback.onComplete(false, "Wallpaper not found");
             return;
         }
+        updateProfileFields(mapOf("profilePhotoUrl", wallpaper.imageUrl), callback);
+    }
+
+    public static void uploadProfilePhoto(Uri imageUri, ActionCallback callback) {
         String uid = currentUid();
         if (uid == null) {
             callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (imageUri == null) {
+            callback.onComplete(false, "Photo not found");
+            return;
+        }
+
+        StorageReference ref = FirebaseStorage.getInstance()
+                .getReference()
+                .child("profile_photos")
+                .child(uid)
+                .child("profile_" + System.currentTimeMillis() + ".jpg");
+
+        ref.putFile(imageUri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful() && task.getException() != null) {
+                        throw task.getException();
+                    }
+                    return ref.getDownloadUrl();
+                })
+                .addOnSuccessListener(uri -> updateProfileFields(mapOf("profilePhotoUrl", uri.toString()), callback))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    public static void updateCoverFromWallpaper(Wallpaper wallpaper, ActionCallback callback) {
+        if (wallpaper == null) {
+            callback.onComplete(false, "Wallpaper not found");
             return;
         }
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("coverImageUrl", wallpaper.imageUrl);
         payload.put("coverWallpaperId", wallpaper.id);
-        payload.put("updatedAt", System.currentTimeMillis());
-
-        db.collection("users")
-                .document(uid)
-                .collection("profile")
-                .document("main")
-                .update(payload)
-                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
-                .addOnFailureListener(e -> db.collection("users")
-                        .document(uid)
-                        .collection("profile")
-                        .document("main")
-                        .set(payload, com.google.firebase.firestore.SetOptions.merge())
-                        .addOnSuccessListener(unused -> callback.onComplete(true, ""))
-                        .addOnFailureListener(err -> callback.onComplete(false, err.getMessage())));
+        updateProfileFields(payload, callback);
     }
 
     public static void addBlogPost(Wallpaper wallpaper, String comment, ActionCallback callback) {
@@ -166,6 +187,29 @@ public class UserProfileStore {
                 .delete()
                 .addOnSuccessListener(unused -> callback.onComplete(true, ""))
                 .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private static void updateProfileFields(Map<String, Object> fields, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        fields.put("updatedAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("main")
+                .set(fields, com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private static Map<String, Object> mapOf(String key, Object value) {
+        Map<String, Object> map = new HashMap<>();
+        map.put(key, value);
+        return map;
     }
 
     private static UserProfile mapProfile(DocumentSnapshot snapshot) {
