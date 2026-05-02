@@ -41,16 +41,14 @@ public class RepostDialogHelper {
                 return;
             }
 
-            btnShare.setEnabled(false);
+            dialog.dismiss();
+            Snackbar.make(anchorView, R.string.post_saved, Snackbar.LENGTH_SHORT).show();
+
             UserProfileStore.addBlogPost(wallpaper, comment, (success, errorMessage) -> anchorView.post(() -> {
-                btnShare.setEnabled(true);
-                if (success) {
-                    dialog.dismiss();
-                    Snackbar.make(anchorView, R.string.post_saved, Snackbar.LENGTH_SHORT).show();
-                } else {
+                if (!success) {
                     Snackbar.make(anchorView,
                             context.getString(R.string.post_failed, errorMessage == null ? "Unknown error" : errorMessage),
-                            Snackbar.LENGTH_SHORT).show();
+                            Snackbar.LENGTH_LONG).show();
                 }
             }));
         });
