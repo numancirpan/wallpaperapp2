@@ -102,6 +102,13 @@
     <string name="profile_save_failed">Profile could not be saved: %1$s</string>
     <string name="change_password">Change Password</string>
     <string name="change_password_description">Update your password by confirming your current password.</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_account_description">Permanently delete your Firebase account from this app.</string>
+    <string name="delete_account_confirm_title">Delete account?</string>
+    <string name="delete_account_confirm_message">This action cannot be undone. Your login account will be deleted.</string>
+    <string name="delete_account_failed">Account could not be deleted: %1$s</string>
+    <string name="account_deleted">Account deleted.</string>
+    <string name="confirm">Confirm</string>
     <string name="cover_photo">Cover Photo</string>
     <string name="choose_cover_from_favorites">Choose from Favorites</string>
     <string name="no_favorites_for_cover">Add a favorite first to choose a cover photo.</string>
