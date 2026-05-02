@@ -17,6 +17,7 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class FavoritesFragment extends Fragment {
@@ -98,7 +99,7 @@ public class FavoritesFragment extends Fragment {
         Map<String, List<Wallpaper>> groupedFavorites =
                 WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
         String query = editFavoritesSearch != null && editFavoritesSearch.getText() != null
-                ? editFavoritesSearch.getText().toString().trim().toLowerCase()
+                ? normalizeSearch(editFavoritesSearch.getText().toString())
                 : "";
 
         if (groupedFavorites.isEmpty()) {
@@ -163,13 +164,35 @@ public class FavoritesFragment extends Fragment {
 
         List<Wallpaper> filtered = new ArrayList<>();
         for (Wallpaper wallpaper : source) {
-            boolean matches = wallpaper.title.toLowerCase().contains(query)
-                    || (wallpaper.aiCategory != null && wallpaper.aiCategory.toLowerCase().contains(query))
-                    || (wallpaper.aiLabels != null && wallpaper.aiLabels.toLowerCase().contains(query));
-            if (matches) {
+            String rawCategory = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory;
+            String rawLabels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels;
+            String displayCategory = CategoryDisplayMapper.toDisplayName(requireContext(), rawCategory);
+            String displayLabels = AiLabelDisplayMapper.toDisplayLabels(requireContext(), rawLabels);
+
+            String searchable = normalizeSearch(
+                    wallpaper.title + " "
+                            + rawCategory + " "
+                            + rawLabels + " "
+                            + displayCategory + " "
+                            + displayLabels
+            );
+
+            if (searchable.contains(query)) {
                 filtered.add(wallpaper);
             }
         }
         return filtered;
+    }
+
+    private String normalizeSearch(String value) {
+        if (value == null) return "";
+        return value.toLowerCase(Locale.ROOT)
+                .replace("ı", "i")
+                .replace("ğ", "g")
+                .replace("ü", "u")
+                .replace("ş", "s")
+                .replace("ö", "o")
+                .replace("ç", "c")
+                .trim();
     }
 }
