@@ -5,12 +5,21 @@
     <string name="ai_categorized_favorites">AI ile Kategorilenen Favoriler</string>
     <string name="search_favorites">Başlık/kategori/etikete göre favori ara</string>
     <string name="settings">Ayarlar</string>
+    <string name="settings_subtitle">Duvar kağıdı deneyimini kişiselleştir.</string>
+    <string name="appearance_settings">Görünüm</string>
+    <string name="layout_settings">Yerleşim</string>
+    <string name="language_settings">Dil</string>
+    <string name="account_settings">Hesap</string>
     <string name="dark_mode">Karanlık Mod</string>
+    <string name="dark_mode_description">Daha rahat görüntüleme için koyu arayüz kullan.</string>
     <string name="grid_columns">Izgara Sütunları</string>
+    <string name="grid_columns_description">Ana ekranda her satırda kaç duvar kağıdı görüneceğini seç.</string>
     <string name="two_columns">2 Sütun</string>
     <string name="three_columns">3 Sütun</string>
     <string name="language">Dil</string>
+    <string name="language_description">Uygulamanın görüntüleme dilini değiştir.</string>
     <string name="logout">Çıkış Yap</string>
+    <string name="logout_description">Firebase oturumunu kapatıp giriş ekranına dön.</string>
 
     <string name="nav_home">Ana Sayfa</string>
     <string name="nav_favorites">Favoriler</string>
@@ -53,7 +62,9 @@
 
     <string name="loading_favorites">Favoriler yükleniyor...</string>
     <string name="no_favorites_yet">Henüz favori yok.</string>
+    <string name="no_favorites_yet_description">AI ile kategorilenen koleksiyonunu oluşturmak için herhangi bir duvar kağıdındaki yıldıza dokun.</string>
     <string name="no_favorite_matches">Bu aramayla eşleşen favori yok.</string>
+    <string name="no_favorite_matches_description">Görünen kategori adları veya AI etiketleriyle aramayı dene.</string>
     <string name="api_fetch_failed_cached">API başarısız oldu, önbellekteki veriler gösteriliyor</string>
 
     <string name="checking_ai_cache">AI önbelleği kontrol ediliyor</string>
@@ -64,6 +75,7 @@
     <string name="on_device_suffix">%1$s (ML Kit ile analiz edildi)</string>
     <string name="uncategorized">Kategorisiz</string>
     <string name="analyzing">Analiz ediliyor</string>
+    <string name="analysis_in_progress">Analiz devam ediyor</string>
 
     <string name="category_workspace">Çalışma Alanı</string>
     <string name="category_cafe">Kafe</string>
