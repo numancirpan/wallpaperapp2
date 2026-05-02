@@ -102,6 +102,13 @@
     <string name="profile_save_failed">Profil kaydedilemedi: %1$s</string>
     <string name="change_password">Şifre Değiştir</string>
     <string name="change_password_description">Mevcut şifreni doğrulayarak yeni şifre belirle.</string>
+    <string name="delete_account">Hesabı Sil</string>
+    <string name="delete_account_description">Bu uygulamadaki Firebase hesabını kalıcı olarak sil.</string>
+    <string name="delete_account_confirm_title">Hesap silinsin mi?</string>
+    <string name="delete_account_confirm_message">Bu işlem geri alınamaz. Giriş hesabın silinecek.</string>
+    <string name="delete_account_failed">Hesap silinemedi: %1$s</string>
+    <string name="account_deleted">Hesap silindi.</string>
+    <string name="confirm">Onayla</string>
     <string name="cover_photo">Kapak Fotoğrafı</string>
     <string name="choose_cover_from_favorites">Favorilerden Seç</string>
     <string name="no_favorites_for_cover">Kapak fotoğrafı seçmek için önce favori ekle.</string>
