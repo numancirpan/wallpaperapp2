@@ -1,5 +1,6 @@
 package com.example.wallpaperapp2;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -40,6 +41,7 @@ public class ProfileFragment extends Fragment {
     private TextInputEditText editBio;
     private MaterialButton btnSaveProfile;
     private MaterialButton btnChangePassword;
+    private MaterialButton btnDeleteAccount;
     private MaterialButton btnChooseCover;
     private MaterialButton btnChooseProfilePhoto;
     private RecyclerView recyclerBlogPosts;
@@ -79,6 +81,7 @@ public class ProfileFragment extends Fragment {
         editBio = view.findViewById(R.id.editBio);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
         btnChangePassword = view.findViewById(R.id.btnChangePassword);
+        btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
         btnChooseCover = view.findViewById(R.id.btnChooseCover);
         btnChooseProfilePhoto = view.findViewById(R.id.btnChooseProfilePhoto);
         recyclerBlogPosts = view.findViewById(R.id.recyclerBlogPosts);
@@ -105,6 +108,7 @@ public class ProfileFragment extends Fragment {
     private void registerActions() {
         btnSaveProfile.setOnClickListener(v -> saveProfile());
         btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
+        btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
         btnChooseCover.setOnClickListener(v -> chooseCoverFromFavorites());
         btnChooseProfilePhoto.setOnClickListener(v -> showProfilePhotoOptions());
     }
@@ -298,6 +302,31 @@ public class ProfileFragment extends Fragment {
                         })
                         .addOnFailureListener(e -> showMessage(getString(R.string.password_change_failed, e.getMessage()))))
                 .addOnFailureListener(e -> showMessage(getString(R.string.password_change_failed, e.getMessage())));
+    }
+
+    private void showDeleteAccountDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_account_confirm_title)
+                .setMessage(R.string.delete_account_confirm_message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.confirm, (dialog, which) -> deleteAccount())
+                .show();
+    }
+
+    private void deleteAccount() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        btnDeleteAccount.setEnabled(false);
+        user.delete()
+                .addOnSuccessListener(unused -> {
+                    showMessage(getString(R.string.account_deleted));
+                    startActivity(new Intent(requireContext(), AuthActivity.class));
+                    requireActivity().finish();
+                })
+                .addOnFailureListener(e -> {
+                    btnDeleteAccount.setEnabled(true);
+                    showMessage(getString(R.string.delete_account_failed, e.getMessage()));
+                });
     }
 
     private void setTextIfDifferent(TextInputEditText editText, String value) {
