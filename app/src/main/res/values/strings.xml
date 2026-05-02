@@ -48,8 +48,13 @@
     <string name="firebase_config_issue">Firebase configuration issue. Check google-services.json and package name.</string>
     <string name="network_error">Network error. Check internet connection.</string>
     <string name="auth_error_code">Authentication error: %1$s</string>
-    <string name="password_reset_sent">Password reset email sent.</string>
-    <string name="password_reset_failed">Password reset failed: %1$s</string>
+    <string name="old_password">Old password</string>
+    <string name="new_password">New password</string>
+    <string name="confirm_new_password">Confirm new password</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="password_changed">Password changed successfully.</string>
+    <string name="password_change_failed">Password could not be changed: %1$s</string>
+    <string name="passwords_do_not_match">New passwords do not match.</string>
 
     <string name="wallpaper_preview">Wallpaper Preview</string>
     <string name="photo_by">Photo by %1$s</string>
@@ -67,7 +72,7 @@
     <string name="comment_hint">Add your thought about this wallpaper</string>
     <string name="share">Share</string>
     <string name="cancel">Cancel</string>
-    <string name="post_saved">Post added to your blog.</string>
+    <string name="post_saved">Reposted.</string>
     <string name="post_failed">Post could not be saved: %1$s</string>
     <string name="comment_required">Please write a comment first.</string>
 
@@ -84,13 +89,18 @@
     <string name="first_name">First name</string>
     <string name="last_name">Last name</string>
     <string name="bio">Bio</string>
-    <string name="profile_photo_url">Profile photo URL</string>
+    <string name="profile_photo">Profile Photo</string>
+    <string name="choose_profile_photo">Choose Profile Photo</string>
+    <string name="photo_from_phone">Choose from Phone</string>
+    <string name="photo_from_favorites">Choose from Favorites</string>
+    <string name="uploading_photo">Uploading photo...</string>
+    <string name="photo_updated">Profile photo updated.</string>
+    <string name="photo_upload_failed">Photo could not be uploaded: %1$s</string>
     <string name="save_profile">Save Profile</string>
     <string name="profile_saved">Profile saved.</string>
     <string name="profile_save_failed">Profile could not be saved: %1$s</string>
     <string name="change_password">Change Password</string>
-    <string name="change_password_description">Send a password reset email to your account.</string>
-    <string name="send_reset_email">Send Reset Email</string>
+    <string name="change_password_description">Update your password by confirming your current password.</string>
     <string name="cover_photo">Cover Photo</string>
     <string name="choose_cover_from_favorites">Choose from Favorites</string>
     <string name="no_favorites_for_cover">Add a favorite first to choose a cover photo.</string>
