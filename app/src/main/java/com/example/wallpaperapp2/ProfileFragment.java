@@ -186,7 +186,7 @@ public class ProfileFragment extends Fragment {
 
     private void uploadProfilePhoto(Uri uri) {
         showMessage(getString(R.string.uploading_photo));
-        UserProfileStore.uploadProfilePhoto(uri, (success, errorMessage) -> {
+        UserProfileStore.uploadProfilePhoto(requireContext(), uri, (success, errorMessage) -> {
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
                 if (success) showMessage(getString(R.string.photo_updated));
@@ -268,6 +268,10 @@ public class ProfileFragment extends Fragment {
             }
             if (newPass.length() < 6) {
                 newPassword.setError(getString(R.string.weak_password));
+                return;
+            }
+            if (oldPass.equals(newPass)) {
+                newPassword.setError(getString(R.string.new_password_same_as_old));
                 return;
             }
             if (!newPass.equals(confirmPass)) {
