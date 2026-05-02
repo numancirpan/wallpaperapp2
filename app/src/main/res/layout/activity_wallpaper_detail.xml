@@ -74,6 +74,7 @@
                         android:id="@+id/btnDetailFavorite"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
+                        android:contentDescription="@string/nav_favorites"
                         android:insetLeft="0dp"
                         android:insetTop="0dp"
                         android:insetRight="0dp"
@@ -81,7 +82,6 @@
                         android:minWidth="0dp"
                         android:minHeight="0dp"
                         android:padding="0dp"
-                        android:contentDescription="@string/nav_favorites"
                         app:cornerRadius="24dp"
                         app:icon="@android:drawable/btn_star_big_off"
                         app:iconGravity="textStart"
@@ -107,10 +107,19 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSetHomeWallpaper"
+            android:id="@+id/btnRepostWallpaper"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="18dp"
+            android:text="@string/repost_wallpaper"
+            app:cornerRadius="28dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetHomeWallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
             android:text="@string/set_home_screen"
             app:cornerRadius="28dp" />
 
