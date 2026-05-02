@@ -55,6 +55,7 @@
     <string name="password_changed">Şifre başarıyla değiştirildi.</string>
     <string name="password_change_failed">Şifre değiştirilemedi: %1$s</string>
     <string name="passwords_do_not_match">Yeni şifreler eşleşmiyor.</string>
+    <string name="new_password_same_as_old">Yeni şifren eski şifrenle aynı olamaz.</string>
 
     <string name="wallpaper_preview">Duvar Kağıdı Önizleme</string>
     <string name="photo_by">Fotoğraf: %1$s</string>
@@ -95,7 +96,7 @@
     <string name="photo_from_favorites">Favorilerden Seç</string>
     <string name="uploading_photo">Fotoğraf yükleniyor...</string>
     <string name="photo_updated">Profil fotoğrafı güncellendi.</string>
-    <string name="photo_upload_failed">Fotoğraf yüklenemedi: %1$s</string>
+    <string name="photo_upload_failed">Fotoğraf yüklenemedi. Firebase Storage aktif olmayabilir veya seçilen dosya okunamıyor: %1$s</string>
     <string name="save_profile">Profili Kaydet</string>
     <string name="profile_saved">Profil kaydedildi.</string>
     <string name="profile_save_failed">Profil kaydedilemedi: %1$s</string>
