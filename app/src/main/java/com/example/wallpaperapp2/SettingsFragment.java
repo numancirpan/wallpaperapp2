@@ -13,12 +13,14 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
+    private LottieAnimationView lottieDarkLight;
     private MaterialSwitch switchDarkMode;
     private RadioGroup radioGroupColumns;
     private RadioButton radioTwoColumns;
@@ -38,6 +40,7 @@ public class SettingsFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
+        lottieDarkLight = view.findViewById(R.id.lottieDarkLight);
         switchDarkMode = view.findViewById(R.id.switchDarkMode);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
@@ -65,7 +68,9 @@ public class SettingsFragment extends Fragment {
     }
 
     private void loadSavedSettings() {
-        switchDarkMode.setChecked(settingsManager.isDarkModeEnabled());
+        boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
+        switchDarkMode.setChecked(darkModeEnabled);
+        setDarkLightFrame(darkModeEnabled);
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -90,6 +95,7 @@ public class SettingsFragment extends Fragment {
     private void registerListeners() {
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
             settingsManager.setDarkMode(isChecked);
+            playDarkLightAnimation(isChecked);
 
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
@@ -133,5 +139,22 @@ public class SettingsFragment extends Fragment {
             startActivity(new android.content.Intent(requireContext(), AuthActivity.class));
             requireActivity().finish();
         });
+    }
+
+    private void setDarkLightFrame(boolean darkModeEnabled) {
+        if (lottieDarkLight == null) return;
+        lottieDarkLight.setProgress(darkModeEnabled ? 1f : 0f);
+    }
+
+    private void playDarkLightAnimation(boolean darkModeEnabled) {
+        if (lottieDarkLight == null) return;
+        if (darkModeEnabled) {
+            lottieDarkLight.setSpeed(1f);
+            lottieDarkLight.setProgress(0f);
+        } else {
+            lottieDarkLight.setSpeed(-1f);
+            lottieDarkLight.setProgress(1f);
+        }
+        lottieDarkLight.playAnimation();
     }
 }
