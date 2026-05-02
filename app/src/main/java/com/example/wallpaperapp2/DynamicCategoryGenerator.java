@@ -1,7 +1,9 @@
 package com.example.wallpaperapp2;
 
+import android.content.Context;
+import android.content.res.Resources;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -12,164 +14,82 @@ import java.util.Set;
 
 public class DynamicCategoryGenerator {
 
-    private static final Set<String> GENERIC_LABELS = new HashSet<>(Arrays.asList(
-            "font", "material", "line", "slope", "rectangle", "object", "organism",
-            "terrestrial plant", "product", "gesture", "event", "fun", "room", "flooring",
-            "sky", "plant", "food", "grass", "soil"
-    ));
-
-    private static final Set<String> DETAIL_LABELS = new HashSet<>(Arrays.asList(
-            "hand", "nail", "eyelash", "jewellery", "jewelry", "ring", "finger", "wrist",
-            "skin", "arm", "metal", "watch", "human body", "close-up", "thumb",
-            "musical instrument", "string instrument", "guitar accessory", "toy"
-    ));
-
-    private static final Map<String, List<String>> CATEGORY_KEYWORDS = new LinkedHashMap<>();
-
-    static {
-        CATEGORY_KEYWORDS.put("Workspace", Arrays.asList(
-                "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing",
-                "paper", "office", "workspace", "work", "study", "mobile phone", "phone", "screen", "book"
-        ));
-        CATEGORY_KEYWORDS.put("Cafe", Arrays.asList(
-                "coffee", "cup", "mug", "table", "tableware", "cafe", "restaurant", "drink", "espresso", "saucer"
-        ));
-        CATEGORY_KEYWORDS.put("Interior", Arrays.asList(
-                "chair", "table", "furniture", "room", "interior", "window", "wall", "home", "floor", "lamp", "bench"
-        ));
-        CATEGORY_KEYWORDS.put("Fashion", Arrays.asList(
-                "shoe", "shoes", "footwear", "sneakers", "heel", "high heel", "dress", "fashion", "clothing", "curtain", "fabric", "flesh", "foot"
-        ));
-        CATEGORY_KEYWORDS.put("Beach", Arrays.asList(
-                "beach", "sea", "ocean", "coast", "shore", "sand", "wave", "water", "rock", "sunset", "sunrise", "cliff"
-        ));
-        CATEGORY_KEYWORDS.put("Water Scenes", Arrays.asList(
-                "waterfall", "river", "lake", "water", "stream", "sea", "ocean", "coast", "reflection"
-        ));
-        CATEGORY_KEYWORDS.put("Nature", Arrays.asList(
-                "forest", "tree", "mountain", "landscape", "plant", "grass", "flower", "prairie", "field", "meadow", "leaf", "moss", "branch", "twig", "insect"
-        ));
-        CATEGORY_KEYWORDS.put("Urban", Arrays.asList(
-                "city", "street", "road", "urban", "traffic", "sidewalk", "crosswalk", "car", "asphalt"
-        ));
-        CATEGORY_KEYWORDS.put("Architecture", Arrays.asList(
-                "building", "architecture", "house", "bridge", "tower", "facade", "roof", "door", "window"
-        ));
-        CATEGORY_KEYWORDS.put("Vehicles", Arrays.asList(
-                "car", "vehicle", "race", "racing", "motorcycle", "automotive", "wheel", "tire", "windshield", "bus", "train"
-        ));
-        CATEGORY_KEYWORDS.put("Animals", Arrays.asList(
-                "dog", "cat", "bird", "animal", "wildlife", "fish", "horse", "pet", "fur", "snout", "nose"
-        ));
-        CATEGORY_KEYWORDS.put("Texture", Arrays.asList(
-                "texture", "pattern", "surface", "water drop", "droplet", "macro", "close-up", "fabric", "wood", "stone", "rough", "asphalt", "wall", "monochrome"
-        ));
-        CATEGORY_KEYWORDS.put("Monochrome", Arrays.asList(
-                "monochrome", "black", "white", "dark", "shadow", "fork", "cutlery", "wing"
-        ));
-        CATEGORY_KEYWORDS.put("Lights", Arrays.asList(
-                "light", "lights", "bokeh", "blur", "neon", "glow", "color", "night", "circle", "lamp"
-        ));
-        CATEGORY_KEYWORDS.put("Abstract", Arrays.asList(
-                "abstract", "pattern", "blur", "color", "gradient", "shape", "design", "bokeh"
-        ));
-        CATEGORY_KEYWORDS.put("Art", Arrays.asList(
-                "poster", "illustration", "graphics", "graphic", "design", "art", "drawing", "painting", "mural"
-        ));
-        CATEGORY_KEYWORDS.put("People", Arrays.asList(
-                "person", "people", "face", "portrait", "smile", "human", "man", "woman"
-        ));
-        CATEGORY_KEYWORDS.put("Space", Arrays.asList(
-                "space", "planet", "moon", "star", "galaxy", "astronomy"
-        ));
+    public static String generateCategory(Context context, List<AiLabelData> labels) {
+        return generateCategory(context, labels, null);
     }
 
-    public static String generateCategory(List<AiLabelData> labels) {
-        return generateCategory(labels, null);
-    }
-
-    public static String generateCategory(List<AiLabelData> labels, List<String> existingCategories) {
-        if (labels == null || labels.isEmpty()) return "Uncategorized";
+    public static String generateCategory(Context context, List<AiLabelData> labels, List<String> existingCategories) {
+        if (labels == null || labels.isEmpty()) return context.getString(R.string.uncategorized);
 
         List<String> normalized = normalizeLabels(labels);
-        String baseCategory = chooseBaseCategory(normalized);
+        String baseCategory = chooseBaseCategory(context, normalized);
         if (baseCategory == null || baseCategory.trim().isEmpty()) {
-            baseCategory = fallbackCategory(labels);
+            baseCategory = fallbackCategory(context, labels);
         }
         if (baseCategory == null || baseCategory.trim().isEmpty()) {
-            baseCategory = "Uncategorized";
+            baseCategory = context.getString(R.string.uncategorized);
         }
         return matchExistingCategory(baseCategory, normalized, existingCategories);
     }
 
-    public static String labelsToDisplay(List<AiLabelData> labels) {
-        if (labels == null || labels.isEmpty()) return "Not available";
+    public static String labelsToDisplay(Context context, List<AiLabelData> labels) {
+        if (labels == null || labels.isEmpty()) return context.getString(R.string.not_available);
+
+        Set<String> genericLabels = readSet(context, R.array.ai_generic_labels);
+        Set<String> detailLabels = readSet(context, R.array.ai_detail_labels);
 
         List<String> displayLabels = new ArrayList<>();
         for (AiLabelData label : labels) {
             String cleaned = cleanLabel(label.text);
             String lower = cleaned.toLowerCase(Locale.ROOT);
             if (cleaned.isEmpty()) continue;
-            if (GENERIC_LABELS.contains(lower)) continue;
-            if (DETAIL_LABELS.contains(lower)) continue;
+            if (genericLabels.contains(lower)) continue;
+            if (detailLabels.contains(lower)) continue;
             if (isContradictoryAnimalLabel(displayLabels, lower)) continue;
             if (!containsIgnoreCase(displayLabels, cleaned)) displayLabels.add(capitalize(cleaned));
             if (displayLabels.size() == 5) break;
         }
 
         if (displayLabels.isEmpty()) {
-            String category = generateCategory(labels);
-            return category.equals("Uncategorized") ? "Visual wallpaper content" : category;
+            String category = generateCategory(context, labels);
+            return category.equalsIgnoreCase(context.getString(R.string.uncategorized))
+                    ? context.getString(R.string.visual_wallpaper_content)
+                    : category;
         }
         return String.join(", ", displayLabels);
     }
 
-    private static String chooseBaseCategory(List<String> labels) {
-        Map<String, Integer> scores = new HashMap<>();
-        for (Map.Entry<String, List<String>> entry : CATEGORY_KEYWORDS.entrySet()) {
+    private static String chooseBaseCategory(Context context, List<String> labels) {
+        Map<String, Integer> scores = new LinkedHashMap<>();
+        Set<String> genericLabels = readSet(context, R.array.ai_generic_labels);
+        Set<String> detailLabels = readSet(context, R.array.ai_detail_labels);
+        Set<String> highWeightKeywords = readSet(context, R.array.ai_high_weight_keywords);
+        Set<String> mediumWeightKeywords = readSet(context, R.array.ai_medium_weight_keywords);
+
+        for (String category : readList(context, R.array.ai_category_keys)) {
             int score = 0;
             for (String label : labels) {
-                if (DETAIL_LABELS.contains(label) || GENERIC_LABELS.contains(label)) continue;
-                for (String keyword : entry.getValue()) {
-                    if (matches(label, keyword)) score += keywordWeight(keyword);
+                if (detailLabels.contains(label) || genericLabels.contains(label)) continue;
+                for (String keyword : readList(context, keywordArrayIdForCategory(context, category))) {
+                    if (matches(label, keyword)) {
+                        score += keywordWeight(keyword, highWeightKeywords, mediumWeightKeywords);
+                    }
                 }
             }
-            scores.put(entry.getKey(), score);
+            scores.put(category, score);
         }
 
-        if (containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper", "book")) {
-            scores.put("Workspace", scores.get("Workspace") + 10);
-        }
-        if (containsAny(labels, "mobile phone", "phone") && containsAny(labels, "laptop", "computer", "desk", "notebook")) {
-            scores.put("Workspace", scores.get("Workspace") + 10);
-        }
-        if (containsAny(labels, "coffee", "cup", "mug", "tableware") && containsAny(labels, "table", "chair", "restaurant", "cafe", "saucer")) {
-            scores.put("Cafe", scores.get("Cafe") + 10);
-        }
-        if (containsAny(labels, "shoe", "shoes", "footwear", "sneakers", "heel", "foot") && containsAny(labels, "curtain", "fabric", "flesh", "wall")) {
-            scores.put("Fashion", scores.get("Fashion") + 12);
-        }
-        if (containsAny(labels, "chair") && containsAny(labels, "table", "tableware", "building", "window")) {
-            scores.put("Cafe", scores.get("Cafe") + 8);
-        }
-        if (containsAny(labels, "beach", "sand", "coast", "shore")) {
-            scores.put("Beach", scores.get("Beach") + 8);
-        }
-        if (containsAny(labels, "field", "prairie", "meadow", "moss", "leaf", "branch", "twig", "flower", "insect")) {
-            scores.put("Nature", scores.get("Nature") + 9);
-        }
-        if (containsAny(labels, "droplet", "water drop", "macro", "surface", "asphalt", "wall")) {
-            scores.put("Texture", scores.get("Texture") + 8);
-        }
-        if (containsAny(labels, "monochrome") || containsAny(labels, "fork", "cutlery") && containsAny(labels, "dark", "shadow", "wing")) {
-            scores.put("Monochrome", scores.get("Monochrome") + 10);
-        }
-        if (containsAny(labels, "bokeh", "blur", "neon", "glow") || containsAny(labels, "light", "lights") && containsAny(labels, "color", "night", "blur")) {
-            scores.put("Lights", scores.get("Lights") + 8);
-        }
-        if (containsAny(labels, "cat", "dog", "fur", "snout", "nose")) {
-            scores.put("Animals", scores.get("Animals") + 8);
-        }
+        applyBoost(scores, "Workspace", 10, containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper", "book"));
+        applyBoost(scores, "Workspace", 10, containsAny(labels, "mobile phone", "phone") && containsAny(labels, "laptop", "computer", "desk", "notebook"));
+        applyBoost(scores, "Interior", 10, containsAny(labels, "coffee", "cup", "mug", "tableware") && containsAny(labels, "table", "chair", "restaurant", "cafe", "saucer"));
+        applyBoost(scores, "Fashion", 12, containsAny(labels, "shoe", "shoes", "footwear", "sneakers", "heel", "foot") && containsAny(labels, "curtain", "fabric", "flesh", "wall"));
+        applyBoost(scores, "Interior", 8, containsAny(labels, "chair") && containsAny(labels, "table", "tableware", "building", "window"));
+        applyBoost(scores, "Beach", 8, containsAny(labels, "beach", "sand", "coast", "shore"));
+        applyBoost(scores, "Nature", 9, containsAny(labels, "field", "prairie", "meadow", "moss", "leaf", "branch", "twig", "flower", "insect"));
+        applyBoost(scores, "Texture", 8, containsAny(labels, "droplet", "water drop", "macro", "surface", "asphalt", "wall"));
+        applyBoost(scores, "Monochrome", 10, containsAny(labels, "monochrome") || containsAny(labels, "fork", "cutlery") && containsAny(labels, "dark", "shadow", "wing"));
+        applyBoost(scores, "Lights", 8, containsAny(labels, "bokeh", "blur", "neon", "glow") || containsAny(labels, "light", "lights") && containsAny(labels, "color", "night", "blur"));
+        applyBoost(scores, "Animals", 8, containsAny(labels, "cat", "dog", "fur", "snout", "nose"));
 
         String bestCategory = null;
         int bestScore = 0;
@@ -180,6 +100,11 @@ public class DynamicCategoryGenerator {
             }
         }
         return bestScore >= 4 ? bestCategory : null;
+    }
+
+    private static void applyBoost(Map<String, Integer> scores, String category, int boost, boolean condition) {
+        if (!condition || !scores.containsKey(category)) return;
+        scores.put(category, scores.get(category) + boost);
     }
 
     private static String matchExistingCategory(String baseCategory, List<String> labels, List<String> existingCategories) {
@@ -207,20 +132,22 @@ public class DynamicCategoryGenerator {
         return bestScore >= 10 ? bestMatch : baseCategory;
     }
 
-    private static String fallbackCategory(List<AiLabelData> labels) {
-        List<String> meaningful = getMeaningfulLabels(labels);
-        if (meaningful.isEmpty()) return "Uncategorized";
-        return normalizeFallbackName(meaningful.get(0));
+    private static String fallbackCategory(Context context, List<AiLabelData> labels) {
+        List<String> meaningful = getMeaningfulLabels(context, labels);
+        if (meaningful.isEmpty()) return context.getString(R.string.uncategorized);
+        return normalizeFallbackName(context, meaningful.get(0));
     }
 
-    private static List<String> getMeaningfulLabels(List<AiLabelData> labels) {
+    private static List<String> getMeaningfulLabels(Context context, List<AiLabelData> labels) {
+        Set<String> genericLabels = readSet(context, R.array.ai_generic_labels);
+        Set<String> detailLabels = readSet(context, R.array.ai_detail_labels);
         List<String> result = new ArrayList<>();
         for (AiLabelData labelData : labels) {
             String cleaned = cleanLabel(labelData.text);
             String lower = cleaned.toLowerCase(Locale.ROOT);
             if (cleaned.isEmpty()) continue;
-            if (GENERIC_LABELS.contains(lower)) continue;
-            if (DETAIL_LABELS.contains(lower)) continue;
+            if (genericLabels.contains(lower)) continue;
+            if (detailLabels.contains(lower)) continue;
             result.add(cleaned);
             if (result.size() == 2) break;
         }
@@ -251,17 +178,17 @@ public class DynamicCategoryGenerator {
         return l.equals(k) || l.contains(k) || k.contains(l);
     }
 
-    private static int keywordWeight(String keyword) {
-        if (keyword.equals("laptop") || keyword.equals("computer") || keyword.equals("beach") || keyword.equals("forest") || keyword.equals("car") || keyword.equals("cat") || keyword.equals("shoe")) return 5;
-        if (keyword.equals("desk") || keyword.equals("keyboard") || keyword.equals("coast") || keyword.equals("field") || keyword.equals("prairie") || keyword.equals("coffee") || keyword.equals("chair") || keyword.equals("branch") || keyword.equals("asphalt")) return 4;
+    private static int keywordWeight(String keyword, Set<String> highWeightKeywords, Set<String> mediumWeightKeywords) {
+        String normalized = keyword.toLowerCase(Locale.ROOT);
+        if (highWeightKeywords.contains(normalized)) return 5;
+        if (mediumWeightKeywords.contains(normalized)) return 4;
         return 2;
     }
 
     private static String familyOf(String category) {
         String c = category.toLowerCase(Locale.ROOT);
         if (c.contains("work") || c.contains("office") || c.contains("tech") || c.contains("computer") || c.contains("laptop")) return "workspace";
-        if (c.contains("cafe") || c.contains("coffee") || c.contains("restaurant")) return "cafe";
-        if (c.contains("interior") || c.contains("furniture") || c.contains("chair")) return "interior";
+        if (c.contains("cafe") || c.contains("coffee") || c.contains("restaurant") || c.contains("interior") || c.contains("furniture") || c.contains("chair")) return "interior";
         if (c.contains("fashion") || c.contains("shoe") || c.contains("footwear")) return "fashion";
         if (c.contains("beach") || c.contains("coast") || c.contains("sea") || c.contains("ocean") || c.contains("water")) return "beach";
         if (c.contains("nature") || c.contains("field") || c.contains("prairie") || c.contains("forest") || c.contains("mountain") || c.contains("branch")) return "nature";
@@ -289,7 +216,7 @@ public class DynamicCategoryGenerator {
         return tokens;
     }
 
-    private static String normalizeFallbackName(String label) {
+    private static String normalizeFallbackName(Context context, String label) {
         String lower = label.toLowerCase(Locale.ROOT);
         if (lower.contains("mobile phone") || lower.equals("phone")) return "Workspace";
         if (lower.contains("rock") || lower.contains("sand")) return "Beach";
@@ -308,6 +235,30 @@ public class DynamicCategoryGenerator {
         if (hasCat && candidate.equals("dog")) return true;
         if (hasDog && candidate.equals("cat")) return true;
         return false;
+    }
+
+    private static int keywordArrayIdForCategory(Context context, String category) {
+        String resourceName = "ai_" + category.toLowerCase(Locale.ROOT)
+                .replace(" ", "_")
+                .replace("-", "_") + "_keywords";
+        int resourceId = context.getResources().getIdentifier(resourceName, "array", context.getPackageName());
+        return resourceId == 0 ? R.array.ai_abstract_keywords : resourceId;
+    }
+
+    private static List<String> readList(Context context, int arrayId) {
+        List<String> result = new ArrayList<>();
+        if (arrayId == 0) return result;
+        try {
+            for (String item : context.getResources().getStringArray(arrayId)) {
+                result.add(item.toLowerCase(Locale.ROOT));
+            }
+        } catch (Resources.NotFoundException ignored) {
+        }
+        return result;
+    }
+
+    private static Set<String> readSet(Context context, int arrayId) {
+        return new HashSet<>(readList(context, arrayId));
     }
 
     private static boolean containsIgnoreCase(List<String> source, String value) {
@@ -332,7 +283,7 @@ public class DynamicCategoryGenerator {
     }
 
     private static String capitalize(String text) {
-        if (text == null || text.isEmpty()) return "Uncategorized";
+        if (text == null || text.isEmpty()) return "";
         String[] parts = text.split("\\s+");
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < parts.length; i++) {
