@@ -35,8 +35,8 @@ public class DynamicCategoryGenerator {
     public static String labelsToDisplay(Context context, List<AiLabelData> labels) {
         if (labels == null || labels.isEmpty()) return context.getString(R.string.not_available);
 
-        Set<String> genericLabels = readSet(context, R.array.ai_generic_labels);
-        Set<String> detailLabels = readSet(context, R.array.ai_detail_labels);
+        Set<String> genericLabels = readNormalizedSet(context, R.array.ai_generic_labels);
+        Set<String> detailLabels = readNormalizedSet(context, R.array.ai_detail_labels);
 
         List<String> displayLabels = new ArrayList<>();
         for (AiLabelData label : labels) {
@@ -61,16 +61,16 @@ public class DynamicCategoryGenerator {
 
     private static String chooseBaseCategory(Context context, List<String> labels) {
         Map<String, Integer> scores = new LinkedHashMap<>();
-        Set<String> genericLabels = readSet(context, R.array.ai_generic_labels);
-        Set<String> detailLabels = readSet(context, R.array.ai_detail_labels);
-        Set<String> highWeightKeywords = readSet(context, R.array.ai_high_weight_keywords);
-        Set<String> mediumWeightKeywords = readSet(context, R.array.ai_medium_weight_keywords);
+        Set<String> genericLabels = readNormalizedSet(context, R.array.ai_generic_labels);
+        Set<String> detailLabels = readNormalizedSet(context, R.array.ai_detail_labels);
+        Set<String> highWeightKeywords = readNormalizedSet(context, R.array.ai_high_weight_keywords);
+        Set<String> mediumWeightKeywords = readNormalizedSet(context, R.array.ai_medium_weight_keywords);
 
-        for (String category : readList(context, R.array.ai_category_keys)) {
+        for (String category : readRawList(context, R.array.ai_category_keys)) {
             int score = 0;
             for (String label : labels) {
                 if (detailLabels.contains(label) || genericLabels.contains(label)) continue;
-                for (String keyword : readList(context, keywordArrayIdForCategory(context, category))) {
+                for (String keyword : readNormalizedList(context, keywordArrayIdForCategory(context, category))) {
                     if (matches(label, keyword)) {
                         score += keywordWeight(keyword, highWeightKeywords, mediumWeightKeywords);
                     }
@@ -135,12 +135,12 @@ public class DynamicCategoryGenerator {
     private static String fallbackCategory(Context context, List<AiLabelData> labels) {
         List<String> meaningful = getMeaningfulLabels(context, labels);
         if (meaningful.isEmpty()) return context.getString(R.string.uncategorized);
-        return normalizeFallbackName(context, meaningful.get(0));
+        return normalizeFallbackName(meaningful.get(0));
     }
 
     private static List<String> getMeaningfulLabels(Context context, List<AiLabelData> labels) {
-        Set<String> genericLabels = readSet(context, R.array.ai_generic_labels);
-        Set<String> detailLabels = readSet(context, R.array.ai_detail_labels);
+        Set<String> genericLabels = readNormalizedSet(context, R.array.ai_generic_labels);
+        Set<String> detailLabels = readNormalizedSet(context, R.array.ai_detail_labels);
         List<String> result = new ArrayList<>();
         for (AiLabelData labelData : labels) {
             String cleaned = cleanLabel(labelData.text);
@@ -216,7 +216,7 @@ public class DynamicCategoryGenerator {
         return tokens;
     }
 
-    private static String normalizeFallbackName(Context context, String label) {
+    private static String normalizeFallbackName(String label) {
         String lower = label.toLowerCase(Locale.ROOT);
         if (lower.contains("mobile phone") || lower.equals("phone")) return "Workspace";
         if (lower.contains("rock") || lower.contains("sand")) return "Beach";
@@ -245,20 +245,28 @@ public class DynamicCategoryGenerator {
         return resourceId == 0 ? R.array.ai_abstract_keywords : resourceId;
     }
 
-    private static List<String> readList(Context context, int arrayId) {
+    private static List<String> readRawList(Context context, int arrayId) {
         List<String> result = new ArrayList<>();
         if (arrayId == 0) return result;
         try {
             for (String item : context.getResources().getStringArray(arrayId)) {
-                result.add(item.toLowerCase(Locale.ROOT));
+                result.add(item.trim());
             }
         } catch (Resources.NotFoundException ignored) {
         }
         return result;
     }
 
-    private static Set<String> readSet(Context context, int arrayId) {
-        return new HashSet<>(readList(context, arrayId));
+    private static List<String> readNormalizedList(Context context, int arrayId) {
+        List<String> result = new ArrayList<>();
+        for (String item : readRawList(context, arrayId)) {
+            result.add(item.toLowerCase(Locale.ROOT));
+        }
+        return result;
+    }
+
+    private static Set<String> readNormalizedSet(Context context, int arrayId) {
+        return new HashSet<>(readNormalizedList(context, arrayId));
     }
 
     private static boolean containsIgnoreCase(List<String> source, String value) {
