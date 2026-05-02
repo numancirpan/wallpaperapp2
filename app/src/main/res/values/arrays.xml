@@ -29,4 +29,104 @@
         <item>@string/category_fashion</item>
         <item>@string/category_monochrome</item>
     </string-array>
+
+    <string-array name="ai_label_translation_keys">
+        <item>hand</item>
+        <item>nail</item>
+        <item>mobile phone</item>
+        <item>phone</item>
+        <item>table</item>
+        <item>desk</item>
+        <item>computer</item>
+        <item>laptop</item>
+        <item>cup</item>
+        <item>tableware</item>
+        <item>coffee</item>
+        <item>mountain</item>
+        <item>forest</item>
+        <item>lake</item>
+        <item>jungle</item>
+        <item>tree</item>
+        <item>sky</item>
+        <item>beach</item>
+        <item>rock</item>
+        <item>water</item>
+        <item>sea</item>
+        <item>ocean</item>
+        <item>flower</item>
+        <item>plant</item>
+        <item>road</item>
+        <item>vehicle</item>
+        <item>car</item>
+        <item>wheel</item>
+        <item>animal</item>
+        <item>cat</item>
+        <item>dog</item>
+        <item>bird</item>
+        <item>pattern</item>
+        <item>texture</item>
+        <item>monochrome</item>
+        <item>foot</item>
+        <item>shoe</item>
+        <item>sandal</item>
+        <item>wall</item>
+        <item>building</item>
+        <item>paper</item>
+        <item>shelf</item>
+        <item>book</item>
+        <item>toy</item>
+        <item>insect</item>
+        <item>twig</item>
+        <item>branch</item>
+    </string-array>
+
+    <string-array name="ai_label_translation_values_tr">
+        <item>El</item>
+        <item>Tırnak</item>
+        <item>Telefon</item>
+        <item>Telefon</item>
+        <item>Masa</item>
+        <item>Çalışma masası</item>
+        <item>Bilgisayar</item>
+        <item>Dizüstü bilgisayar</item>
+        <item>Bardak</item>
+        <item>Sofra eşyası</item>
+        <item>Kahve</item>
+        <item>Dağ</item>
+        <item>Orman</item>
+        <item>Göl</item>
+        <item>Orman</item>
+        <item>Ağaç</item>
+        <item>Gökyüzü</item>
+        <item>Sahil</item>
+        <item>Kaya</item>
+        <item>Su</item>
+        <item>Deniz</item>
+        <item>Okyanus</item>
+        <item>Çiçek</item>
+        <item>Bitki</item>
+        <item>Yol</item>
+        <item>Araç</item>
+        <item>Araba</item>
+        <item>Tekerlek</item>
+        <item>Hayvan</item>
+        <item>Kedi</item>
+        <item>Köpek</item>
+        <item>Kuş</item>
+        <item>Desen</item>
+        <item>Doku</item>
+        <item>Tek renk</item>
+        <item>Ayak</item>
+        <item>Ayakkabı</item>
+        <item>Sandalet</item>
+        <item>Duvar</item>
+        <item>Bina</item>
+        <item>Kağıt</item>
+        <item>Raf</item>
+        <item>Kitap</item>
+        <item>Oyuncak</item>
+        <item>Böcek</item>
+        <item>İnce dal</item>
+        <item>Dal</item>
+    </string-array>
 </resources>
