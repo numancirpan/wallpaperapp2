@@ -1,0 +1,213 @@
+package com.example.wallpaperapp2;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class UserProfileStore {
+
+    public interface ProfileCallback {
+        void onLoaded(UserProfile profile);
+    }
+
+    public interface PostsCallback {
+        void onLoaded(List<BlogPost> posts);
+    }
+
+    public interface ActionCallback {
+        void onComplete(boolean success, String errorMessage);
+    }
+
+    private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    public static ListenerRegistration listenProfile(ProfileCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onLoaded(new UserProfile());
+            return null;
+        }
+
+        return db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("main")
+                .addSnapshotListener((snapshot, error) -> callback.onLoaded(mapProfile(snapshot)));
+    }
+
+    public static void saveProfile(UserProfile profile, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("firstName", safe(profile.firstName));
+        payload.put("lastName", safe(profile.lastName));
+        payload.put("bio", safe(profile.bio));
+        payload.put("profilePhotoUrl", safe(profile.profilePhotoUrl));
+        payload.put("coverImageUrl", safe(profile.coverImageUrl));
+        payload.put("coverWallpaperId", profile.coverWallpaperId);
+        payload.put("updatedAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("main")
+                .set(payload)
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    public static void updateCoverFromWallpaper(Wallpaper wallpaper, ActionCallback callback) {
+        if (wallpaper == null) {
+            callback.onComplete(false, "Wallpaper not found");
+            return;
+        }
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("coverImageUrl", wallpaper.imageUrl);
+        payload.put("coverWallpaperId", wallpaper.id);
+        payload.put("updatedAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("main")
+                .update(payload)
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> db.collection("users")
+                        .document(uid)
+                        .collection("profile")
+                        .document("main")
+                        .set(payload, com.google.firebase.firestore.SetOptions.merge())
+                        .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                        .addOnFailureListener(err -> callback.onComplete(false, err.getMessage())));
+    }
+
+    public static void addBlogPost(Wallpaper wallpaper, String comment, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (wallpaper == null) {
+            callback.onComplete(false, "Wallpaper not found");
+            return;
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("wallpaperId", wallpaper.id);
+        payload.put("imageUrl", wallpaper.imageUrl);
+        payload.put("photographer", wallpaper.title);
+        payload.put("comment", safe(comment));
+        payload.put("aiCategory", safe(wallpaper.aiCategory));
+        payload.put("createdAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("posts")
+                .add(payload)
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    public static ListenerRegistration listenBlogPosts(PostsCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onLoaded(new ArrayList<>());
+            return null;
+        }
+
+        return db.collection("users")
+                .document(uid)
+                .collection("posts")
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshot, error) -> {
+                    List<BlogPost> posts = new ArrayList<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            BlogPost post = mapPost(doc);
+                            if (post != null) posts.add(post);
+                        }
+                    }
+                    callback.onLoaded(posts);
+                });
+    }
+
+    public static void deleteBlogPost(String postId, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (postId == null || postId.trim().isEmpty()) {
+            callback.onComplete(false, "Post not found");
+            return;
+        }
+
+        db.collection("users")
+                .document(uid)
+                .collection("posts")
+                .document(postId)
+                .delete()
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private static UserProfile mapProfile(DocumentSnapshot snapshot) {
+        UserProfile profile = new UserProfile();
+        if (snapshot == null || !snapshot.exists()) return profile;
+        profile.firstName = safe(snapshot.getString("firstName"));
+        profile.lastName = safe(snapshot.getString("lastName"));
+        profile.bio = safe(snapshot.getString("bio"));
+        profile.profilePhotoUrl = safe(snapshot.getString("profilePhotoUrl"));
+        profile.coverImageUrl = safe(snapshot.getString("coverImageUrl"));
+        Object coverId = snapshot.get("coverWallpaperId");
+        profile.coverWallpaperId = coverId instanceof Number ? ((Number) coverId).intValue() : -1;
+        Object updatedAt = snapshot.get("updatedAt");
+        profile.updatedAt = updatedAt instanceof Number ? ((Number) updatedAt).longValue() : 0L;
+        return profile;
+    }
+
+    private static BlogPost mapPost(DocumentSnapshot doc) {
+        if (doc == null || !doc.exists()) return null;
+        BlogPost post = new BlogPost();
+        post.id = doc.getId();
+        Object wallpaperId = doc.get("wallpaperId");
+        post.wallpaperId = wallpaperId instanceof Number ? ((Number) wallpaperId).intValue() : -1;
+        post.imageUrl = safe(doc.getString("imageUrl"));
+        post.photographer = safe(doc.getString("photographer"));
+        post.comment = safe(doc.getString("comment"));
+        post.aiCategory = safe(doc.getString("aiCategory"));
+        Object createdAt = doc.get("createdAt");
+        post.createdAt = createdAt instanceof Number ? ((Number) createdAt).longValue() : 0L;
+        return post;
+    }
+
+    public static String currentEmail() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        return user == null ? "" : safe(user.getEmail());
+    }
+
+    private static String currentUid() {
+        return FirebaseAuth.getInstance().getUid();
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value.trim();
+    }
+}
