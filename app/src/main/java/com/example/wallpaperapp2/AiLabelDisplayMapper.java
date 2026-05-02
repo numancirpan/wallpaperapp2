@@ -16,10 +16,15 @@ public class AiLabelDisplayMapper {
         }
 
         String cleaned = labelsCsv.trim();
-        boolean onDevice = cleaned.toLowerCase(Locale.ROOT).contains("(on-device)")
-                || cleaned.toLowerCase(Locale.ROOT).contains("(cihaz üstü)");
+        String lowerCleaned = cleaned.toLowerCase(Locale.ROOT);
+        boolean onDevice = lowerCleaned.contains("(on-device)")
+                || lowerCleaned.contains("(cihaz üstü)")
+                || lowerCleaned.contains("(analyzed with ml kit)")
+                || lowerCleaned.contains("(ml kit ile analiz edildi)");
         cleaned = cleaned.replace("(on-device)", "")
                 .replace("(cihaz üstü)", "")
+                .replace("(analyzed with ML Kit)", "")
+                .replace("(ML Kit ile analiz edildi)", "")
                 .trim();
 
         if (looksLikeSystemMessage(cleaned)) {
