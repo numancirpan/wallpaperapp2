@@ -8,12 +8,12 @@ import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -24,7 +24,7 @@ public class SettingsFragment extends Fragment {
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
     private Spinner spinnerLanguage;
-    private Button btnLogout;
+    private MaterialButton btnLogout;
 
     private AppSettingsManager settingsManager;
     private boolean isInitializingLanguage = true;
