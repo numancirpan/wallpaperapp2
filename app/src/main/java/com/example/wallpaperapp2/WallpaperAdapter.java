@@ -63,7 +63,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             FirebaseFavoritesStore.saveFavorite(wallpaper);
 
             if (needsAnalysis(wallpaper)) {
-                wallpaper.aiCategory = "Analyzing";
+                wallpaper.aiCategory = v.getContext().getString(R.string.analyzing);
                 wallpaper.aiLabels = v.getContext().getString(R.string.checking_ai_cache);
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 notifyItemChanged(position);
@@ -112,7 +112,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
     }
 
     private void runOnDeviceFallback(ViewHolder holder, Wallpaper wallpaper, int position) {
-        wallpaper.aiCategory = "Analyzing";
+        wallpaper.aiCategory = holder.itemView.getContext().getString(R.string.analyzing);
         wallpaper.aiLabels = holder.itemView.getContext().getString(R.string.using_on_device_fallback);
         FirebaseFavoritesStore.saveFavorite(wallpaper);
         holder.itemView.post(() -> notifyItemChanged(position));
@@ -121,13 +121,14 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             @Override
             public void onSuccess(java.util.List<AiLabelData> labels) {
                 String finalCategory = DynamicCategoryGenerator.generateCategory(
+                        holder.itemView.getContext(),
                         labels,
                         WallpaperRepository.getExistingAiCategories()
                 );
                 wallpaper.aiCategory = finalCategory;
                 wallpaper.aiLabels = holder.itemView.getContext().getString(
                         R.string.on_device_suffix,
-                        DynamicCategoryGenerator.labelsToDisplay(labels)
+                        DynamicCategoryGenerator.labelsToDisplay(holder.itemView.getContext(), labels)
                 );
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 FirebaseFavoritesStore.saveAiCache(wallpaper);
@@ -136,7 +137,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
             @Override
             public void onError(Exception e) {
-                wallpaper.aiCategory = "Uncategorized";
+                wallpaper.aiCategory = holder.itemView.getContext().getString(R.string.uncategorized);
                 wallpaper.aiLabels = holder.itemView.getContext().getString(R.string.on_device_analysis_failed);
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 holder.itemView.post(() -> notifyItemChanged(position));
