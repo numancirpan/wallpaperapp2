@@ -3,8 +3,10 @@ package com.example.wallpaperapp2;
 import android.content.Context;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class AiLabelDisplayMapper {
 
@@ -59,98 +61,20 @@ public class AiLabelDisplayMapper {
             return label;
         }
 
-        switch (label.toLowerCase(Locale.ROOT)) {
-            case "cup": return "Bardak";
-            case "desk": return "Masa";
-            case "table": return "Masa";
-            case "tableware": return "Sofra Eşyası";
-            case "saucer": return "Tabak";
-            case "computer": return "Bilgisayar";
-            case "laptop": return "Dizüstü Bilgisayar";
-            case "keyboard": return "Klavye";
-            case "coffee": return "Kahve";
-            case "mobile phone": return "Telefon";
-            case "phone": return "Telefon";
-            case "notebook": return "Defter";
-            case "paper": return "Kağıt";
-            case "pen": return "Kalem";
-            case "writing": return "Yazı";
-            case "shelf": return "Raf";
-            case "lipstick": return "Ruj";
-            case "jacket": return "Ceket";
-            case "leather": return "Deri";
-            case "chair": return "Sandalye";
-            case "building": return "Bina";
-            case "wall": return "Duvar";
-            case "bench": return "Bank";
-            case "pattern": return "Desen";
-            case "monochrome": return "Tek Renk";
-            case "fork": return "Çatal";
-            case "cutlery": return "Çatal Bıçak";
-            case "wing": return "Kanat";
-            case "beach": return "Sahil";
-            case "rock": return "Kaya";
-            case "sky": return "Gökyüzü";
-            case "vacation": return "Tatil";
-            case "leisure": return "Dinlenme";
-            case "mountain": return "Dağ";
-            case "cliff": return "Uçurum";
-            case "bird": return "Kuş";
-            case "water": return "Su";
-            case "waterfall": return "Şelale";
-            case "river": return "Nehir";
-            case "lake": return "Göl";
-            case "sea": return "Deniz";
-            case "ocean": return "Okyanus";
-            case "sand": return "Kum";
-            case "forest": return "Orman";
-            case "field": return "Tarla";
-            case "prairie": return "Çayır";
-            case "plant": return "Bitki";
-            case "flower": return "Çiçek";
-            case "road": return "Yol";
-            case "asphalt": return "Asfalt";
-            case "grass": return "Çimen";
-            case "tree": return "Ağaç";
-            case "branch": return "Dal";
-            case "twig": return "İnce Dal";
-            case "insect": return "Böcek";
-            case "vehicle": return "Araç";
-            case "wheel": return "Tekerlek";
-            case "tire": return "Lastik";
-            case "car": return "Araba";
-            case "windshield": return "Ön Cam";
-            case "cat": return "Kedi";
-            case "dog": return "Köpek";
-            case "fur": return "Kürk";
-            case "snout": return "Burun";
-            case "textile": return "Tekstil";
-            case "toy": return "Oyuncak";
-            case "shoe": return "Ayakkabı";
-            case "shoes": return "Ayakkabılar";
-            case "foot": return "Ayak";
-            case "flesh": return "Ten Rengi";
-            case "curtain": return "Perde";
-            case "sneakers": return "Spor Ayakkabı";
-            case "footwear": return "Ayakkabı";
-            case "light": return "Işık";
-            case "lights": return "Işıklar";
-            case "blur": return "Bulanıklık";
-            case "bokeh": return "Bokeh";
-            case "color": return "Renk";
-            case "texture": return "Doku";
-            case "surface": return "Yüzey";
-            case "droplet": return "Su Damlası";
-            case "water drop": return "Su Damlası";
-            case "macro": return "Makro";
-            case "architecture": return "Mimari";
-            case "city": return "Şehir";
-            case "street": return "Sokak";
-            case "person": return "İnsan";
-            case "people": return "İnsanlar";
-            case "portrait": return "Portre";
-            default:
-                return label;
+        Map<String, String> translations = readTurkishTranslations(context);
+        String translated = translations.get(label.toLowerCase(Locale.ROOT));
+        return translated == null ? label : translated;
+    }
+
+    private static Map<String, String> readTurkishTranslations(Context context) {
+        Map<String, String> translations = new HashMap<>();
+        String[] keys = context.getResources().getStringArray(R.array.ai_label_translation_keys);
+        String[] values = context.getResources().getStringArray(R.array.ai_label_translation_values_tr);
+
+        int count = Math.min(keys.length, values.length);
+        for (int i = 0; i < count; i++) {
+            translations.put(keys[i].toLowerCase(Locale.ROOT).trim(), values[i].trim());
         }
+        return translations;
     }
 }
