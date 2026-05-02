@@ -1,5 +1,6 @@
 package com.example.wallpaperapp2;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,18 +11,18 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
-import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
-    private LottieAnimationView lottieDarkLight;
-    private MaterialSwitch switchDarkMode;
+    private MaterialCardView cardLightMode;
+    private MaterialCardView cardDarkMode;
     private RadioGroup radioGroupColumns;
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
@@ -40,8 +41,8 @@ public class SettingsFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        lottieDarkLight = view.findViewById(R.id.lottieDarkLight);
-        switchDarkMode = view.findViewById(R.id.switchDarkMode);
+        cardLightMode = view.findViewById(R.id.cardLightMode);
+        cardDarkMode = view.findViewById(R.id.cardDarkMode);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
         radioThreeColumns = view.findViewById(R.id.radioThreeColumns);
@@ -69,8 +70,7 @@ public class SettingsFragment extends Fragment {
 
     private void loadSavedSettings() {
         boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
-        switchDarkMode.setChecked(darkModeEnabled);
-        setDarkLightFrame(darkModeEnabled);
+        updateThemeCards(darkModeEnabled);
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -93,16 +93,8 @@ public class SettingsFragment extends Fragment {
     }
 
     private void registerListeners() {
-        switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            settingsManager.setDarkMode(isChecked);
-            playDarkLightAnimation(isChecked);
-
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            }
-        });
+        cardLightMode.setOnClickListener(v -> applyTheme(false));
+        cardDarkMode.setOnClickListener(v -> applyTheme(true));
 
         radioGroupColumns.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioThreeColumns) {
@@ -141,20 +133,25 @@ public class SettingsFragment extends Fragment {
         });
     }
 
-    private void setDarkLightFrame(boolean darkModeEnabled) {
-        if (lottieDarkLight == null) return;
-        lottieDarkLight.setProgress(darkModeEnabled ? 1f : 0f);
+    private void applyTheme(boolean darkModeEnabled) {
+        settingsManager.setDarkMode(darkModeEnabled);
+        updateThemeCards(darkModeEnabled);
+        AppCompatDelegate.setDefaultNightMode(
+                darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+        );
     }
 
-    private void playDarkLightAnimation(boolean darkModeEnabled) {
-        if (lottieDarkLight == null) return;
-        if (darkModeEnabled) {
-            lottieDarkLight.setSpeed(1f);
-            lottieDarkLight.setProgress(0f);
-        } else {
-            lottieDarkLight.setSpeed(-1f);
-            lottieDarkLight.setProgress(1f);
-        }
-        lottieDarkLight.playAnimation();
+    private void updateThemeCards(boolean darkModeEnabled) {
+        setThemeCardSelected(cardLightMode, !darkModeEnabled);
+        setThemeCardSelected(cardDarkMode, darkModeEnabled);
+    }
+
+    private void setThemeCardSelected(MaterialCardView card, boolean selected) {
+        if (card == null) return;
+        int primary = ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_primary80);
+        int transparent = ContextCompat.getColor(requireContext(), android.R.color.transparent);
+        card.setStrokeWidth(selected ? 4 : 1);
+        card.setStrokeColor(selected ? primary : ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral_variant60));
+        card.setCardBackgroundColor(ColorStateList.valueOf(selected ? primary : transparent));
     }
 }
