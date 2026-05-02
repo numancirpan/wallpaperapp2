@@ -1,5 +1,7 @@
 package com.example.wallpaperapp2;
 
+import android.content.Context;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -7,9 +9,9 @@ import java.util.Set;
 
 public class CategoryMatcher {
 
-    public static String matchOrCreate(String candidate, List<String> existingCategories) {
+    public static String matchOrCreate(Context context, String candidate, List<String> existingCategories) {
         if (candidate == null || candidate.trim().isEmpty()) {
-            return "Uncategorized";
+            return context.getString(R.string.uncategorized);
         }
 
         if (existingCategories == null || existingCategories.isEmpty()) {
@@ -71,13 +73,6 @@ public class CategoryMatcher {
 
     private static String normalize(String text) {
         if (text == null) return "";
-
-        String lower = text.toLowerCase(Locale.ROOT).trim();
-
-        if (lower.equals("people")) return "person";
-        if (lower.equals("graphic")) return "graphic design";
-        if (lower.equals("graphics")) return "graphic design";
-
-        return lower;
+        return text.toLowerCase(Locale.ROOT).trim();
     }
 }
