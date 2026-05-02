@@ -55,6 +55,7 @@
     <string name="password_changed">Password changed successfully.</string>
     <string name="password_change_failed">Password could not be changed: %1$s</string>
     <string name="passwords_do_not_match">New passwords do not match.</string>
+    <string name="new_password_same_as_old">Your new password cannot be the same as your old password.</string>
 
     <string name="wallpaper_preview">Wallpaper Preview</string>
     <string name="photo_by">Photo by %1$s</string>
@@ -95,7 +96,7 @@
     <string name="photo_from_favorites">Choose from Favorites</string>
     <string name="uploading_photo">Uploading photo...</string>
     <string name="photo_updated">Profile photo updated.</string>
-    <string name="photo_upload_failed">Photo could not be uploaded: %1$s</string>
+    <string name="photo_upload_failed">Photo could not be uploaded. Firebase Storage may not be enabled or the selected file cannot be read: %1$s</string>
     <string name="save_profile">Save Profile</string>
     <string name="profile_saved">Profile saved.</string>
     <string name="profile_save_failed">Profile could not be saved: %1$s</string>
