@@ -48,8 +48,13 @@
     <string name="firebase_config_issue">Firebase yapılandırma sorunu. google-services.json ve paket adını kontrol et.</string>
     <string name="network_error">Ağ hatası. İnternet bağlantını kontrol et.</string>
     <string name="auth_error_code">Kimlik doğrulama hatası: %1$s</string>
-    <string name="password_reset_sent">Şifre sıfırlama e-postası gönderildi.</string>
-    <string name="password_reset_failed">Şifre sıfırlama başarısız: %1$s</string>
+    <string name="old_password">Eski şifre</string>
+    <string name="new_password">Yeni şifre</string>
+    <string name="confirm_new_password">Yeni şifre tekrar</string>
+    <string name="reset_password">Şifreyi Değiştir</string>
+    <string name="password_changed">Şifre başarıyla değiştirildi.</string>
+    <string name="password_change_failed">Şifre değiştirilemedi: %1$s</string>
+    <string name="passwords_do_not_match">Yeni şifreler eşleşmiyor.</string>
 
     <string name="wallpaper_preview">Duvar Kağıdı Önizleme</string>
     <string name="photo_by">Fotoğraf: %1$s</string>
@@ -67,7 +72,7 @@
     <string name="comment_hint">Bu duvar kağıdı hakkında düşünceni yaz</string>
     <string name="share">Paylaş</string>
     <string name="cancel">İptal</string>
-    <string name="post_saved">Paylaşım bloguna eklendi.</string>
+    <string name="post_saved">Reposted.</string>
     <string name="post_failed">Paylaşım kaydedilemedi: %1$s</string>
     <string name="comment_required">Önce bir yorum yazmalısın.</string>
 
@@ -84,13 +89,18 @@
     <string name="first_name">Ad</string>
     <string name="last_name">Soyad</string>
     <string name="bio">Bio</string>
-    <string name="profile_photo_url">Profil fotoğrafı URL</string>
+    <string name="profile_photo">Profil Fotoğrafı</string>
+    <string name="choose_profile_photo">Profil Fotoğrafı Seç</string>
+    <string name="photo_from_phone">Telefondan Seç</string>
+    <string name="photo_from_favorites">Favorilerden Seç</string>
+    <string name="uploading_photo">Fotoğraf yükleniyor...</string>
+    <string name="photo_updated">Profil fotoğrafı güncellendi.</string>
+    <string name="photo_upload_failed">Fotoğraf yüklenemedi: %1$s</string>
     <string name="save_profile">Profili Kaydet</string>
     <string name="profile_saved">Profil kaydedildi.</string>
     <string name="profile_save_failed">Profil kaydedilemedi: %1$s</string>
     <string name="change_password">Şifre Değiştir</string>
-    <string name="change_password_description">Hesabına şifre sıfırlama e-postası gönder.</string>
-    <string name="send_reset_email">Sıfırlama E-postası Gönder</string>
+    <string name="change_password_description">Mevcut şifreni doğrulayarak yeni şifre belirle.</string>
     <string name="cover_photo">Kapak Fotoğrafı</string>
     <string name="choose_cover_from_favorites">Favorilerden Seç</string>
     <string name="no_favorites_for_cover">Kapak fotoğrafı seçmek için önce favori ekle.</string>
