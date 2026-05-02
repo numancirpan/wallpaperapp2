@@ -1,0 +1,100 @@
+<resources>
+    <string-array name="ai_generic_labels">
+        <item>font</item><item>material</item><item>line</item><item>slope</item><item>rectangle</item><item>object</item><item>organism</item>
+        <item>terrestrial plant</item><item>product</item><item>gesture</item><item>event</item><item>fun</item><item>room</item><item>flooring</item>
+        <item>sky</item><item>plant</item><item>food</item><item>grass</item><item>soil</item>
+    </string-array>
+
+    <string-array name="ai_detail_labels">
+        <item>hand</item><item>nail</item><item>eyelash</item><item>jewellery</item><item>jewelry</item><item>ring</item><item>finger</item><item>wrist</item>
+        <item>skin</item><item>arm</item><item>metal</item><item>watch</item><item>human body</item><item>close-up</item><item>thumb</item>
+        <item>musical instrument</item><item>string instrument</item><item>guitar accessory</item><item>toy</item>
+    </string-array>
+
+    <string-array name="ai_category_keys">
+        <item>Workspace</item><item>Interior</item><item>Fashion</item><item>Beach</item><item>Water Scenes</item><item>Nature</item>
+        <item>Urban</item><item>Architecture</item><item>Vehicles</item><item>Animals</item><item>Texture</item><item>Monochrome</item>
+        <item>Lights</item><item>Abstract</item><item>Art</item><item>People</item><item>Space</item>
+    </string-array>
+
+    <string-array name="ai_workspace_keywords">
+        <item>laptop</item><item>computer</item><item>keyboard</item><item>desk</item><item>notebook</item><item>pen</item><item>writing</item>
+        <item>paper</item><item>office</item><item>workspace</item><item>work</item><item>study</item><item>mobile phone</item><item>phone</item><item>screen</item><item>book</item>
+    </string-array>
+
+    <string-array name="ai_interior_keywords">
+        <item>coffee</item><item>cup</item><item>mug</item><item>table</item><item>tableware</item><item>cafe</item><item>restaurant</item><item>drink</item><item>espresso</item><item>saucer</item>
+        <item>chair</item><item>furniture</item><item>room</item><item>interior</item><item>window</item><item>wall</item><item>home</item><item>floor</item><item>lamp</item><item>bench</item>
+    </string-array>
+
+    <string-array name="ai_fashion_keywords">
+        <item>shoe</item><item>shoes</item><item>footwear</item><item>sneakers</item><item>heel</item><item>high heel</item><item>dress</item><item>fashion</item>
+        <item>clothing</item><item>curtain</item><item>fabric</item><item>flesh</item><item>foot</item>
+    </string-array>
+
+    <string-array name="ai_beach_keywords">
+        <item>beach</item><item>sea</item><item>ocean</item><item>coast</item><item>shore</item><item>sand</item><item>wave</item><item>water</item><item>rock</item><item>sunset</item><item>sunrise</item><item>cliff</item>
+    </string-array>
+
+    <string-array name="ai_water_scenes_keywords">
+        <item>waterfall</item><item>river</item><item>lake</item><item>water</item><item>stream</item><item>sea</item><item>ocean</item><item>coast</item><item>reflection</item>
+    </string-array>
+
+    <string-array name="ai_nature_keywords">
+        <item>forest</item><item>tree</item><item>mountain</item><item>landscape</item><item>plant</item><item>grass</item><item>flower</item><item>prairie</item><item>field</item>
+        <item>meadow</item><item>leaf</item><item>moss</item><item>branch</item><item>twig</item><item>insect</item>
+    </string-array>
+
+    <string-array name="ai_urban_keywords">
+        <item>city</item><item>street</item><item>road</item><item>urban</item><item>traffic</item><item>sidewalk</item><item>crosswalk</item><item>car</item><item>asphalt</item>
+    </string-array>
+
+    <string-array name="ai_architecture_keywords">
+        <item>building</item><item>architecture</item><item>house</item><item>bridge</item><item>tower</item><item>facade</item><item>roof</item><item>door</item><item>window</item>
+    </string-array>
+
+    <string-array name="ai_vehicles_keywords">
+        <item>car</item><item>vehicle</item><item>race</item><item>racing</item><item>motorcycle</item><item>automotive</item><item>wheel</item><item>tire</item><item>windshield</item><item>bus</item><item>train</item>
+    </string-array>
+
+    <string-array name="ai_animals_keywords">
+        <item>dog</item><item>cat</item><item>bird</item><item>animal</item><item>wildlife</item><item>fish</item><item>horse</item><item>pet</item><item>fur</item><item>snout</item><item>nose</item>
+    </string-array>
+
+    <string-array name="ai_texture_keywords">
+        <item>texture</item><item>pattern</item><item>surface</item><item>water drop</item><item>droplet</item><item>macro</item><item>close-up</item><item>fabric</item><item>wood</item>
+        <item>stone</item><item>rough</item><item>asphalt</item><item>wall</item><item>monochrome</item>
+    </string-array>
+
+    <string-array name="ai_monochrome_keywords">
+        <item>monochrome</item><item>black</item><item>white</item><item>dark</item><item>shadow</item><item>fork</item><item>cutlery</item><item>wing</item>
+    </string-array>
+
+    <string-array name="ai_lights_keywords">
+        <item>light</item><item>lights</item><item>bokeh</item><item>blur</item><item>neon</item><item>glow</item><item>color</item><item>night</item><item>circle</item><item>lamp</item>
+    </string-array>
+
+    <string-array name="ai_abstract_keywords">
+        <item>abstract</item><item>pattern</item><item>blur</item><item>color</item><item>gradient</item><item>shape</item><item>design</item><item>bokeh</item>
+    </string-array>
+
+    <string-array name="ai_art_keywords">
+        <item>poster</item><item>illustration</item><item>graphics</item><item>graphic</item><item>design</item><item>art</item><item>drawing</item><item>painting</item><item>mural</item>
+    </string-array>
+
+    <string-array name="ai_people_keywords">
+        <item>person</item><item>people</item><item>face</item><item>portrait</item><item>smile</item><item>human</item><item>man</item><item>woman</item>
+    </string-array>
+
+    <string-array name="ai_space_keywords">
+        <item>space</item><item>planet</item><item>moon</item><item>star</item><item>galaxy</item><item>astronomy</item>
+    </string-array>
+
+    <string-array name="ai_high_weight_keywords">
+        <item>laptop</item><item>computer</item><item>beach</item><item>forest</item><item>car</item><item>cat</item><item>shoe</item>
+    </string-array>
+
+    <string-array name="ai_medium_weight_keywords">
+        <item>desk</item><item>keyboard</item><item>coast</item><item>field</item><item>prairie</item><item>coffee</item><item>chair</item><item>branch</item><item>asphalt</item>
+    </string-array>
+</resources>
