@@ -1,13 +1,13 @@
 <resources>
     <string-array name="ai_generic_labels">
         <item>font</item><item>material</item><item>line</item><item>slope</item><item>rectangle</item><item>object</item><item>organism</item>
-        <item>terrestrial plant</item><item>product</item><item>gesture</item><item>event</item><item>fun</item><item>room</item><item>flooring</item>
+        <item>terrestrial plant</item><item>product</item><item>event</item><item>fun</item><item>room</item><item>flooring</item>
         <item>sky</item><item>plant</item><item>food</item><item>grass</item><item>soil</item>
     </string-array>
 
     <string-array name="ai_detail_labels">
-        <item>hand</item><item>nail</item><item>eyelash</item><item>jewellery</item><item>jewelry</item><item>ring</item><item>finger</item><item>wrist</item>
-        <item>skin</item><item>arm</item><item>metal</item><item>watch</item><item>human body</item><item>close-up</item><item>thumb</item>
+        <item>eyelash</item><item>jewellery</item><item>jewelry</item><item>ring</item><item>finger</item>
+        <item>skin</item><item>metal</item><item>human body</item><item>close-up</item><item>thumb</item>
         <item>musical instrument</item><item>string instrument</item><item>guitar accessory</item><item>toy</item>
     </string-array>
 
@@ -20,6 +20,7 @@
     <string-array name="ai_workspace_keywords">
         <item>laptop</item><item>computer</item><item>keyboard</item><item>desk</item><item>notebook</item><item>pen</item><item>writing</item>
         <item>paper</item><item>office</item><item>workspace</item><item>work</item><item>study</item><item>mobile phone</item><item>phone</item><item>screen</item><item>book</item>
+        <item>hand</item><item>nail</item><item>gesture</item><item>wrist</item><item>watch</item><item>arm</item>
     </string-array>
 
     <string-array name="ai_interior_keywords">
@@ -96,5 +97,6 @@
 
     <string-array name="ai_medium_weight_keywords">
         <item>desk</item><item>keyboard</item><item>coast</item><item>field</item><item>prairie</item><item>coffee</item><item>chair</item><item>branch</item><item>asphalt</item>
+        <item>hand</item><item>nail</item><item>gesture</item><item>wrist</item><item>watch</item><item>arm</item>
     </string-array>
 </resources>
