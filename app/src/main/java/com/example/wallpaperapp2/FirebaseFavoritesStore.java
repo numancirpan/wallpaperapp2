@@ -2,6 +2,7 @@ package com.example.wallpaperapp2;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -64,16 +65,27 @@ public class FirebaseFavoritesStore {
                 .document(uid)
                 .collection("favorites")
                 .get()
-                .addOnSuccessListener(snapshot -> {
-                    Map<Integer, Map<String, Object>> mapped = new HashMap<>();
-                    snapshot.getDocuments().forEach(doc -> {
-                        Object idValue = doc.get("id");
-                        int id = idValue instanceof Number ? ((Number) idValue).intValue() : -1;
-                        if (id > -1) mapped.put(id, doc.getData());
-                    });
-                    callback.onLoaded(mapped);
-                })
+                .addOnSuccessListener(snapshot -> callback.onLoaded(mapFavoritesSnapshot(snapshot)))
                 .addOnFailureListener(e -> callback.onLoaded(new HashMap<>()));
+    }
+
+    public static ListenerRegistration listenFavorites(FavoritesCallback callback) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) {
+            callback.onLoaded(new HashMap<>());
+            return null;
+        }
+
+        return db.collection("users")
+                .document(uid)
+                .collection("favorites")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || snapshot == null) {
+                        callback.onLoaded(new HashMap<>());
+                        return;
+                    }
+                    callback.onLoaded(mapFavoritesSnapshot(snapshot));
+                });
     }
 
     public static void fetchAiCache(Wallpaper wallpaper, AiCacheCallback callback) {
@@ -143,6 +155,16 @@ public class FirebaseFavoritesStore {
         if (lowerC.contains("hand") || lowerC.contains("nail") || lowerC.contains("musical instrument")) return false;
         if (lowerC.equals("beach rock") || lowerC.equals("field prairie") || lowerC.equals("mobile phone nail")) return false;
         return true;
+    }
+
+    private static Map<Integer, Map<String, Object>> mapFavoritesSnapshot(com.google.firebase.firestore.QuerySnapshot snapshot) {
+        Map<Integer, Map<String, Object>> mapped = new HashMap<>();
+        snapshot.getDocuments().forEach(doc -> {
+            Object idValue = doc.get("id");
+            int id = idValue instanceof Number ? ((Number) idValue).intValue() : -1;
+            if (id > -1) mapped.put(id, doc.getData());
+        });
+        return mapped;
     }
 
     private static String getCacheId(Wallpaper wallpaper) {
