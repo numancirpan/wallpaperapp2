@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class FirebaseFavoritesStore {
@@ -121,17 +122,23 @@ public class FirebaseFavoritesStore {
     public static boolean isUsableAiData(String category, String labels) {
         String c = category == null ? "" : category.trim();
         String l = labels == null ? "" : labels.trim();
-        String lowerC = c.toLowerCase();
-        String lowerL = l.toLowerCase();
+        String lowerC = c.toLowerCase(Locale.ROOT);
+        String lowerL = l.toLowerCase(Locale.ROOT);
 
         if (c.isEmpty() || l.isEmpty()) return false;
-        if (lowerC.equals("uncategorized") || lowerC.equals("analyzing")) return false;
+        if (lowerC.equals("uncategorized") || lowerC.equals("kategorisiz")) return false;
+        if (lowerC.equals("analyzing") || lowerC.equals("analiz ediliyor")) return false;
+        if (lowerL.contains("visual wallpaper content")) return false;
+        if (lowerL.contains("görsel duvar kağıdı içeriği")) return false;
         if (lowerL.contains("gemini http")) return false;
         if (lowerL.contains("gemini api key")) return false;
         if (lowerL.contains("gemini analysis failed")) return false;
+        if (lowerL.contains("gemini analizi")) return false;
         if (lowerL.contains("image analysis in progress")) return false;
         if (lowerL.contains("image could not be loaded")) return false;
         if (lowerL.contains("on-device analysis failed")) return false;
+        if (lowerL.contains("cihaz üstü analiz başarısız")) return false;
+        if (lowerL.contains("ml kit analizi başarısız")) return false;
 
         if (lowerC.contains("hand") || lowerC.contains("nail") || lowerC.contains("musical instrument")) return false;
         if (lowerC.equals("beach rock") || lowerC.equals("field prairie") || lowerC.equals("mobile phone nail")) return false;
