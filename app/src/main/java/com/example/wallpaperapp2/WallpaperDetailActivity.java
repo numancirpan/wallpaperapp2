@@ -4,18 +4,14 @@ import android.app.WallpaperManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,38 +97,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     }
 
     private void bindRepostAction() {
-        btnRepostWallpaper.setOnClickListener(v -> showRepostDialog());
-    }
-
-    private void showRepostDialog() {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_repost, null, false);
-        TextInputEditText editComment = dialogView.findViewById(R.id.editRepostComment);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.write_comment)
-                .setView(dialogView)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.share, null)
-                .create();
-
-        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String comment = editComment.getText() == null ? "" : editComment.getText().toString().trim();
-            if (comment.isEmpty()) {
-                editComment.setError(getString(R.string.comment_required));
-                return;
-            }
-
-            UserProfileStore.addBlogPost(wallpaper, comment, (success, errorMessage) -> runOnUiThread(() -> {
-                if (success) {
-                    showMessage(getString(R.string.post_saved));
-                    dialog.dismiss();
-                } else {
-                    showMessage(getString(R.string.post_failed, errorMessage == null ? "Unknown error" : errorMessage));
-                }
-            }));
-        }));
-
-        dialog.show();
+        btnRepostWallpaper.setOnClickListener(v -> RepostDialogHelper.show(this, findViewById(android.R.id.content), wallpaper));
     }
 
     private void analyzeFavoriteFromDetail() {
