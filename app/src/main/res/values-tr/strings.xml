@@ -56,10 +56,10 @@
 
     <string name="checking_ai_cache">AI önbelleği kontrol ediliyor</string>
     <string name="gemini_analysis_in_progress">Gemini analizi devam ediyor</string>
-    <string name="using_on_device_fallback">Cihaz üstü AI yedeği kullanılıyor</string>
-    <string name="on_device_analysis_failed">Cihaz üstü analiz başarısız oldu</string>
+    <string name="using_on_device_fallback">ML Kit ile analiz ediliyor</string>
+    <string name="on_device_analysis_failed">ML Kit analizi başarısız oldu</string>
     <string name="visual_wallpaper_content">Görsel duvar kağıdı içeriği</string>
-    <string name="on_device_suffix">%1$s (cihaz üstü)</string>
+    <string name="on_device_suffix">%1$s (ML Kit ile analiz edildi)</string>
     <string name="uncategorized">Kategorisiz</string>
     <string name="analyzing">Analiz ediliyor</string>
 
