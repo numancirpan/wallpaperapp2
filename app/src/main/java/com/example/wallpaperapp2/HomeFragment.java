@@ -6,12 +6,12 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.List;
@@ -79,7 +79,7 @@ public class HomeFragment extends Fragment {
             public void onError(Exception exception) {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), R.string.api_fetch_failed_cached, Toast.LENGTH_SHORT).show()
+                        Snackbar.make(requireView(), R.string.api_fetch_failed_cached, Snackbar.LENGTH_SHORT).show()
                 );
             }
         });
