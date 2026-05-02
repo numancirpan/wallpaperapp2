@@ -1,5 +1,6 @@
 package com.example.wallpaperapp2;
 
+import android.content.Context;
 import android.net.Uri;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -9,8 +10,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,32 +82,46 @@ public class UserProfileStore {
         updateProfileFields(mapOf("profilePhotoUrl", wallpaper.imageUrl), callback);
     }
 
-    public static void uploadProfilePhoto(Uri imageUri, ActionCallback callback) {
+    public static void uploadProfilePhoto(Context context, Uri imageUri, ActionCallback callback) {
         String uid = currentUid();
         if (uid == null) {
             callback.onComplete(false, "User session not found");
             return;
         }
-        if (imageUri == null) {
+        if (context == null || imageUri == null) {
             callback.onComplete(false, "Photo not found");
             return;
         }
 
-        StorageReference ref = FirebaseStorage.getInstance()
-                .getReference()
-                .child("profile_photos")
-                .child(uid)
-                .child("profile_" + System.currentTimeMillis() + ".jpg");
+        try {
+            InputStream stream = context.getContentResolver().openInputStream(imageUri);
+            if (stream == null) {
+                callback.onComplete(false, "Selected file cannot be opened");
+                return;
+            }
 
-        ref.putFile(imageUri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful() && task.getException() != null) {
-                        throw task.getException();
-                    }
-                    return ref.getDownloadUrl();
-                })
-                .addOnSuccessListener(uri -> updateProfileFields(mapOf("profilePhotoUrl", uri.toString()), callback))
-                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+            StorageReference ref = FirebaseStorage.getInstance()
+                    .getReference()
+                    .child("profile_photos")
+                    .child(uid)
+                    .child("profile_" + System.currentTimeMillis() + ".jpg");
+
+            StorageMetadata metadata = new StorageMetadata.Builder()
+                    .setContentType("image/jpeg")
+                    .build();
+
+            ref.putStream(stream, metadata)
+                    .continueWithTask(task -> {
+                        if (!task.isSuccessful() && task.getException() != null) {
+                            throw task.getException();
+                        }
+                        return ref.getDownloadUrl();
+                    })
+                    .addOnSuccessListener(uri -> updateProfileFields(mapOf("profilePhotoUrl", uri.toString()), callback))
+                    .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+        } catch (Exception e) {
+            callback.onComplete(false, e.getMessage());
+        }
     }
 
     public static void updateCoverFromWallpaper(Wallpaper wallpaper, ActionCallback callback) {
@@ -142,8 +159,14 @@ public class UserProfileStore {
                 .document(uid)
                 .collection("posts")
                 .add(payload)
-                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
-                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onComplete(true, "");
+                    } else {
+                        Exception e = task.getException();
+                        callback.onComplete(false, e == null ? "Unknown error" : e.getMessage());
+                    }
+                });
     }
 
     public static ListenerRegistration listenBlogPosts(PostsCallback callback) {
