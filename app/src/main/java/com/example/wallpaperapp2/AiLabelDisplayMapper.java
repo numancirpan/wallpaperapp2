@@ -17,15 +17,12 @@ public class AiLabelDisplayMapper {
 
         String cleaned = labelsCsv.trim();
         String lowerCleaned = cleaned.toLowerCase(Locale.ROOT);
-        boolean onDevice = lowerCleaned.contains("(on-device)")
-                || lowerCleaned.contains("(cihaz üstü)")
-                || lowerCleaned.contains("(analyzed with ml kit)")
-                || lowerCleaned.contains("(ml kit ile analiz edildi)");
-        cleaned = cleaned.replace("(on-device)", "")
-                .replace("(cihaz üstü)", "")
-                .replace("(analyzed with ML Kit)", "")
-                .replace("(ML Kit ile analiz edildi)", "")
-                .trim();
+        boolean onDevice = lowerCleaned.contains("on-device")
+                || lowerCleaned.contains("cihaz üstü")
+                || lowerCleaned.contains("analyzed with ml kit")
+                || lowerCleaned.contains("ml kit ile analiz edildi");
+
+        cleaned = removeMlKitSuffix(cleaned).trim();
 
         if (looksLikeSystemMessage(cleaned)) {
             return cleaned;
@@ -49,6 +46,17 @@ public class AiLabelDisplayMapper {
         return result;
     }
 
+    private static String removeMlKitSuffix(String value) {
+        return value
+                .replaceAll("(?i)\\s*\\(on-device\\)\\s*", "")
+                .replaceAll("(?i)\\s*\\(cihaz üstü\\)\\s*", "")
+                .replaceAll("(?i)\\s*\\(analyzed with ml kit\\)\\s*", "")
+                .replaceAll("(?i)\\s*\\(ml kit ile analiz edildi\\)\\s*", "")
+                .replaceAll("(?i)\\s*analyzed with ml kit\\s*", "")
+                .replaceAll("(?i)\\s*ml kit ile analiz edildi\\s*", "")
+                .trim();
+    }
+
     private static boolean looksLikeSystemMessage(String text) {
         String lower = text.toLowerCase(Locale.ROOT);
         return lower.contains("gemini http")
@@ -67,8 +75,13 @@ public class AiLabelDisplayMapper {
         }
 
         Map<String, String> translations = readTurkishTranslations(context);
-        String translated = translations.get(label.toLowerCase(Locale.ROOT));
+        String normalized = normalizeKey(label);
+        String translated = translations.get(normalized);
         return translated == null ? label : translated;
+    }
+
+    private static String normalizeKey(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).trim();
     }
 
     private static Map<String, String> readTurkishTranslations(Context context) {
@@ -78,7 +91,7 @@ public class AiLabelDisplayMapper {
 
         int count = Math.min(keys.length, values.length);
         for (int i = 0; i < count; i++) {
-            translations.put(keys[i].toLowerCase(Locale.ROOT).trim(), values[i].trim());
+            translations.put(normalizeKey(keys[i]), values[i].trim());
         }
         return translations;
     }
