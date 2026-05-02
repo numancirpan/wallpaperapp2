@@ -1,6 +1,6 @@
 package com.example.wallpaperapp2;
 
-import android.app.AlertDialog;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,7 +8,11 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,7 +21,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
@@ -32,10 +38,10 @@ public class ProfileFragment extends Fragment {
     private TextInputEditText editFirstName;
     private TextInputEditText editLastName;
     private TextInputEditText editBio;
-    private TextInputEditText editProfilePhotoUrl;
     private MaterialButton btnSaveProfile;
-    private MaterialButton btnSendResetEmail;
+    private MaterialButton btnChangePassword;
     private MaterialButton btnChooseCover;
+    private MaterialButton btnChooseProfilePhoto;
     private RecyclerView recyclerBlogPosts;
     private MaterialCardView cardBlogEmptyState;
 
@@ -43,15 +49,24 @@ public class ProfileFragment extends Fragment {
     private BlogPostAdapter blogPostAdapter;
     private ListenerRegistration profileListener;
     private ListenerRegistration postsListener;
+    private ActivityResultLauncher<String> imagePickerLauncher;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        registerImagePicker();
         bindViews(view);
         setupBlogList();
         registerActions();
         startListeners();
         return view;
+    }
+
+    private void registerImagePicker() {
+        imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri == null) return;
+            uploadProfilePhoto(uri);
+        });
     }
 
     private void bindViews(View view) {
@@ -62,10 +77,10 @@ public class ProfileFragment extends Fragment {
         editFirstName = view.findViewById(R.id.editFirstName);
         editLastName = view.findViewById(R.id.editLastName);
         editBio = view.findViewById(R.id.editBio);
-        editProfilePhotoUrl = view.findViewById(R.id.editProfilePhotoUrl);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
-        btnSendResetEmail = view.findViewById(R.id.btnSendResetEmail);
+        btnChangePassword = view.findViewById(R.id.btnChangePassword);
         btnChooseCover = view.findViewById(R.id.btnChooseCover);
+        btnChooseProfilePhoto = view.findViewById(R.id.btnChooseProfilePhoto);
         recyclerBlogPosts = view.findViewById(R.id.recyclerBlogPosts);
         cardBlogEmptyState = view.findViewById(R.id.cardBlogEmptyState);
     }
@@ -89,8 +104,9 @@ public class ProfileFragment extends Fragment {
 
     private void registerActions() {
         btnSaveProfile.setOnClickListener(v -> saveProfile());
-        btnSendResetEmail.setOnClickListener(v -> sendPasswordReset());
+        btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
         btnChooseCover.setOnClickListener(v -> chooseCoverFromFavorites());
+        btnChooseProfilePhoto.setOnClickListener(v -> showProfilePhotoOptions());
     }
 
     private void startListeners() {
@@ -114,7 +130,6 @@ public class ProfileFragment extends Fragment {
         setTextIfDifferent(editFirstName, currentProfile.firstName);
         setTextIfDifferent(editLastName, currentProfile.lastName);
         setTextIfDifferent(editBio, currentProfile.bio);
-        setTextIfDifferent(editProfilePhotoUrl, currentProfile.profilePhotoUrl);
 
         if (currentProfile.profilePhotoUrl != null && !currentProfile.profilePhotoUrl.trim().isEmpty()) {
             Glide.with(this).load(currentProfile.profilePhotoUrl).centerCrop().into(imageProfilePhoto);
@@ -140,7 +155,6 @@ public class ProfileFragment extends Fragment {
         currentProfile.firstName = getText(editFirstName);
         currentProfile.lastName = getText(editLastName);
         currentProfile.bio = getText(editBio);
-        currentProfile.profilePhotoUrl = getText(editProfilePhotoUrl);
 
         btnSaveProfile.setEnabled(false);
         UserProfileStore.saveProfile(currentProfile, (success, errorMessage) -> {
@@ -156,41 +170,130 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    private void sendPasswordReset() {
-        String email = UserProfileStore.currentEmail();
-        if (email.trim().isEmpty()) return;
-        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                .addOnSuccessListener(unused -> showMessage(getString(R.string.password_reset_sent)))
-                .addOnFailureListener(e -> showMessage(getString(R.string.password_reset_failed, e.getMessage())));
+    private void showProfilePhotoOptions() {
+        String[] options = new String[]{getString(R.string.photo_from_phone), getString(R.string.photo_from_favorites)};
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.choose_profile_photo)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        imagePickerLauncher.launch("image/*");
+                    } else {
+                        chooseProfilePhotoFromFavorites();
+                    }
+                })
+                .show();
+    }
+
+    private void uploadProfilePhoto(Uri uri) {
+        showMessage(getString(R.string.uploading_photo));
+        UserProfileStore.uploadProfilePhoto(uri, (success, errorMessage) -> {
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(() -> {
+                if (success) showMessage(getString(R.string.photo_updated));
+                else showMessage(getString(R.string.photo_upload_failed, errorMessage == null ? "Unknown error" : errorMessage));
+            });
+        });
+    }
+
+    private void chooseProfilePhotoFromFavorites() {
+        showWallpaperPicker(R.string.profile_photo, selected ->
+                UserProfileStore.updateProfilePhotoFromWallpaper(selected, (success, errorMessage) -> {
+                    if (!isAdded()) return;
+                    requireActivity().runOnUiThread(() -> {
+                        if (success) showMessage(getString(R.string.photo_updated));
+                        else showMessage(getString(R.string.profile_save_failed, errorMessage == null ? "Unknown error" : errorMessage));
+                    });
+                })
+        );
     }
 
     private void chooseCoverFromFavorites() {
+        showWallpaperPicker(R.string.cover_photo, selected ->
+                UserProfileStore.updateCoverFromWallpaper(selected, (success, errorMessage) -> {
+                    if (!isAdded()) return;
+                    requireActivity().runOnUiThread(() -> {
+                        if (success) showMessage(getString(R.string.cover_updated));
+                        else showMessage(getString(R.string.profile_save_failed, errorMessage == null ? "Unknown error" : errorMessage));
+                    });
+                })
+        );
+    }
+
+    private void showWallpaperPicker(int titleRes, SelectableWallpaperAdapter.OnWallpaperSelectedListener listener) {
         List<Wallpaper> favorites = WallpaperRepository.getFavoriteWallpapers();
         if (favorites.isEmpty()) {
             showMessage(getString(R.string.no_favorites_for_cover));
             return;
         }
 
-        String[] names = new String[favorites.size()];
-        for (int i = 0; i < favorites.size(); i++) {
-            Wallpaper wallpaper = favorites.get(i);
-            String category = CategoryDisplayMapper.toDisplayName(requireContext(), wallpaper.aiCategory);
-            names[i] = wallpaper.title + " - " + category;
-        }
+        View pickerView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_wallpaper_picker, null, false);
+        RecyclerView recyclerPicker = pickerView.findViewById(R.id.recyclerWallpaperPicker);
+        recyclerPicker.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.cover_photo)
-                .setItems(names, (dialog, which) -> {
-                    Wallpaper selected = favorites.get(which);
-                    UserProfileStore.updateCoverFromWallpaper(selected, (success, errorMessage) -> {
-                        if (!isAdded()) return;
-                        requireActivity().runOnUiThread(() -> {
-                            if (success) showMessage(getString(R.string.cover_updated));
-                            else showMessage(getString(R.string.profile_save_failed, errorMessage == null ? "Unknown error" : errorMessage));
-                        });
-                    });
-                })
-                .show();
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(titleRes)
+                .setView(pickerView)
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+
+        recyclerPicker.setAdapter(new SelectableWallpaperAdapter(favorites, wallpaper -> {
+            listener.onSelected(wallpaper);
+            dialog.dismiss();
+        }));
+
+        dialog.show();
+    }
+
+    private void showChangePasswordDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_change_password, null, false);
+        TextInputEditText oldPassword = dialogView.findViewById(R.id.editOldPassword);
+        TextInputEditText newPassword = dialogView.findViewById(R.id.editNewPassword);
+        TextInputEditText confirmPassword = dialogView.findViewById(R.id.editConfirmPassword);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.change_password)
+                .setView(dialogView)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.reset_password, null)
+                .create();
+
+        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String oldPass = getText(oldPassword);
+            String newPass = getText(newPassword);
+            String confirmPass = getText(confirmPassword);
+
+            if (oldPass.length() < 6) {
+                oldPassword.setError(getString(R.string.weak_password));
+                return;
+            }
+            if (newPass.length() < 6) {
+                newPassword.setError(getString(R.string.weak_password));
+                return;
+            }
+            if (!newPass.equals(confirmPass)) {
+                confirmPassword.setError(getString(R.string.passwords_do_not_match));
+                return;
+            }
+
+            changePassword(oldPass, newPass, dialog);
+        }));
+
+        dialog.show();
+    }
+
+    private void changePassword(String oldPassword, String newPassword, AlertDialog dialog) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String email = user == null ? "" : user.getEmail();
+        if (user == null || email == null || email.trim().isEmpty()) return;
+
+        user.reauthenticate(EmailAuthProvider.getCredential(email, oldPassword))
+                .addOnSuccessListener(unused -> user.updatePassword(newPassword)
+                        .addOnSuccessListener(update -> {
+                            showMessage(getString(R.string.password_changed));
+                            dialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> showMessage(getString(R.string.password_change_failed, e.getMessage()))))
+                .addOnFailureListener(e -> showMessage(getString(R.string.password_change_failed, e.getMessage())));
     }
 
     private void setTextIfDifferent(TextInputEditText editText, String value) {
