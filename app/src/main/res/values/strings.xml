@@ -56,10 +56,10 @@
 
     <string name="checking_ai_cache">Checking AI cache</string>
     <string name="gemini_analysis_in_progress">Gemini analysis in progress</string>
-    <string name="using_on_device_fallback">Using on-device AI fallback</string>
-    <string name="on_device_analysis_failed">On-device analysis failed</string>
+    <string name="using_on_device_fallback">Using ML Kit fallback analysis</string>
+    <string name="on_device_analysis_failed">ML Kit analysis failed</string>
     <string name="visual_wallpaper_content">Visual wallpaper content</string>
-    <string name="on_device_suffix">%1$s (on-device)</string>
+    <string name="on_device_suffix">%1$s (analyzed with ML Kit)</string>
     <string name="uncategorized">Uncategorized</string>
     <string name="analyzing">Analyzing</string>
 
