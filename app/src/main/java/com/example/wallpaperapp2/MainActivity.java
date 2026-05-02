@@ -62,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.nav_favorites) {
                 loadFragment(new FavoritesFragment());
                 return true;
+            } else if (id == R.id.nav_profile) {
+                loadFragment(new ProfileFragment());
+                return true;
             } else if (id == R.id.nav_settings) {
                 loadFragment(new SettingsFragment());
                 return true;
