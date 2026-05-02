@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AiClassifier {
@@ -24,6 +25,9 @@ public class AiClassifier {
         void onSuccess(List<AiLabelData> labels);
         void onError(Exception e);
     }
+
+    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final int ML_KIT_IMAGE_SIZE = 512;
 
     public static void analyzeImage(
             @NonNull Context context,
@@ -49,12 +53,12 @@ public class AiClassifier {
             @NonNull String imageUrl,
             @NonNull OnLabelsReadyListener listener
     ) {
-        Executors.newSingleThreadExecutor().execute(() -> {
+        EXECUTOR.execute(() -> {
             try {
                 Bitmap bitmap = Glide.with(context.getApplicationContext())
                         .asBitmap()
                         .load(imageUrl)
-                        .submit()
+                        .submit(ML_KIT_IMAGE_SIZE, ML_KIT_IMAGE_SIZE)
                         .get();
                 analyzeBitmap(bitmap, listener);
             } catch (Exception e) {
