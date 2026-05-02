@@ -17,10 +17,10 @@
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardAuthLogo"
-            android:layout_width="86dp"
-            android:layout_height="86dp"
+            android:layout_width="92dp"
+            android:layout_height="92dp"
             android:layout_marginBottom="18dp"
-            app:cardCornerRadius="28dp"
+            app:cardCornerRadius="30dp"
             app:cardElevation="2dp"
             app:strokeWidth="1dp">
 
@@ -28,15 +28,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:foregroundGravity="center"
-                android:padding="18dp">
+                android:padding="12dp">
 
                 <ImageView
                     android:id="@+id/imgAuthLogo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:adjustViewBounds="true"
                     android:contentDescription="@string/app_name"
-                    android:src="@drawable/logo_placeholder"
-                    app:tint="?attr/colorOnSurface" />
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/logo_placeholder" />
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
