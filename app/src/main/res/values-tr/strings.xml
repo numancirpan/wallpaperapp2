@@ -23,6 +23,7 @@
 
     <string name="nav_home">Ana Sayfa</string>
     <string name="nav_favorites">Favoriler</string>
+    <string name="nav_profile">Profil</string>
     <string name="nav_settings">Ayarlar</string>
 
     <string name="auth_title">Wallpaper Uygulaması Giriş</string>
@@ -47,6 +48,8 @@
     <string name="firebase_config_issue">Firebase yapılandırma sorunu. google-services.json ve paket adını kontrol et.</string>
     <string name="network_error">Ağ hatası. İnternet bağlantını kontrol et.</string>
     <string name="auth_error_code">Kimlik doğrulama hatası: %1$s</string>
+    <string name="password_reset_sent">Şifre sıfırlama e-postası gönderildi.</string>
+    <string name="password_reset_failed">Şifre sıfırlama başarısız: %1$s</string>
 
     <string name="wallpaper_preview">Duvar Kağıdı Önizleme</string>
     <string name="photo_by">Fotoğraf: %1$s</string>
@@ -59,6 +62,14 @@
     <string name="setting_wallpaper">Duvar kağıdı ayarlanıyor...</string>
     <string name="wallpaper_set_successfully">Duvar kağıdı başarıyla ayarlandı</string>
     <string name="wallpaper_set_failed">Duvar kağıdı ayarlanamadı: %1$s</string>
+    <string name="repost_wallpaper">Blogda Paylaş</string>
+    <string name="write_comment">Yorum yaz</string>
+    <string name="comment_hint">Bu duvar kağıdı hakkında düşünceni yaz</string>
+    <string name="share">Paylaş</string>
+    <string name="cancel">İptal</string>
+    <string name="post_saved">Paylaşım bloguna eklendi.</string>
+    <string name="post_failed">Paylaşım kaydedilemedi: %1$s</string>
+    <string name="comment_required">Önce bir yorum yazmalısın.</string>
 
     <string name="loading_favorites">Favoriler yükleniyor...</string>
     <string name="no_favorites_yet">Henüz favori yok.</string>
@@ -66,6 +77,30 @@
     <string name="no_favorite_matches">Bu aramayla eşleşen favori yok.</string>
     <string name="no_favorite_matches_description">Görünen kategori adları veya AI etiketleriyle aramayı dene.</string>
     <string name="api_fetch_failed_cached">API başarısız oldu, önbellekteki veriler gösteriliyor</string>
+
+    <string name="profile">Profil</string>
+    <string name="profile_subtitle">Hesabını ve kişisel duvar kağıdı blogunu yönet.</string>
+    <string name="profile_info">Profil Bilgileri</string>
+    <string name="first_name">Ad</string>
+    <string name="last_name">Soyad</string>
+    <string name="bio">Bio</string>
+    <string name="profile_photo_url">Profil fotoğrafı URL</string>
+    <string name="save_profile">Profili Kaydet</string>
+    <string name="profile_saved">Profil kaydedildi.</string>
+    <string name="profile_save_failed">Profil kaydedilemedi: %1$s</string>
+    <string name="change_password">Şifre Değiştir</string>
+    <string name="change_password_description">Hesabına şifre sıfırlama e-postası gönder.</string>
+    <string name="send_reset_email">Sıfırlama E-postası Gönder</string>
+    <string name="cover_photo">Kapak Fotoğrafı</string>
+    <string name="choose_cover_from_favorites">Favorilerden Seç</string>
+    <string name="no_favorites_for_cover">Kapak fotoğrafı seçmek için önce favori ekle.</string>
+    <string name="cover_updated">Kapak fotoğrafı güncellendi.</string>
+    <string name="my_blog">Blogum</string>
+    <string name="my_blog_description">Yorum ekleyerek yeniden paylaştığın duvar kağıtları burada görünür.</string>
+    <string name="no_posts_yet">Henüz blog paylaşımı yok.</string>
+    <string name="no_posts_yet_description">Bir duvar kağıdı detayına girip yorumla paylaş.</string>
+    <string name="delete_post">Paylaşımı Sil</string>
+    <string name="post_deleted">Paylaşım silindi.</string>
 
     <string name="checking_ai_cache">AI önbelleği kontrol ediliyor</string>
     <string name="gemini_analysis_in_progress">Gemini analizi devam ediyor</string>
