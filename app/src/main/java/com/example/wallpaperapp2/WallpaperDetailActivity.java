@@ -94,7 +94,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     }
 
     private void analyzeFavoriteFromDetail() {
-        wallpaper.aiCategory = "Analyzing";
+        wallpaper.aiCategory = getString(R.string.analyzing);
         wallpaper.aiLabels = getString(R.string.checking_ai_cache);
         FirebaseFavoritesStore.saveFavorite(wallpaper);
         updateAiTexts();
@@ -133,7 +133,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     }
 
     private void runOnDeviceFallback() {
-        wallpaper.aiCategory = "Analyzing";
+        wallpaper.aiCategory = getString(R.string.analyzing);
         wallpaper.aiLabels = getString(R.string.using_on_device_fallback);
         FirebaseFavoritesStore.saveFavorite(wallpaper);
         runOnUiThread(this::updateUiSafe);
@@ -142,12 +142,13 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             @Override
             public void onSuccess(java.util.List<AiLabelData> labels) {
                 wallpaper.aiCategory = DynamicCategoryGenerator.generateCategory(
+                        WallpaperDetailActivity.this,
                         labels,
                         WallpaperRepository.getExistingAiCategories()
                 );
                 wallpaper.aiLabels = getString(
                         R.string.on_device_suffix,
-                        DynamicCategoryGenerator.labelsToDisplay(labels)
+                        DynamicCategoryGenerator.labelsToDisplay(WallpaperDetailActivity.this, labels)
                 );
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 FirebaseFavoritesStore.saveAiCache(wallpaper);
@@ -156,7 +157,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
-                wallpaper.aiCategory = "Uncategorized";
+                wallpaper.aiCategory = getString(R.string.uncategorized);
                 wallpaper.aiLabels = getString(R.string.on_device_analysis_failed);
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 runOnUiThread(WallpaperDetailActivity.this::updateUiSafe);
