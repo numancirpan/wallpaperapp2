@@ -17,6 +17,8 @@
     <string name="nav_settings">Ayarlar</string>
 
     <string name="auth_title">Wallpaper Uygulaması Giriş</string>
+    <string name="auth_subtitle_login">Favori duvar kağıtlarını ve AI kategorilerini senkronize etmek için giriş yap.</string>
+    <string name="auth_subtitle_register">Favorilerini kaydetmek ve AI koleksiyonlarını senkronize tutmak için hesap oluştur.</string>
     <string name="email">E-posta</string>
     <string name="password">Şifre</string>
     <string name="login">Giriş Yap</string>
