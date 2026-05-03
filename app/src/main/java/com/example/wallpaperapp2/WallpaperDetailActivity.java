@@ -1,9 +1,14 @@
 package com.example.wallpaperapp2;
 
 import android.app.WallpaperManager;
+import android.app.Dialog;
+import android.content.ContentValues;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -13,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,6 +31,8 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private TextView txtAiLabels;
     private MaterialButton btnFavorite;
     private MaterialButton btnRepostWallpaper;
+    private MaterialButton btnDetailCollection;
+    private MaterialButton btnDownloadWallpaper;
     private MaterialButton btnSetHomeWallpaper;
     private MaterialButton btnSetLockWallpaper;
 
@@ -43,6 +51,8 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         txtAiLabels = findViewById(R.id.txtDetailAiLabels);
         btnFavorite = findViewById(R.id.btnDetailFavorite);
         btnRepostWallpaper = findViewById(R.id.btnRepostWallpaper);
+        btnDetailCollection = findViewById(R.id.btnDetailCollection);
+        btnDownloadWallpaper = findViewById(R.id.btnDownloadWallpaper);
         btnSetHomeWallpaper = findViewById(R.id.btnSetHomeWallpaper);
         btnSetLockWallpaper = findViewById(R.id.btnSetLockWallpaper);
 
@@ -60,6 +70,9 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             bindWallpaperActions();
             bindFavoriteAction();
             bindRepostAction();
+            bindCollectionAction();
+            bindDownloadAction();
+            imageWallpaper.setOnClickListener(v -> showFullscreenPreview());
         }
     }
 
@@ -98,6 +111,77 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
     private void bindRepostAction() {
         btnRepostWallpaper.setOnClickListener(v -> RepostDialogHelper.show(this, findViewById(android.R.id.content), wallpaper));
+    }
+
+    private void bindDownloadAction() {
+        btnDownloadWallpaper.setOnClickListener(v -> downloadWallpaper());
+    }
+
+    private void bindCollectionAction() {
+        btnDetailCollection.setOnClickListener(v ->
+                CollectionDialogHelper.show(this, findViewById(android.R.id.content), wallpaper)
+        );
+    }
+
+    private void downloadWallpaper() {
+        btnDownloadWallpaper.setEnabled(false);
+        showMessage(getString(R.string.downloading_wallpaper));
+
+        backgroundExecutor.execute(() -> {
+            try {
+                Bitmap bitmap = loadCurrentBitmap();
+                String displayName = "wallpaper_" + wallpaper.id + "_" + System.currentTimeMillis() + ".jpg";
+
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, displayName);
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/WallpaperApp");
+                    values.put(MediaStore.Images.Media.IS_PENDING, 1);
+                }
+
+                android.net.Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new Exception("Gallery location could not be opened");
+
+                OutputStream stream = getContentResolver().openOutputStream(uri);
+                if (stream == null) throw new Exception("Image file could not be created");
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream);
+                stream.close();
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.clear();
+                    values.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    getContentResolver().update(uri, values, null, null);
+                }
+
+                runOnUiThread(() -> showMessage(getString(R.string.wallpaper_downloaded)));
+            } catch (Exception e) {
+                runOnUiThread(() -> showMessage(getString(R.string.wallpaper_download_failed, e.getMessage())));
+            } finally {
+                runOnUiThread(() -> btnDownloadWallpaper.setEnabled(true));
+            }
+        });
+    }
+
+    private void showFullscreenPreview() {
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        ImageView preview = new ImageView(this);
+        preview.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        preview.setBackgroundColor(android.graphics.Color.BLACK);
+        preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        preview.setOnClickListener(v -> dialog.dismiss());
+
+        if (wallpaper.hasRemoteImage()) {
+            Glide.with(this).load(wallpaper.imageUrl).fitCenter().into(preview);
+        } else {
+            preview.setImageResource(wallpaper.imageRes);
+        }
+
+        dialog.setContentView(preview);
+        dialog.show();
     }
 
     private void analyzeFavoriteFromDetail() {
@@ -190,16 +274,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
         backgroundExecutor.execute(() -> {
             try {
-                Bitmap bitmap;
-                if (wallpaper.hasRemoteImage()) {
-                    bitmap = Glide.with(getApplicationContext())
-                            .asBitmap()
-                            .load(wallpaper.imageUrl)
-                            .submit()
-                            .get();
-                } else {
-                    bitmap = ((android.graphics.drawable.BitmapDrawable) imageWallpaper.getDrawable()).getBitmap();
-                }
+                Bitmap bitmap = loadCurrentBitmap();
 
                 WallpaperManager manager = WallpaperManager.getInstance(getApplicationContext());
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -223,6 +298,17 @@ public class WallpaperDetailActivity extends AppCompatActivity {
 
     private boolean needsAnalysis() {
         return !FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels);
+    }
+
+    private Bitmap loadCurrentBitmap() throws Exception {
+        if (wallpaper.hasRemoteImage()) {
+            return Glide.with(getApplicationContext())
+                    .asBitmap()
+                    .load(wallpaper.imageUrl)
+                    .submit()
+                    .get();
+        }
+        return ((BitmapDrawable) imageWallpaper.getDrawable()).getBitmap();
     }
 
     private void updateFavoriteIcon() {

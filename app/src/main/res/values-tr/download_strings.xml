@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_wallpaper">Duvar Kagidini Indir</string>
+    <string name="downloading_wallpaper">Duvar kagidi indiriliyor...</string>
+    <string name="wallpaper_downloaded">Duvar kagidi galeriye kaydedildi.</string>
+    <string name="wallpaper_download_failed">Duvar kagidi indirilemedi: %1$s</string>
+</resources>

@@ -7,7 +7,10 @@
     <string name="collection_name">Koleksiyon adi</string>
     <string name="collection_name_required">Koleksiyon adi gir.</string>
     <string name="collection_saved">Koleksiyona eklendi.</string>
+    <string name="collection_removed">Koleksiyondan cikarildi.</string>
     <string name="collection_save_failed">Koleksiyon kaydedilemedi: %1$s</string>
+    <string name="in_this_collection">Bu koleksiyonda var</string>
+    <string name="remove_from_collection">Cikar</string>
     <string name="new_collection">Yeni koleksiyon</string>
     <string name="my_collections">Koleksiyonlar</string>
     <string name="no_collections_yet">Henuz koleksiyon yok.</string>

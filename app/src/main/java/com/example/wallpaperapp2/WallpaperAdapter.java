@@ -1,6 +1,8 @@
 package com.example.wallpaperapp2;
 
+import android.content.res.ColorStateList;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +49,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
         holder.txtWallpaperTitle.setVisibility(View.GONE);
         FavoriteButtonStyler.apply(holder.btnFavorite, wallpaper.isFavorite);
+        applyCollectionButtonStyle(holder.btnAddToCollection, UserProfileStore.isWallpaperInCachedCollection(wallpaper.id));
 
         holder.btnFavorite.setOnClickListener(v -> {
             wallpaper.isFavorite = !wallpaper.isFavorite;
@@ -165,6 +168,14 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
 
     private boolean needsAnalysis(Wallpaper wallpaper) {
         return !FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels);
+    }
+
+    private void applyCollectionButtonStyle(MaterialButton button, boolean inCollection) {
+        int background = inCollection ? Color.parseColor("#6E4BA8") : Color.parseColor("#33FFFFFF");
+        int icon = inCollection ? Color.WHITE : Color.parseColor("#E8DEF8");
+        button.setBackgroundTintList(ColorStateList.valueOf(background));
+        button.setIconTint(ColorStateList.valueOf(icon));
+        button.setAlpha(inCollection ? 1f : 0.82f);
     }
 
     @Override

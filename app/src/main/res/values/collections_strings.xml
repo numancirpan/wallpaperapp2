@@ -7,7 +7,10 @@
     <string name="collection_name">Collection name</string>
     <string name="collection_name_required">Enter a collection name.</string>
     <string name="collection_saved">Added to collection.</string>
+    <string name="collection_removed">Removed from collection.</string>
     <string name="collection_save_failed">Collection could not be saved: %1$s</string>
+    <string name="in_this_collection">Already in this collection</string>
+    <string name="remove_from_collection">Remove</string>
     <string name="new_collection">New collection</string>
     <string name="my_collections">Collections</string>
     <string name="no_collections_yet">No collections yet.</string>

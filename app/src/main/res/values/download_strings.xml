@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_wallpaper">Download Wallpaper</string>
+    <string name="downloading_wallpaper">Downloading wallpaper...</string>
+    <string name="wallpaper_downloaded">Wallpaper saved to gallery.</string>
+    <string name="wallpaper_download_failed">Wallpaper could not be downloaded: %1$s</string>
+</resources>

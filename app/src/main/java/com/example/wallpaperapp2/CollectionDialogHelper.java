@@ -43,7 +43,7 @@ public class CollectionDialogHelper {
         root.setPadding(padding, 12, padding, padding);
 
         TextView handle = new TextView(context);
-        handle.setText("━━━━");
+        handle.setText("----");
         handle.setTextColor(0xFFB7A8CC);
         handle.setGravity(android.view.Gravity.CENTER);
         root.addView(handle, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -91,10 +91,21 @@ public class CollectionDialogHelper {
 
         for (WallpaperCollection collection : safeCollections) {
             if (collection.name == null || collection.name.trim().isEmpty()) continue;
-            listContainer.addView(collectionRow(context, collection, v -> {
-                UserProfileStore.addWallpaperToCollection(collection.id, wallpaper, (success, errorMessage) ->
-                        showResult(context, anchor, success, errorMessage)
-                );
+            boolean containsWallpaper = collectionContains(collection, wallpaper.id);
+            listContainer.addView(collectionRow(context, collection, containsWallpaper, v -> {
+                if (containsWallpaper) return;
+                UserProfileStore.addWallpaperToCollection(collection.id, wallpaper, (success, errorMessage) -> {
+                    showResult(context, anchor, success, errorMessage);
+                    UserProfileStore.fetchCollections(ignored -> {
+                    });
+                });
+                sheet.dismiss();
+            }, v -> {
+                UserProfileStore.removeWallpaperFromCollection(collection.id, wallpaper.id, (success, errorMessage) -> {
+                    showRemoveResult(context, anchor, success, errorMessage);
+                    UserProfileStore.fetchCollections(ignored -> {
+                    });
+                });
                 sheet.dismiss();
             }));
         }
@@ -115,13 +126,19 @@ public class CollectionDialogHelper {
         listContainer.addView(newButton, params);
     }
 
-    private static View collectionRow(Context context, WallpaperCollection collection, View.OnClickListener listener) {
+    private static View collectionRow(
+            Context context,
+            WallpaperCollection collection,
+            boolean containsWallpaper,
+            View.OnClickListener addListener,
+            View.OnClickListener removeListener
+    ) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
         row.setPadding(dp(context, 14), dp(context, 12), dp(context, 14), dp(context, 12));
-        row.setBackgroundColor(0x10C7B2FF);
-        row.setOnClickListener(listener);
+        row.setBackgroundColor(containsWallpaper ? 0x22C7B2FF : 0x10C7B2FF);
+        row.setOnClickListener(addListener);
 
         LinearLayout textColumn = new LinearLayout(context);
         textColumn.setOrientation(LinearLayout.VERTICAL);
@@ -135,16 +152,29 @@ public class CollectionDialogHelper {
 
         int count = collection.wallpapers == null ? 0 : collection.wallpapers.size();
         TextView meta = new TextView(context);
-        meta.setText(context.getResources().getQuantityString(R.plurals.collection_photo_count, count, count));
+        meta.setText(containsWallpaper
+                ? context.getString(R.string.in_this_collection)
+                : context.getResources().getQuantityString(R.plurals.collection_photo_count, count, count));
         meta.setAlpha(0.68f);
         meta.setTextSize(13);
         textColumn.addView(meta);
 
-        TextView arrow = new TextView(context);
-        arrow.setText("›");
-        arrow.setTextSize(28);
-        arrow.setTextColor(0xFF6E4BA8);
-        row.addView(arrow);
+        if (containsWallpaper) {
+            MaterialButton remove = new MaterialButton(context);
+            remove.setText(R.string.remove_from_collection);
+            remove.setTextSize(12);
+            remove.setMinWidth(0);
+            remove.setCornerRadius(dp(context, 18));
+            remove.setTextColor(0xFF6E4BA8);
+            remove.setOnClickListener(removeListener);
+            row.addView(remove, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(context, 40)));
+        } else {
+            TextView arrow = new TextView(context);
+            arrow.setText(">");
+            arrow.setTextSize(22);
+            arrow.setTextColor(0xFF6E4BA8);
+            row.addView(arrow);
+        }
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -196,6 +226,22 @@ public class CollectionDialogHelper {
                 ? context.getString(R.string.collection_saved)
                 : context.getString(R.string.collection_save_failed, errorMessage == null ? "Unknown error" : errorMessage);
         Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private static void showRemoveResult(Context context, View anchor, boolean success, String errorMessage) {
+        if (anchor == null) return;
+        String message = success
+                ? context.getString(R.string.collection_removed)
+                : context.getString(R.string.collection_save_failed, errorMessage == null ? "Unknown error" : errorMessage);
+        Snackbar.make(anchor, message, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private static boolean collectionContains(WallpaperCollection collection, int wallpaperId) {
+        if (collection.wallpapers == null) return false;
+        for (Wallpaper wallpaper : collection.wallpapers) {
+            if (wallpaper != null && wallpaper.id == wallpaperId) return true;
+        }
+        return false;
     }
 
     private static int dp(Context context, int value) {

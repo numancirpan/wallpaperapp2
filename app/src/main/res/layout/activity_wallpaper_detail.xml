@@ -116,6 +116,26 @@
             app:cornerRadius="28dp" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDetailCollection"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/add_to_collection"
+            app:cornerRadius="28dp"
+            app:icon="@android:drawable/ic_menu_add" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDownloadWallpaper"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/download_wallpaper"
+            app:cornerRadius="28dp"
+            app:icon="@android:drawable/stat_sys_download_done" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSetHomeWallpaper"
             android:layout_width="match_parent"
             android:layout_height="56dp"

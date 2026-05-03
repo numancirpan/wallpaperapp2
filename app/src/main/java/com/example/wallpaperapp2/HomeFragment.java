@@ -58,6 +58,7 @@ public class HomeFragment extends Fragment {
         adapter = new WallpaperAdapter(list);
         recyclerView.setAdapter(adapter);
         renderSuggestionChips();
+        loadCollectionsForIndicators();
         loadWallpapersFromApi();
 
         editSearch.addTextChangedListener(new TextWatcher() {
@@ -109,6 +110,13 @@ public class HomeFragment extends Fragment {
                 indexSearchMetadata();
                 renderSuggestionChips();
             });
+        });
+    }
+
+    private void loadCollectionsForIndicators() {
+        UserProfileStore.fetchCollections(collections -> {
+            if (!isAdded() || adapter == null) return;
+            requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
         });
     }
 
@@ -262,6 +270,7 @@ public class HomeFragment extends Fragment {
 
         if (adapter != null) {
             filterWallpapers();
+            loadCollectionsForIndicators();
         }
     }
 }

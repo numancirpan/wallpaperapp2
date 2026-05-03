@@ -235,6 +235,16 @@ public class UserProfileStore {
         return new ArrayList<>(cachedCollections);
     }
 
+    public static boolean isWallpaperInCachedCollection(int wallpaperId) {
+        for (WallpaperCollection collection : cachedCollections) {
+            if (collection.wallpapers == null) continue;
+            for (Wallpaper wallpaper : collection.wallpapers) {
+                if (wallpaper != null && wallpaper.id == wallpaperId) return true;
+            }
+        }
+        return false;
+    }
+
     public static void fetchCollections(CollectionsCallback callback) {
         String uid = currentUid();
         if (uid == null) {
@@ -274,6 +284,51 @@ public class UserProfileStore {
         }
 
         appendWallpaperToCollection(uid, collectionId, wallpaper, callback);
+    }
+
+    public static void removeWallpaperFromCollection(String collectionId, int wallpaperId, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (collectionId == null || collectionId.trim().isEmpty()) {
+            callback.onComplete(false, "Collection not found");
+            return;
+        }
+
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .document(collectionId)
+                .get()
+                .addOnSuccessListener(document -> {
+                    List<Map<String, Object>> items = new ArrayList<>();
+                    Object rawItems = document.get("items");
+                    if (rawItems instanceof List<?>) {
+                        for (Object rawItem : (List<?>) rawItems) {
+                            if (!(rawItem instanceof Map<?, ?>)) continue;
+                            Object rawId = ((Map<?, ?>) rawItem).get("id");
+                            int id = rawId instanceof Number ? ((Number) rawId).intValue() : -1;
+                            if (id == wallpaperId) continue;
+
+                            Map<String, Object> item = new HashMap<>();
+                            for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawItem).entrySet()) {
+                                if (entry.getKey() != null) item.put(String.valueOf(entry.getKey()), entry.getValue());
+                            }
+                            items.add(item);
+                        }
+                    }
+
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("items", items);
+                    update.put("updatedAt", System.currentTimeMillis());
+                    document.getReference()
+                            .update(update)
+                            .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                            .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                })
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
     }
 
     public static void addWallpaperToCollectionByName(String collectionName, Wallpaper wallpaper, ActionCallback callback) {
