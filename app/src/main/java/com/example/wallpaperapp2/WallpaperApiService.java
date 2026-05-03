@@ -24,45 +24,52 @@ public class WallpaperApiService {
 
     public static void fetchWallpapers(Callback callback) {
         EXECUTOR.execute(() -> {
-            HttpURLConnection connection = null;
             try {
-                URL url = new URL(BuildConfig.WALLPAPER_API_URL);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
-                connection.setRequestMethod("GET");
-                connection.connect();
-
-                int responseCode = connection.getResponseCode();
-                InputStream stream = responseCode >= 200 && responseCode < 300
-                        ? connection.getInputStream()
-                        : connection.getErrorStream();
-
-                String raw = readStream(stream);
-                if (responseCode < 200 || responseCode >= 300) {
-                    throw new Exception("Wallpaper API error: " + responseCode + " " + raw);
-                }
-
-                JSONArray array = new JSONArray(raw);
-                List<Wallpaper> result = new ArrayList<>();
-                for (int i = 0; i < array.length(); i++) {
-                    JSONObject item = array.getJSONObject(i);
-                    String idText = item.optString("id", String.valueOf(i + 1));
-                    int id = safeParseInt(idText, i + 1);
-                    String author = item.optString("author", "Wallpaper " + id);
-                    String imageUrl = item.optString("download_url", "");
-                    result.add(new Wallpaper(id, imageUrl, author));
-                }
-
+                List<Wallpaper> result = fetchWallpapersFromUrl(BuildConfig.WALLPAPER_API_URL);
                 callback.onSuccess(result);
             } catch (Exception e) {
                 callback.onError(e);
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
             }
         });
+    }
+
+    private static List<Wallpaper> fetchWallpapersFromUrl(String urlText) throws Exception {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlText);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+            connection.setRequestMethod("GET");
+            connection.connect();
+
+            int responseCode = connection.getResponseCode();
+            InputStream stream = responseCode >= 200 && responseCode < 300
+                    ? connection.getInputStream()
+                    : connection.getErrorStream();
+
+            String raw = readStream(stream);
+            if (responseCode < 200 || responseCode >= 300) {
+                throw new Exception("Wallpaper API error: " + responseCode + " " + raw);
+            }
+
+            JSONArray array = new JSONArray(raw);
+            List<Wallpaper> result = new ArrayList<>();
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject item = array.getJSONObject(i);
+                String idText = item.optString("id", String.valueOf(i + 1));
+                int id = safeParseInt(idText, i + 1);
+                String author = item.optString("author", "Wallpaper " + id);
+                String imageUrl = item.optString("download_url", "");
+                result.add(new Wallpaper(id, imageUrl, author));
+            }
+
+            return result;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     private static String readStream(InputStream stream) throws Exception {

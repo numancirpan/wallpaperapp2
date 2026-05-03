@@ -44,12 +44,15 @@ public class GeminiCategoryService {
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final List<String> MODEL_CANDIDATES = Arrays.asList(
-            "gemini-2.0-flash"
+            "gemini-2.0-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash",
+            "gemini-pro-vision"
     );
-    private static final int GEMINI_IMAGE_SIZE = 512;
-    private static final int GEMINI_JPEG_QUALITY = 70;
-    private static final int GEMINI_CONNECT_TIMEOUT_MS = 5000;
-    private static final int GEMINI_READ_TIMEOUT_MS = 7000;
+
+    public static boolean isConfigured() {
+        return BuildConfig.GEMINI_API_KEY != null && !BuildConfig.GEMINI_API_KEY.trim().isEmpty();
+    }
 
     public static void analyzeWallpaper(
             @NonNull Context context,
@@ -71,7 +74,7 @@ public class GeminiCategoryService {
                     return;
                 }
 
-                String base64Image = bitmapToBase64(resizeBitmap(bitmap, GEMINI_IMAGE_SIZE));
+                String base64Image = bitmapToBase64(resizeBitmap(bitmap, 768));
                 String requestBody = buildRequestBody(wallpaper, existingCategories, base64Image).toString();
                 String lastError = "Unknown Gemini error";
 
@@ -100,6 +103,17 @@ public class GeminiCategoryService {
         });
     }
 
+    public static void refineCategory(
+            @NonNull Context context,
+            @NonNull Wallpaper wallpaper,
+            List<AiLabelData> labels,
+            String onDeviceCategory,
+            List<String> existingCategories,
+            @NonNull Callback callback
+    ) {
+        analyzeWallpaper(context, wallpaper, existingCategories, callback);
+    }
+
     private static GeminiHttpResult callGemini(String apiKey, String modelName, String requestBody) throws Exception {
         HttpURLConnection connection = null;
         try {
@@ -109,8 +123,8 @@ public class GeminiCategoryService {
                     + apiKey;
 
             connection = (HttpURLConnection) new URL(endpoint).openConnection();
-            connection.setConnectTimeout(GEMINI_CONNECT_TIMEOUT_MS);
-            connection.setReadTimeout(GEMINI_READ_TIMEOUT_MS);
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(20000);
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setDoOutput(true);
@@ -173,7 +187,7 @@ public class GeminiCategoryService {
             return Glide.with(context.getApplicationContext())
                     .asBitmap()
                     .load(wallpaper.imageUrl)
-                    .submit(GEMINI_IMAGE_SIZE, GEMINI_IMAGE_SIZE)
+                    .submit(768, 768)
                     .get();
         }
         return BitmapFactory.decodeResource(context.getResources(), wallpaper.imageRes);
@@ -194,7 +208,7 @@ public class GeminiCategoryService {
 
     private static String bitmapToBase64(Bitmap bitmap) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, GEMINI_JPEG_QUALITY, outputStream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 82, outputStream);
         return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP);
     }
 

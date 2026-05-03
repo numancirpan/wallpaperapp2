@@ -10,6 +10,7 @@
     <string name="layout_settings">Yerleşim</string>
     <string name="language_settings">Dil</string>
     <string name="account_settings">Hesap</string>
+    <string name="light_mode">Aydinlik Mod</string>
     <string name="dark_mode">Karanlık Mod</string>
     <string name="dark_mode_description">Daha rahat görüntüleme için koyu arayüz kullan.</string>
     <string name="grid_columns">Izgara Sütunları</string>

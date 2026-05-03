@@ -10,6 +10,7 @@ public class AppSettingsManager {
     private static final String KEY_DARK_MODE = "dark_mode";
     private static final String KEY_GRID_COLUMNS = "grid_columns";
     private static final String KEY_LANGUAGE_CODE = "language_code";
+    private static final String KEY_AI_AUTO_CATEGORIZE = "ai_auto_categorize";
 
     private final SharedPreferences sharedPreferences;
 
@@ -39,5 +40,13 @@ public class AppSettingsManager {
 
     public String getLanguageCode() {
         return sharedPreferences.getString(KEY_LANGUAGE_CODE, "en");
+    }
+
+    public void setAiAutoCategorizeEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_AI_AUTO_CATEGORIZE, enabled).apply();
+    }
+
+    public boolean isAiAutoCategorizeEnabled() {
+        return sharedPreferences.getBoolean(KEY_AI_AUTO_CATEGORIZE, true);
     }
 }

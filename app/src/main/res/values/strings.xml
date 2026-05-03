@@ -10,6 +10,7 @@
     <string name="layout_settings">Layout</string>
     <string name="language_settings">Language</string>
     <string name="account_settings">Account</string>
+    <string name="light_mode">Light Mode</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="dark_mode_description">Use a darker interface for comfortable viewing.</string>
     <string name="grid_columns">Grid Columns</string>

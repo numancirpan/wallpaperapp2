@@ -2,14 +2,24 @@ package com.example.wallpaperapp2;
 
 import android.content.Context;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 public class WallpaperRepository {
+
+    private static final List<String> CATEGORY_SEARCH_TERMS = Arrays.asList(
+            "work", "working", "workspace",
+            "animal", "animals",
+            "nature", "beach", "water", "ocean", "sea",
+            "city", "urban", "architecture",
+            "vehicle", "vehicles",
+            "people", "person", "portrait",
+            "art", "abstract", "space", "food", "phone", "dark", "minimal"
+    );
 
     public static List<Wallpaper> wallpaperList = new ArrayList<>();
 
@@ -31,25 +41,38 @@ public class WallpaperRepository {
         return favoriteList;
     }
 
-    public static List<Wallpaper> searchWallpapersByTitle(String query) {
-        return searchWallpapersByTitle(null, query);
-    }
+    public static List<Wallpaper> searchWallpapers(Context context, String query) {
+        String normalizedQuery = normalizeSearch(query);
+        if (normalizedQuery.isEmpty()) {
+            return new ArrayList<>(wallpaperList);
+        }
 
-    public static List<Wallpaper> searchWallpapersByTitle(Context context, String query) {
         List<Wallpaper> filteredList = new ArrayList<>();
-        String normalized = normalizeSearchText(query);
 
         for (Wallpaper wallpaper : wallpaperList) {
-            boolean matchesQuery = normalizeSearchText(wallpaper.title).contains(normalized)
-                    || normalizeSearchText(wallpaper.aiCategory).contains(normalized)
-                    || normalizeSearchText(wallpaper.aiLabels).contains(normalized);
+            String rawCategory = safeString(wallpaper.aiCategory);
+            String rawLabels = safeString(wallpaper.aiLabels);
+            String displayCategory = CategoryDisplayMapper.toDisplayName(context, rawCategory);
+            String displayLabels = AiLabelDisplayMapper.toDisplayLabels(context, rawLabels);
+            String searchable = normalizeSearch(
+                    safeString(wallpaper.title) + " "
+                            + rawCategory + " "
+                            + rawLabels + " "
+                            + displayCategory + " "
+                            + displayLabels
+            );
+            List<String> searchableTokens = tokenize(searchable);
 
-            if (!matchesQuery && context != null) {
-                String displayCategory = CategoryDisplayMapper.toDisplayName(context, wallpaper.aiCategory);
-                String displayLabels = AiLabelDisplayMapper.toDisplayLabels(context, wallpaper.aiLabels);
-                matchesQuery = normalizeSearchText(displayCategory).contains(normalized)
-                        || normalizeSearchText(displayLabels).contains(normalized)
-                        || categorySearchMatches(context, wallpaper, normalized);
+            boolean matchesQuery;
+            if (isCategoryStyleQuery(normalizedQuery)) {
+                String categoryOnlySearchable = normalizeSearch(rawCategory + " " + displayCategory);
+                matchesQuery = categoryOnlySearchable.contains(normalizedQuery)
+                        || CategoryResolver.matchesQuery(normalizedQuery, rawCategory, "");
+            } else if (isShortSpecificQuery(normalizedQuery)) {
+                matchesQuery = matchesTokenPrefix(searchableTokens, normalizedQuery);
+            } else {
+                matchesQuery = searchable.contains(normalizedQuery)
+                        || matchesTokenPrefix(searchableTokens, normalizedQuery);
             }
 
             if (matchesQuery) {
@@ -130,16 +153,8 @@ public class WallpaperRepository {
             }
 
             wallpaper.isFavorite = true;
-
-            String cloudCategory = normalizeCategoryKey(safeString(data.get("aiCategory")));
-            String cloudLabels = safeString(data.get("aiLabels"));
-            boolean cloudHasUsableAi = FirebaseFavoritesStore.isUsableAiData(cloudCategory, cloudLabels);
-            boolean localHasUsableAi = FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels);
-
-            if (cloudHasUsableAi || !localHasUsableAi) {
-                wallpaper.aiCategory = cloudCategory;
-                wallpaper.aiLabels = cloudLabels;
-            }
+            wallpaper.aiCategory = normalizeCategoryKey(safeString(data.get("aiCategory")));
+            wallpaper.aiLabels = safeString(data.get("aiLabels"));
         }
     }
 
@@ -183,25 +198,53 @@ public class WallpaperRepository {
         return value == null ? "" : String.valueOf(value);
     }
 
-    private static String normalizeSearchText(String value) {
+    private static String normalizeSearch(String value) {
         if (value == null) return "";
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .toLowerCase(Locale.ROOT)
+        return value.toLowerCase(Locale.ROOT)
                 .replace("ı", "i")
                 .replace("ğ", "g")
                 .replace("ü", "u")
                 .replace("ş", "s")
                 .replace("ö", "o")
                 .replace("ç", "c")
+                .replace("Ä±", "i")
+                .replace("ÄŸ", "g")
+                .replace("Ã¼", "u")
+                .replace("ÅŸ", "s")
+                .replace("Ã¶", "o")
+                .replace("Ã§", "c")
+                .replaceAll("[^a-z0-9\\s-]", " ")
+                .replaceAll("\\s+", " ")
                 .trim();
-        return normalized;
     }
 
-    private static boolean categorySearchMatches(Context context, Wallpaper wallpaper, String normalizedQuery) {
-        String canonical = CategoryDisplayMapper.canonicalName(wallpaper.aiCategory);
-        String display = CategoryDisplayMapper.toDisplayName(context, canonical);
-        return normalizeSearchText(canonical).contains(normalizedQuery)
-                || normalizeSearchText(display).contains(normalizedQuery);
+    private static boolean isCategoryStyleQuery(String query) {
+        return CATEGORY_SEARCH_TERMS.contains(query);
+    }
+
+    private static boolean isShortSpecificQuery(String query) {
+        return query.length() <= 4 && !isCategoryStyleQuery(query);
+    }
+
+    private static List<String> tokenize(String value) {
+        List<String> tokens = new ArrayList<>();
+        if (value == null || value.trim().isEmpty()) return tokens;
+
+        for (String token : value.split("\\s+")) {
+            String cleaned = token.trim();
+            if (!cleaned.isEmpty()) {
+                tokens.add(cleaned);
+            }
+        }
+        return tokens;
+    }
+
+    private static boolean matchesTokenPrefix(List<String> tokens, String query) {
+        for (String token : tokens) {
+            if (token.equals(query) || token.startsWith(query)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

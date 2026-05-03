@@ -1,7 +1,6 @@
 package com.example.wallpaperapp2;
 
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -10,30 +9,34 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 public class HomeFragment extends Fragment {
+
+    private static final List<String> QUICK_SEARCHES = Arrays.asList(
+            "nature",
+            "work",
+            "animals",
+            "beach",
+            "city",
+            "abstract"
+    );
 
     RecyclerView recyclerView;
     WallpaperAdapter adapter;
     List<Wallpaper> list;
     TextInputEditText editSearch;
     ChipGroup chipGroupSuggestions;
-    private final Set<Integer> metadataRequestedWallpaperIds = new HashSet<>();
 
     public HomeFragment() {
     }
@@ -57,8 +60,7 @@ public class HomeFragment extends Fragment {
 
         adapter = new WallpaperAdapter(list);
         recyclerView.setAdapter(adapter);
-        renderSuggestionChips();
-        loadCollectionsForIndicators();
+        setupQuickSearchChips();
         loadWallpapersFromApi();
 
         editSearch.addTextChangedListener(new TextWatcher() {
@@ -69,7 +71,6 @@ public class HomeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 filterWallpapers();
-                updateActiveSuggestion(s == null ? "" : s.toString().trim());
             }
 
             @Override
@@ -78,6 +79,30 @@ public class HomeFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void setupQuickSearchChips() {
+        if (chipGroupSuggestions == null) return;
+
+        chipGroupSuggestions.removeAllViews();
+        for (String quickSearch : QUICK_SEARCHES) {
+            Chip chip = new Chip(requireContext());
+            chip.setText(capitalizeLabel(quickSearch));
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setEnsureMinTouchTargetSize(true);
+            chip.setChipBackgroundColorResource(R.color.chip_background_color);
+            chip.setTextColor(ContextCompat.getColorStateList(requireContext(), R.color.chip_text_color));
+            chip.setChipStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.chip_stroke)));
+            chip.setChipStrokeWidth(2f);
+            chip.setChipCornerRadius(24f);
+            chip.setOnClickListener(v -> {
+                if (editSearch == null) return;
+                editSearch.setText(quickSearch);
+                editSearch.setSelection(quickSearch.length());
+            });
+            chipGroupSuggestions.addView(chip);
+        }
     }
 
     private void loadWallpapersFromApi() {
@@ -107,16 +132,8 @@ public class HomeFragment extends Fragment {
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
                 filterWallpapers();
-                indexSearchMetadata();
-                renderSuggestionChips();
+                warmUpSearchMetadata();
             });
-        });
-    }
-
-    private void loadCollectionsForIndicators() {
-        UserProfileStore.fetchCollections(collections -> {
-            if (!isAdded() || adapter == null) return;
-            requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
         });
     }
 
@@ -127,19 +144,16 @@ public class HomeFragment extends Fragment {
             query = editSearch.getText().toString().trim();
         }
 
-        List<Wallpaper> filteredList = WallpaperRepository.searchWallpapersByTitle(requireContext(), query);
+        List<Wallpaper> filteredList = WallpaperRepository.searchWallpapers(requireContext(), query);
         adapter.updateList(filteredList);
+        updateQuickSearchSelection(query);
     }
 
-    private void indexSearchMetadata() {
+    private void warmUpSearchMetadata() {
         if (!isAdded()) return;
 
         List<String> existingCategories = WallpaperRepository.getExistingAiCategories();
         for (Wallpaper wallpaper : WallpaperRepository.wallpaperList) {
-            if (wallpaper == null || metadataRequestedWallpaperIds.contains(wallpaper.id)) continue;
-            if (FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels)) continue;
-
-            metadataRequestedWallpaperIds.add(wallpaper.id);
             WallpaperAiMetadataIndexer.ensureSearchMetadata(
                     requireContext(),
                     wallpaper,
@@ -147,115 +161,15 @@ public class HomeFragment extends Fragment {
                     updatedWallpaper -> {
                         if (!isAdded()) return;
                         requireActivity().runOnUiThread(() -> {
-                            filterWallpapers();
-                            renderSuggestionChips();
+                            if (editSearch == null || editSearch.getText() == null) return;
+                            String activeQuery = editSearch.getText().toString().trim();
+                            if (!activeQuery.isEmpty()) {
+                                filterWallpapers();
+                            }
                         });
                     }
             );
         }
-    }
-
-    private void renderSuggestionChips() {
-        if (chipGroupSuggestions == null || !isAdded()) return;
-        chipGroupSuggestions.removeAllViews();
-
-        List<String> suggestions = buildSearchSuggestions();
-        String currentQuery = editSearch.getText() == null ? "" : editSearch.getText().toString().trim();
-        for (String suggestion : suggestions) {
-            Chip chip = new Chip(requireContext());
-            chip.setText(suggestion);
-            chip.setCheckable(true);
-            chip.setChecked(suggestion.equalsIgnoreCase(currentQuery));
-            chip.setChipBackgroundColor(chipColors());
-            chip.setTextColor(textColors());
-            chip.setChipStrokeColor(ColorStateList.valueOf(Color.parseColor("#8A7AA6")));
-            chip.setChipStrokeWidth(1f);
-            chip.setOnClickListener(v -> {
-                editSearch.setText(suggestion);
-                editSearch.setSelection(suggestion.length());
-                updateActiveSuggestion(suggestion);
-            });
-            chipGroupSuggestions.addView(chip);
-        }
-    }
-
-    private List<String> buildSearchSuggestions() {
-        Set<String> pool = new LinkedHashSet<>();
-        for (Wallpaper wallpaper : WallpaperRepository.wallpaperList) {
-            if (FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels)) {
-                addSuggestion(pool, CategoryDisplayMapper.toDisplayName(requireContext(), wallpaper.aiCategory));
-            }
-        }
-
-        if (pool.size() < 5) {
-            for (String fallback : preferredSimpleSuggestions()) {
-                if (WallpaperRepository.searchWallpapersByTitle(requireContext(), fallback).isEmpty()) continue;
-                addSuggestion(pool, fallback);
-                if (pool.size() == 5) break;
-            }
-        }
-
-        List<String> suggestions = new ArrayList<>(pool);
-        Collections.shuffle(suggestions);
-        return suggestions.subList(0, Math.min(5, suggestions.size()));
-    }
-
-    private void addSuggestion(Set<String> pool, String value) {
-        if (value == null) return;
-        String clean = value.trim();
-        if (clean.isEmpty()) return;
-        String lower = clean.toLowerCase(Locale.ROOT);
-        if (lower.contains("unknown") || lower.contains("analyzing") || lower.contains("analiz")) return;
-        if (lower.contains("not available") || lower.contains("mevcut")) return;
-        if (lower.contains("kategorisiz") || lower.contains("uncategorized")) return;
-        pool.add(clean);
-    }
-
-    private List<String> preferredSimpleSuggestions() {
-        List<String> suggestions = new ArrayList<>();
-        suggestions.add(getString(R.string.category_workspace));
-        suggestions.add(getString(R.string.category_nature));
-        suggestions.add(getString(R.string.category_beach));
-        suggestions.add(getString(R.string.category_animals));
-        suggestions.add(getString(R.string.category_urban));
-        suggestions.add(getString(R.string.category_architecture));
-        suggestions.add(getString(R.string.category_water_scenes));
-        suggestions.add(getString(R.string.category_vehicles));
-        return suggestions;
-    }
-
-    private void updateActiveSuggestion(String selected) {
-        for (int i = 0; i < chipGroupSuggestions.getChildCount(); i++) {
-            View child = chipGroupSuggestions.getChildAt(i);
-            if (child instanceof Chip) {
-                Chip chip = (Chip) child;
-                chip.setChecked(chip.getText() != null && chip.getText().toString().equalsIgnoreCase(selected));
-            }
-        }
-    }
-
-    private ColorStateList chipColors() {
-        int[][] states = new int[][]{
-                new int[]{android.R.attr.state_checked},
-                new int[]{}
-        };
-        int[] colors = new int[]{
-                Color.parseColor("#D8C9F3"),
-                Color.parseColor("#00FFFFFF")
-        };
-        return new ColorStateList(states, colors);
-    }
-
-    private ColorStateList textColors() {
-        int[][] states = new int[][]{
-                new int[]{android.R.attr.state_checked},
-                new int[]{}
-        };
-        int[] colors = new int[]{
-                Color.parseColor("#3A2368"),
-                Color.parseColor("#4B4256")
-        };
-        return new ColorStateList(states, colors);
     }
 
     @Override
@@ -270,7 +184,25 @@ public class HomeFragment extends Fragment {
 
         if (adapter != null) {
             filterWallpapers();
-            loadCollectionsForIndicators();
+        }
+    }
+
+    private String capitalizeLabel(String value) {
+        if (value == null || value.isEmpty()) return "";
+        return value.substring(0, 1).toUpperCase() + value.substring(1);
+    }
+
+    private void updateQuickSearchSelection(String query) {
+        if (chipGroupSuggestions == null) return;
+
+        String normalizedQuery = query == null ? "" : query.trim();
+        for (int i = 0; i < chipGroupSuggestions.getChildCount(); i++) {
+            View child = chipGroupSuggestions.getChildAt(i);
+            if (!(child instanceof Chip)) continue;
+
+            Chip chip = (Chip) child;
+            String chipText = chip.getText() == null ? "" : chip.getText().toString();
+            chip.setChecked(chipText.equalsIgnoreCase(normalizedQuery));
         }
     }
 }

@@ -79,9 +79,8 @@ public class DynamicCategoryGenerator {
             scores.put(category, score);
         }
 
-        applyBoost(scores, "Workspace", 12, containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper", "book", "personal computer", "computer hardware", "electronic device", "technology", "gadget", "input device", "display device", "monitor"));
-        applyBoost(scores, "Workspace", 10, containsAny(labels, "mobile phone", "phone") && containsAny(labels, "laptop", "computer", "desk", "notebook", "keyboard", "table", "screen"));
-        applyBoost(scores, "Workspace", 8, containsAny(labels, "table", "wood", "coffee") && containsAny(labels, "hand", "writing", "pen", "paper", "notebook", "book", "screen", "keyboard", "laptop", "computer"));
+        applyBoost(scores, "Workspace", 10, containsAny(labels, "laptop", "computer", "keyboard", "desk", "notebook", "pen", "writing", "paper", "book"));
+        applyBoost(scores, "Workspace", 10, containsAny(labels, "mobile phone", "phone") && containsAny(labels, "laptop", "computer", "desk", "notebook"));
         applyBoost(scores, "Interior", 10, containsAny(labels, "coffee", "cup", "mug", "tableware") && containsAny(labels, "table", "chair", "restaurant", "cafe", "saucer"));
         applyBoost(scores, "Fashion", 12, containsAny(labels, "shoe", "shoes", "footwear", "sneakers", "heel", "foot") && containsAny(labels, "curtain", "fabric", "flesh", "wall"));
         applyBoost(scores, "Interior", 8, containsAny(labels, "chair") && containsAny(labels, "table", "tableware", "building", "window"));
@@ -220,9 +219,6 @@ public class DynamicCategoryGenerator {
     private static String normalizeFallbackName(String label) {
         String lower = label.toLowerCase(Locale.ROOT);
         if (lower.contains("mobile phone") || lower.equals("phone")) return "Workspace";
-        if (lower.contains("personal computer") || lower.contains("computer hardware") || lower.contains("electronic device")) return "Workspace";
-        if (lower.contains("keyboard") || lower.contains("laptop") || lower.contains("computer") || lower.contains("notebook")) return "Workspace";
-        if (lower.contains("pen") || lower.contains("writing") || lower.contains("paper")) return "Workspace";
         if (lower.contains("rock") || lower.contains("sand")) return "Beach";
         if (lower.contains("chair")) return "Interior";
         if (lower.contains("shoe") || lower.contains("foot") || lower.contains("sneaker")) return "Fashion";
