@@ -1,0 +1,15 @@
+<resources>
+    <string name="repost_subtitle">Bu duvar kağıdını kısa bir düşünceyle kişisel blogunda paylaş.</string>
+    <string name="update_post">Yazıyı Güncelle</string>
+    <string name="post_saving">Yazı kaydediliyor...</string>
+    <string name="post_saved_done">Paylaşım yapıldı.</string>
+    <string name="comment_too_long">Yorum en fazla %1$d karakter olabilir.</string>
+    <string name="posting">Paylaşılıyor...</string>
+    <string name="edit_post">Düzenle</string>
+    <string name="edit_post_title">Yazıyı düzenle</string>
+    <string name="post_updated">Yazı güncellendi.</string>
+    <string name="saving">Kaydediliyor...</string>
+    <string name="favorites_stat">Favoriler</string>
+    <string name="posts_stat">Yazılar</string>
+    <string name="completion_stat">Tamamlanma</string>
+</resources>
