@@ -83,5 +83,12 @@
             android:text="Language selection is currently a placeholder and will be connected to real app localization later."
             android:textSize="14sp" />
 
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:layout_marginTop="20dp" />
+
     </LinearLayout>
 </ScrollView>

@@ -1,22 +1,29 @@
 package com.example.wallpaperapp2;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FavoritesFragment extends Fragment {
 
-    RecyclerView recyclerView;
-    WallpaperAdapter adapter;
-    List<Wallpaper> favoriteList;
+    private LinearLayout favoritesContainer;
+    private LinearLayout favoritesGroupsContainer;
+    private TextInputEditText editFavoritesSearch;
 
     public FavoritesFragment() {
     }
@@ -26,16 +33,26 @@ public class FavoritesFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_favorites, container, false);
+        favoritesContainer = view.findViewById(R.id.favoritesContainer);
+        favoritesGroupsContainer = view.findViewById(R.id.favoritesGroupsContainer);
+        editFavoritesSearch = view.findViewById(R.id.editFavoritesSearch);
 
-        recyclerView = view.findViewById(R.id.recyclerFavorites);
+        editFavoritesSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
-        AppSettingsManager settingsManager = new AppSettingsManager(requireContext());
-        int columnCount = settingsManager.getGridColumns();
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), columnCount));
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                renderFavoriteGroups();
+            }
 
-        favoriteList = WallpaperRepository.getFavoriteWallpapers();
-        adapter = new WallpaperAdapter(favoriteList);
-        recyclerView.setAdapter(adapter);
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        renderFavoriteGroups();
 
         return view;
     }
@@ -43,17 +60,89 @@ public class FavoritesFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        renderFavoriteGroups();
+    }
 
-        if (recyclerView != null) {
-            AppSettingsManager settingsManager = new AppSettingsManager(requireContext());
-            int columnCount = settingsManager.getGridColumns();
-            recyclerView.setLayoutManager(new GridLayoutManager(getContext(), columnCount));
+    private void renderFavoriteGroups() {
+        if (favoritesContainer == null || favoritesGroupsContainer == null) return;
+
+        favoritesGroupsContainer.removeAllViews();
+
+        Map<String, List<Wallpaper>> groupedFavorites =
+                WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
+        String query = editFavoritesSearch != null && editFavoritesSearch.getText() != null
+                ? editFavoritesSearch.getText().toString().trim().toLowerCase()
+                : "";
+
+        if (groupedFavorites.isEmpty()) {
+            TextView emptyText = new TextView(requireContext());
+            emptyText.setText("No favorites yet.");
+            emptyText.setTextSize(16);
+            favoritesGroupsContainer.addView(emptyText);
+            return;
         }
 
-        if (adapter != null) {
-            favoriteList.clear();
-            favoriteList.addAll(WallpaperRepository.getFavoriteWallpapers());
-            adapter.notifyDataSetChanged();
+        boolean anyResult = false;
+        for (Map.Entry<String, List<Wallpaper>> entry : groupedFavorites.entrySet()) {
+            String categoryName = entry.getKey();
+            List<Wallpaper> wallpapers = filterByQuery(entry.getValue(), query);
+            if (wallpapers.isEmpty()) continue;
+            anyResult = true;
+
+            TextView categoryTitle = new TextView(requireContext());
+            categoryTitle.setText(categoryName);
+            categoryTitle.setTextSize(20);
+            categoryTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+
+            LinearLayout.LayoutParams categoryParams =
+                    new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                    );
+            categoryParams.topMargin = 16;
+            categoryParams.bottomMargin = 8;
+            categoryTitle.setLayoutParams(categoryParams);
+
+            favoritesGroupsContainer.addView(categoryTitle);
+
+            RecyclerView recyclerView = new RecyclerView(requireContext());
+            recyclerView.setLayoutManager(
+                    new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            );
+            recyclerView.setAdapter(new FavoriteAiAdapter(wallpapers));
+
+            LinearLayout.LayoutParams recyclerParams =
+                    new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                    );
+            recyclerView.setLayoutParams(recyclerParams);
+
+            favoritesGroupsContainer.addView(recyclerView);
         }
+
+        if (!anyResult) {
+            TextView emptyText = new TextView(requireContext());
+            emptyText.setText("No favorite matches this search.");
+            emptyText.setTextSize(16);
+            favoritesGroupsContainer.addView(emptyText);
+        }
+    }
+
+    private List<Wallpaper> filterByQuery(List<Wallpaper> source, String query) {
+        if (query == null || query.isEmpty()) {
+            return source;
+        }
+
+        List<Wallpaper> filtered = new ArrayList<>();
+        for (Wallpaper wallpaper : source) {
+            boolean matches = wallpaper.title.toLowerCase().contains(query)
+                    || (wallpaper.aiCategory != null && wallpaper.aiCategory.toLowerCase().contains(query))
+                    || (wallpaper.aiLabels != null && wallpaper.aiLabels.toLowerCase().contains(query));
+            if (matches) {
+                filtered.add(wallpaper);
+            }
+        }
+        return filtered;
     }
 }
