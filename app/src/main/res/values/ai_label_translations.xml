@@ -9,7 +9,7 @@
         <item>car</item><item>windshield</item><item>cat</item><item>dog</item><item>fur</item><item>snout</item><item>textile</item><item>toy</item><item>shoe</item><item>shoes</item>
         <item>sandal</item><item>foot</item><item>flesh</item><item>curtain</item><item>sneakers</item><item>footwear</item><item>light</item><item>lights</item><item>blur</item><item>bokeh</item><item>color</item>
         <item>texture</item><item>surface</item><item>droplet</item><item>water drop</item><item>macro</item><item>architecture</item><item>city</item><item>street</item><item>person</item><item>people</item><item>portrait</item>
-        <item>book</item><item>animal</item>
+        <item>book</item><item>animal</item><item>boat</item><item>ship</item><item>watercraft</item><item>underwater</item><item>reef</item><item>petal</item><item>watercolor paint</item><item>paint</item><item>painting</item>
     </string-array>
 
     <string-array name="ai_label_translation_values_tr">
@@ -22,6 +22,6 @@
         <item>Araba</item><item>Ön Cam</item><item>Kedi</item><item>Köpek</item><item>Kürk</item><item>Burun</item><item>Tekstil</item><item>Oyuncak</item><item>Ayakkabı</item><item>Ayakkabılar</item>
         <item>Sandalet</item><item>Ayak</item><item>Ten Rengi</item><item>Perde</item><item>Spor Ayakkabı</item><item>Ayakkabı</item><item>Işık</item><item>Işıklar</item><item>Bulanıklık</item><item>Bokeh</item><item>Renk</item>
         <item>Doku</item><item>Yüzey</item><item>Su Damlası</item><item>Su Damlası</item><item>Makro</item><item>Mimari</item><item>Şehir</item><item>Sokak</item><item>İnsan</item><item>İnsanlar</item><item>Portre</item>
-        <item>Kitap</item><item>Hayvan</item>
+        <item>Kitap</item><item>Hayvan</item><item>Tekne</item><item>Gemi</item><item>Deniz Aracı</item><item>Su Altı</item><item>Resif</item><item>Taç Yaprak</item><item>Sulu Boya</item><item>Boya</item><item>Resim</item>
     </string-array>
 </resources>
