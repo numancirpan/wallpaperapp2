@@ -56,41 +56,45 @@
                     android:textSize="14sp" />
 
                 <LinearLayout
+                    android:id="@+id/themeSwitchContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:gravity="center_vertical"
+                    android:layout_marginTop="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/txtLightModeLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="☀️"
-                        android:textSize="24sp" />
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/switchThemeMode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_marginEnd="12dp"
-                        android:text=""
-                        app:showText="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🌙"
-                        android:textSize="24sp" />
-
-                    <TextView
-                        android:id="@+id/txtThemeMode"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:gravity="end"
                         android:text="@string/light_mode"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <FrameLayout
+                        android:id="@+id/themeSwitchTrack"
+                        android:layout_width="112dp"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="14dp"
+                        android:padding="5dp">
+
+                        <TextView
+                            android:id="@+id/themeSwitchThumb"
+                            android:layout_width="42dp"
+                            android:layout_height="42dp"
+                            android:gravity="center"
+                            android:text="☀️"
+                            android:textSize="24sp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/txtDarkModeLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dark_mode"
                         android:textSize="15sp"
                         android:textStyle="bold" />
                 </LinearLayout>
