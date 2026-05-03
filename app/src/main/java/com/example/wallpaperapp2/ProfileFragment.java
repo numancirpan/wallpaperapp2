@@ -3,6 +3,8 @@ package com.example.wallpaperapp2;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ProfileFragment extends Fragment {
 
@@ -36,6 +39,10 @@ public class ProfileFragment extends Fragment {
     private ImageView imageProfilePhoto;
     private TextView txtProfileDisplayName;
     private TextView txtProfileEmail;
+    private TextView txtFavoriteCount;
+    private TextView txtPostCount;
+    private TextView txtCompletionPercent;
+    private TextView txtBioCounter;
     private TextInputEditText editFirstName;
     private TextInputEditText editLastName;
     private TextInputEditText editBio;
@@ -52,12 +59,14 @@ public class ProfileFragment extends Fragment {
     private ListenerRegistration profileListener;
     private ListenerRegistration postsListener;
     private ActivityResultLauncher<String> imagePickerLauncher;
+    private int currentPostCount = 0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
         registerImagePicker();
         bindViews(view);
+        setupBioCounter();
         setupBlogList();
         registerActions();
         startListeners();
@@ -76,6 +85,10 @@ public class ProfileFragment extends Fragment {
         imageProfilePhoto = view.findViewById(R.id.imageProfilePhoto);
         txtProfileDisplayName = view.findViewById(R.id.txtProfileDisplayName);
         txtProfileEmail = view.findViewById(R.id.txtProfileEmail);
+        txtFavoriteCount = view.findViewById(R.id.txtFavoriteCount);
+        txtPostCount = view.findViewById(R.id.txtPostCount);
+        txtCompletionPercent = view.findViewById(R.id.txtCompletionPercent);
+        txtBioCounter = view.findViewById(R.id.txtBioCounter);
         editFirstName = view.findViewById(R.id.editFirstName);
         editLastName = view.findViewById(R.id.editLastName);
         editBio = view.findViewById(R.id.editBio);
@@ -88,8 +101,33 @@ public class ProfileFragment extends Fragment {
         cardBlogEmptyState = view.findViewById(R.id.cardBlogEmptyState);
     }
 
+    private void setupBioCounter() {
+        updateBioCounter(getText(editBio).length());
+        editBio.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateBioCounter(s == null ? 0 : s.length());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+    }
+
     private void setupBlogList() {
-        blogPostAdapter = new BlogPostAdapter(new ArrayList<>(), post ->
+        blogPostAdapter = new BlogPostAdapter(new ArrayList<>(), new BlogPostAdapter.OnPostActionListener() {
+            @Override
+            public void onEdit(BlogPost post) {
+                showEditPostDialog(post);
+            }
+
+            @Override
+            public void onDelete(BlogPost post) {
                 UserProfileStore.deleteBlogPost(post.id, (success, errorMessage) -> {
                     if (!isAdded()) return;
                     requireActivity().runOnUiThread(() -> {
@@ -99,8 +137,9 @@ public class ProfileFragment extends Fragment {
                             showMessage(errorMessage == null ? getString(R.string.post_failed, "Unknown error") : errorMessage);
                         }
                     });
-                })
-        );
+                });
+            }
+        });
         recyclerBlogPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerBlogPosts.setAdapter(blogPostAdapter);
     }
@@ -134,6 +173,8 @@ public class ProfileFragment extends Fragment {
         setTextIfDifferent(editFirstName, currentProfile.firstName);
         setTextIfDifferent(editLastName, currentProfile.lastName);
         setTextIfDifferent(editBio, currentProfile.bio);
+        updateBioCounter(getText(editBio).length());
+        renderStats();
 
         if (currentProfile.profilePhotoUrl != null && !currentProfile.profilePhotoUrl.trim().isEmpty()) {
             Glide.with(this).load(currentProfile.profilePhotoUrl).centerCrop().into(imageProfilePhoto);
@@ -150,21 +191,49 @@ public class ProfileFragment extends Fragment {
 
     private void renderPosts(List<BlogPost> posts) {
         List<BlogPost> safePosts = posts == null ? new ArrayList<>() : posts;
+        currentPostCount = safePosts.size();
         blogPostAdapter.updateList(safePosts);
         cardBlogEmptyState.setVisibility(safePosts.isEmpty() ? View.VISIBLE : View.GONE);
         recyclerBlogPosts.setVisibility(safePosts.isEmpty() ? View.GONE : View.VISIBLE);
+        renderStats();
+    }
+
+    private void renderStats() {
+        int favoriteCount = WallpaperRepository.getFavoriteWallpapers().size();
+        txtFavoriteCount.setText(String.valueOf(favoriteCount));
+        txtPostCount.setText(String.valueOf(currentPostCount));
+        txtCompletionPercent.setText(String.format(Locale.getDefault(), "%d%%", calculateProfileCompletion()));
+    }
+
+    private int calculateProfileCompletion() {
+        int completed = 0;
+        int total = 5;
+        if (!safe(currentProfile.firstName).isEmpty()) completed++;
+        if (!safe(currentProfile.lastName).isEmpty()) completed++;
+        if (!safe(currentProfile.bio).isEmpty()) completed++;
+        if (!safe(currentProfile.profilePhotoUrl).isEmpty()) completed++;
+        if (!safe(currentProfile.coverImageUrl).isEmpty()) completed++;
+        return Math.round((completed * 100f) / total);
     }
 
     private void saveProfile() {
-        currentProfile.firstName = getText(editFirstName);
-        currentProfile.lastName = getText(editLastName);
-        currentProfile.bio = getText(editBio);
+        String bio = getText(editBio);
+        if (bio.length() > UserProfileStore.MAX_BIO_LENGTH) {
+            editBio.setError(getString(R.string.bio_too_long, UserProfileStore.MAX_BIO_LENGTH));
+            return;
+        }
+
+        currentProfile.firstName = limit(getText(editFirstName), UserProfileStore.MAX_NAME_LENGTH);
+        currentProfile.lastName = limit(getText(editLastName), UserProfileStore.MAX_NAME_LENGTH);
+        currentProfile.bio = limit(bio, UserProfileStore.MAX_BIO_LENGTH);
 
         btnSaveProfile.setEnabled(false);
+        btnSaveProfile.setText(R.string.saving);
         UserProfileStore.saveProfile(currentProfile, (success, errorMessage) -> {
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
                 btnSaveProfile.setEnabled(true);
+                btnSaveProfile.setText(R.string.save_profile);
                 if (success) {
                     showMessage(getString(R.string.profile_saved));
                 } else {
@@ -172,6 +241,58 @@ public class ProfileFragment extends Fragment {
                 }
             });
         });
+    }
+
+    private void showEditPostDialog(BlogPost post) {
+        if (post == null || !isAdded()) return;
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_repost, null, false);
+        ImageView imagePreview = dialogView.findViewById(R.id.imageRepostPreview);
+        TextInputEditText editComment = dialogView.findViewById(R.id.editRepostComment);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelRepost);
+        MaterialButton btnShare = dialogView.findViewById(R.id.btnShareRepost);
+        TextView title = dialogView.findViewById(R.id.txtRepostDialogTitle);
+        TextView counter = dialogView.findViewById(R.id.txtRepostCounter);
+
+        title.setText(R.string.edit_post_title);
+        btnShare.setText(R.string.save_profile);
+        editComment.setText(post.comment);
+        RepostDialogHelper.attachCommentCounter(editComment, counter);
+
+        Glide.with(this).load(post.imageUrl).centerCrop().into(imagePreview);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnShare.setOnClickListener(v -> {
+            String comment = getText(editComment);
+            if (comment.isEmpty()) {
+                editComment.setError(getString(R.string.comment_required));
+                return;
+            }
+            if (comment.length() > UserProfileStore.MAX_COMMENT_LENGTH) {
+                editComment.setError(getString(R.string.comment_too_long, UserProfileStore.MAX_COMMENT_LENGTH));
+                return;
+            }
+            btnShare.setEnabled(false);
+            btnShare.setText(R.string.saving);
+            UserProfileStore.updateBlogPost(post.id, comment, (success, errorMessage) -> {
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    btnShare.setEnabled(true);
+                    btnShare.setText(R.string.save_profile);
+                    if (success) {
+                        dialog.dismiss();
+                        showMessage(getString(R.string.post_updated));
+                    } else {
+                        showMessage(getString(R.string.post_failed, errorMessage == null ? "Unknown error" : errorMessage));
+                    }
+                });
+            });
+        });
+
+        dialog.show();
     }
 
     private void showProfilePhotoOptions() {
@@ -336,8 +457,23 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    private void updateBioCounter(int length) {
+        if (txtBioCounter != null) {
+            txtBioCounter.setText(String.format(Locale.getDefault(), "%d / %d", length, UserProfileStore.MAX_BIO_LENGTH));
+        }
+    }
+
     private String getText(TextInputEditText editText) {
         return editText.getText() == null ? "" : editText.getText().toString().trim();
+    }
+
+    private String limit(String value, int maxLength) {
+        String clean = value == null ? "" : value.trim();
+        return clean.length() <= maxLength ? clean : clean.substring(0, maxLength);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void showMessage(String message) {
