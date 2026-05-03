@@ -14,7 +14,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class HomeFragment extends Fragment {
 
@@ -22,6 +24,7 @@ public class HomeFragment extends Fragment {
     WallpaperAdapter adapter;
     List<Wallpaper> list;
     TextInputEditText editSearch;
+    private final Set<Integer> metadataRequestedWallpaperIds = new HashSet<>();
 
     public HomeFragment() {
     }
@@ -89,7 +92,10 @@ public class HomeFragment extends Fragment {
         FirebaseFavoritesStore.fetchFavorites(favoritesById -> {
             WallpaperRepository.applyFavoriteData(favoritesById);
             if (!isAdded()) return;
-            requireActivity().runOnUiThread(this::filterWallpapers);
+            requireActivity().runOnUiThread(() -> {
+                filterWallpapers();
+                indexSearchMetadata();
+            });
         });
     }
 
@@ -100,8 +106,29 @@ public class HomeFragment extends Fragment {
             query = editSearch.getText().toString().trim();
         }
 
-        List<Wallpaper> filteredList = WallpaperRepository.searchWallpapersByTitle(query);
+        List<Wallpaper> filteredList = WallpaperRepository.searchWallpapersByTitle(requireContext(), query);
         adapter.updateList(filteredList);
+    }
+
+    private void indexSearchMetadata() {
+        if (!isAdded()) return;
+
+        List<String> existingCategories = WallpaperRepository.getExistingAiCategories();
+        for (Wallpaper wallpaper : WallpaperRepository.wallpaperList) {
+            if (wallpaper == null || metadataRequestedWallpaperIds.contains(wallpaper.id)) continue;
+            if (FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels)) continue;
+
+            metadataRequestedWallpaperIds.add(wallpaper.id);
+            WallpaperAiMetadataIndexer.ensureSearchMetadata(
+                    requireContext(),
+                    wallpaper,
+                    existingCategories,
+                    updatedWallpaper -> {
+                        if (!isAdded()) return;
+                        requireActivity().runOnUiThread(this::filterWallpapers);
+                    }
+            );
+        }
     }
 
     @Override

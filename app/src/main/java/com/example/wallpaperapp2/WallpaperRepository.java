@@ -1,5 +1,7 @@
 package com.example.wallpaperapp2;
 
+import android.content.Context;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -29,13 +31,24 @@ public class WallpaperRepository {
     }
 
     public static List<Wallpaper> searchWallpapersByTitle(String query) {
+        return searchWallpapersByTitle(null, query);
+    }
+
+    public static List<Wallpaper> searchWallpapersByTitle(Context context, String query) {
         List<Wallpaper> filteredList = new ArrayList<>();
-        String normalized = query == null ? "" : query.toLowerCase();
+        String normalized = normalizeSearchText(query);
 
         for (Wallpaper wallpaper : wallpaperList) {
-            boolean matchesQuery = wallpaper.title.toLowerCase().contains(normalized)
-                    || (wallpaper.aiCategory != null && wallpaper.aiCategory.toLowerCase().contains(normalized))
-                    || (wallpaper.aiLabels != null && wallpaper.aiLabels.toLowerCase().contains(normalized));
+            boolean matchesQuery = normalizeSearchText(wallpaper.title).contains(normalized)
+                    || normalizeSearchText(wallpaper.aiCategory).contains(normalized)
+                    || normalizeSearchText(wallpaper.aiLabels).contains(normalized);
+
+            if (!matchesQuery && context != null) {
+                String displayCategory = CategoryDisplayMapper.toDisplayName(context, wallpaper.aiCategory);
+                String displayLabels = AiLabelDisplayMapper.toDisplayLabels(context, wallpaper.aiLabels);
+                matchesQuery = normalizeSearchText(displayCategory).contains(normalized)
+                        || normalizeSearchText(displayLabels).contains(normalized);
+            }
 
             if (matchesQuery) {
                 filteredList.add(wallpaper);
@@ -158,5 +171,9 @@ public class WallpaperRepository {
 
     private static String safeString(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    private static String normalizeSearchText(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).trim();
     }
 }
