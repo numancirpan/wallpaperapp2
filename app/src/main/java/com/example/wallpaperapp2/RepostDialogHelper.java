@@ -5,6 +5,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,6 +19,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.Locale;
 
 public class RepostDialogHelper {
+
+    private static final long DIALOG_ANIMATION_DURATION_MS = 180L;
 
     public static void show(Context context, View anchorView, Wallpaper wallpaper) {
         if (context == null || anchorView == null || wallpaper == null) return;
@@ -41,7 +44,9 @@ public class RepostDialogHelper {
                 .setView(dialogView)
                 .create();
 
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        dialog.setOnShowListener(d -> animateDialogIn(dialogView));
+
+        btnCancel.setOnClickListener(v -> dismissWithAnimation(dialog, dialogView));
         btnShare.setOnClickListener(v -> {
             String comment = editComment.getText() == null ? "" : editComment.getText().toString().trim();
             if (comment.isEmpty()) {
@@ -56,14 +61,12 @@ public class RepostDialogHelper {
             btnShare.setEnabled(false);
             btnCancel.setEnabled(false);
             btnShare.setText(R.string.posting);
+            dismissWithAnimation(dialog, dialogView);
+            Snackbar.make(anchorView, R.string.post_saving, Snackbar.LENGTH_SHORT).show();
 
             UserProfileStore.addBlogPost(wallpaper, comment, (success, errorMessage) -> anchorView.post(() -> {
-                btnShare.setEnabled(true);
-                btnCancel.setEnabled(true);
-                btnShare.setText(R.string.share);
                 if (success) {
-                    dialog.dismiss();
-                    Snackbar.make(anchorView, R.string.post_saved, Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(anchorView, R.string.post_saved_done, Snackbar.LENGTH_SHORT).show();
                 } else {
                     Snackbar.make(anchorView,
                             context.getString(R.string.post_failed, errorMessage == null ? "Unknown error" : errorMessage),
@@ -73,6 +76,10 @@ public class RepostDialogHelper {
         });
 
         dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+        }
     }
 
     public static void attachCommentCounter(TextInputEditText editComment, TextView txtCounter) {
@@ -92,6 +99,30 @@ public class RepostDialogHelper {
             public void afterTextChanged(Editable s) {
             }
         });
+    }
+
+    public static void animateDialogIn(View dialogView) {
+        if (dialogView == null) return;
+        dialogView.setAlpha(0f);
+        dialogView.setScaleX(0.96f);
+        dialogView.setScaleY(0.96f);
+        dialogView.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(DIALOG_ANIMATION_DURATION_MS)
+                .start();
+    }
+
+    public static void dismissWithAnimation(AlertDialog dialog, View dialogView) {
+        if (dialog == null || dialogView == null) return;
+        dialogView.animate()
+                .alpha(0f)
+                .scaleX(0.96f)
+                .scaleY(0.96f)
+                .setDuration(DIALOG_ANIMATION_DURATION_MS)
+                .withEndAction(dialog::dismiss)
+                .start();
     }
 
     private static void updateCounter(TextView txtCounter, int length) {
