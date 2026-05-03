@@ -73,7 +73,7 @@
     <string name="comment_hint">Bu duvar kağıdı hakkında düşünceni yaz</string>
     <string name="share">Paylaş</string>
     <string name="cancel">İptal</string>
-    <string name="post_saved">Reposted.</string>
+    <string name="post_saved">Paylaşıldı.</string>
     <string name="post_failed">Paylaşım kaydedilemedi: %1$s</string>
     <string name="comment_required">Önce bir yorum yazmalısın.</string>
 
