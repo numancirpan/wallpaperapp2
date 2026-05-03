@@ -8,7 +8,6 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
@@ -246,13 +246,13 @@ public class ProfileFragment extends Fragment {
 
     private void showEditPostDialog(BlogPost post) {
         if (post == null || !isAdded()) return;
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_repost, null, false);
-        ImageView imagePreview = dialogView.findViewById(R.id.imageRepostPreview);
-        TextInputEditText editComment = dialogView.findViewById(R.id.editRepostComment);
-        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelRepost);
-        MaterialButton btnShare = dialogView.findViewById(R.id.btnShareRepost);
-        TextView title = dialogView.findViewById(R.id.txtRepostDialogTitle);
-        TextView counter = dialogView.findViewById(R.id.txtRepostCounter);
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_repost, null, false);
+        ImageView imagePreview = sheetView.findViewById(R.id.imageRepostPreview);
+        TextInputEditText editComment = sheetView.findViewById(R.id.editRepostComment);
+        MaterialButton btnCancel = sheetView.findViewById(R.id.btnCancelRepost);
+        MaterialButton btnShare = sheetView.findViewById(R.id.btnShareRepost);
+        TextView title = sheetView.findViewById(R.id.txtRepostDialogTitle);
+        TextView counter = sheetView.findViewById(R.id.txtRepostCounter);
 
         title.setText(R.string.edit_post_title);
         btnShare.setText(R.string.update_post);
@@ -261,12 +261,10 @@ public class ProfileFragment extends Fragment {
 
         Glide.with(this).load(post.imageUrl).centerCrop().into(imagePreview);
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .create();
-        dialog.setOnShowListener(d -> RepostDialogHelper.animateDialogIn(dialogView));
+        BottomSheetDialog sheet = new BottomSheetDialog(requireContext());
+        sheet.setContentView(sheetView);
 
-        btnCancel.setOnClickListener(v -> RepostDialogHelper.dismissWithAnimation(dialog, dialogView));
+        btnCancel.setOnClickListener(v -> sheet.dismiss());
         btnShare.setOnClickListener(v -> {
             String comment = getText(editComment);
             if (comment.isEmpty()) {
@@ -280,7 +278,7 @@ public class ProfileFragment extends Fragment {
             btnShare.setEnabled(false);
             btnCancel.setEnabled(false);
             btnShare.setText(R.string.post_saving);
-            RepostDialogHelper.dismissWithAnimation(dialog, dialogView);
+            sheet.dismiss();
             showMessage(getString(R.string.post_saving));
             UserProfileStore.updateBlogPost(post.id, comment, (success, errorMessage) -> {
                 if (!isAdded()) return;
@@ -294,11 +292,7 @@ public class ProfileFragment extends Fragment {
             });
         });
 
-        dialog.show();
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-        }
+        sheet.show();
     }
 
     private void showProfilePhotoOptions() {
