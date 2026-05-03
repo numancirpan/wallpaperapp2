@@ -1,5 +1,7 @@
 package com.example.wallpaperapp2;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,7 +12,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
@@ -24,11 +28,13 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
-    private static final long THEME_ANIMATION_DELAY_MS = 350L;
+    private static final long THEME_ANIMATION_DELAY_MS = 430L;
+    private static final long BACKGROUND_ANIMATION_DURATION_MS = 420L;
 
-    private MaterialCardView cardLightMode;
-    private MaterialCardView cardDarkMode;
+    private ScrollView settingsScrollView;
+    private View settingsRoot;
     private LottieAnimationView themeToggleAnimation;
+    private TextView txtThemeMode;
     private RadioGroup radioGroupColumns;
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
@@ -48,9 +54,10 @@ public class SettingsFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        cardLightMode = view.findViewById(R.id.cardLightMode);
-        cardDarkMode = view.findViewById(R.id.cardDarkMode);
+        settingsScrollView = view.findViewById(R.id.settingsScrollView);
+        settingsRoot = view.findViewById(R.id.settingsRoot);
         themeToggleAnimation = view.findViewById(R.id.themeToggleAnimation);
+        txtThemeMode = view.findViewById(R.id.txtThemeMode);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
         radioThreeColumns = view.findViewById(R.id.radioThreeColumns);
@@ -78,8 +85,9 @@ public class SettingsFragment extends Fragment {
 
     private void loadSavedSettings() {
         boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
-        updateThemeCards(darkModeEnabled);
+        updateThemeLabel(darkModeEnabled);
         updateThemeAnimationState(darkModeEnabled);
+        applyInstantSettingsBackground(darkModeEnabled);
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -102,8 +110,6 @@ public class SettingsFragment extends Fragment {
     }
 
     private void registerListeners() {
-        cardLightMode.setOnClickListener(v -> applyThemeWithAnimation(false));
-        cardDarkMode.setOnClickListener(v -> applyThemeWithAnimation(true));
         themeToggleAnimation.setOnClickListener(v -> applyThemeWithAnimation(!settingsManager.isDarkModeEnabled()));
 
         radioGroupColumns.setOnCheckedChangeListener((group, checkedId) -> {
@@ -148,8 +154,9 @@ public class SettingsFragment extends Fragment {
 
         isThemeChanging = true;
         settingsManager.setDarkMode(darkModeEnabled);
-        updateThemeCards(darkModeEnabled);
+        updateThemeLabel(darkModeEnabled);
         playThemeToggleAnimation(darkModeEnabled);
+        animateSettingsBackground(darkModeEnabled);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
@@ -171,17 +178,33 @@ public class SettingsFragment extends Fragment {
         themeToggleAnimation.setProgress(darkModeEnabled ? 1f : 0f);
     }
 
-    private void updateThemeCards(boolean darkModeEnabled) {
-        setThemeCardSelected(cardLightMode, !darkModeEnabled);
-        setThemeCardSelected(cardDarkMode, darkModeEnabled);
+    private void updateThemeLabel(boolean darkModeEnabled) {
+        if (txtThemeMode == null) return;
+        txtThemeMode.setText(darkModeEnabled ? R.string.dark_mode : R.string.light_mode);
     }
 
-    private void setThemeCardSelected(MaterialCardView card, boolean selected) {
-        if (card == null) return;
-        int primary = ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_primary80);
-        int transparent = ContextCompat.getColor(requireContext(), android.R.color.transparent);
-        card.setStrokeWidth(selected ? 4 : 1);
-        card.setStrokeColor(selected ? primary : ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral_variant60));
-        card.setCardBackgroundColor(ColorStateList.valueOf(selected ? primary : transparent));
+    private void applyInstantSettingsBackground(boolean darkModeEnabled) {
+        int color = getSettingsBackgroundColor(darkModeEnabled);
+        setSettingsBackgroundColor(color);
+    }
+
+    private void animateSettingsBackground(boolean darkModeEnabled) {
+        int startColor = getSettingsBackgroundColor(!darkModeEnabled);
+        int endColor = getSettingsBackgroundColor(darkModeEnabled);
+        ValueAnimator animator = ValueAnimator.ofObject(new ArgbEvaluator(), startColor, endColor);
+        animator.setDuration(BACKGROUND_ANIMATION_DURATION_MS);
+        animator.addUpdateListener(animation -> setSettingsBackgroundColor((int) animation.getAnimatedValue()));
+        animator.start();
+    }
+
+    private int getSettingsBackgroundColor(boolean darkModeEnabled) {
+        return darkModeEnabled
+                ? ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral10)
+                : ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral99);
+    }
+
+    private void setSettingsBackgroundColor(int color) {
+        if (settingsScrollView != null) settingsScrollView.setBackgroundColor(color);
+        if (settingsRoot != null) settingsRoot.setBackgroundColor(color);
     }
 }
