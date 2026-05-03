@@ -2,6 +2,8 @@ package com.example.wallpaperapp2;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +17,18 @@ import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
+    private static final long THEME_ANIMATION_DELAY_MS = 350L;
+
     private MaterialCardView cardLightMode;
     private MaterialCardView cardDarkMode;
+    private LottieAnimationView themeToggleAnimation;
     private RadioGroup radioGroupColumns;
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
@@ -31,6 +37,7 @@ public class SettingsFragment extends Fragment {
 
     private AppSettingsManager settingsManager;
     private boolean isInitializingLanguage = true;
+    private boolean isThemeChanging = false;
 
     public SettingsFragment() {
     }
@@ -43,6 +50,7 @@ public class SettingsFragment extends Fragment {
 
         cardLightMode = view.findViewById(R.id.cardLightMode);
         cardDarkMode = view.findViewById(R.id.cardDarkMode);
+        themeToggleAnimation = view.findViewById(R.id.themeToggleAnimation);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
         radioThreeColumns = view.findViewById(R.id.radioThreeColumns);
@@ -71,6 +79,7 @@ public class SettingsFragment extends Fragment {
     private void loadSavedSettings() {
         boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
         updateThemeCards(darkModeEnabled);
+        updateThemeAnimationState(darkModeEnabled);
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -93,8 +102,9 @@ public class SettingsFragment extends Fragment {
     }
 
     private void registerListeners() {
-        cardLightMode.setOnClickListener(v -> applyTheme(false));
-        cardDarkMode.setOnClickListener(v -> applyTheme(true));
+        cardLightMode.setOnClickListener(v -> applyThemeWithAnimation(false));
+        cardDarkMode.setOnClickListener(v -> applyThemeWithAnimation(true));
+        themeToggleAnimation.setOnClickListener(v -> applyThemeWithAnimation(!settingsManager.isDarkModeEnabled()));
 
         radioGroupColumns.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioThreeColumns) {
@@ -133,12 +143,32 @@ public class SettingsFragment extends Fragment {
         });
     }
 
-    private void applyTheme(boolean darkModeEnabled) {
+    private void applyThemeWithAnimation(boolean darkModeEnabled) {
+        if (isThemeChanging || darkModeEnabled == settingsManager.isDarkModeEnabled()) return;
+
+        isThemeChanging = true;
         settingsManager.setDarkMode(darkModeEnabled);
         updateThemeCards(darkModeEnabled);
-        AppCompatDelegate.setDefaultNightMode(
-                darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-        );
+        playThemeToggleAnimation(darkModeEnabled);
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (!isAdded()) return;
+            AppCompatDelegate.setDefaultNightMode(
+                    darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+            );
+        }, THEME_ANIMATION_DELAY_MS);
+    }
+
+    private void playThemeToggleAnimation(boolean darkModeEnabled) {
+        if (themeToggleAnimation == null) return;
+        themeToggleAnimation.cancelAnimation();
+        themeToggleAnimation.setSpeed(darkModeEnabled ? 1f : -1f);
+        themeToggleAnimation.playAnimation();
+    }
+
+    private void updateThemeAnimationState(boolean darkModeEnabled) {
+        if (themeToggleAnimation == null) return;
+        themeToggleAnimation.setProgress(darkModeEnabled ? 1f : 0f);
     }
 
     private void updateThemeCards(boolean darkModeEnabled) {
