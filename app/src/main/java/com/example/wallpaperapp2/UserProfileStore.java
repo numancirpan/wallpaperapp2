@@ -21,6 +21,10 @@ import java.util.Map;
 
 public class UserProfileStore {
 
+    public static final int MAX_NAME_LENGTH = 40;
+    public static final int MAX_BIO_LENGTH = 120;
+    public static final int MAX_COMMENT_LENGTH = 250;
+
     public interface ProfileCallback {
         void onLoaded(UserProfile profile);
     }
@@ -57,9 +61,9 @@ public class UserProfileStore {
         }
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("firstName", safe(profile.firstName));
-        payload.put("lastName", safe(profile.lastName));
-        payload.put("bio", safe(profile.bio));
+        payload.put("firstName", limit(profile.firstName, MAX_NAME_LENGTH));
+        payload.put("lastName", limit(profile.lastName, MAX_NAME_LENGTH));
+        payload.put("bio", limit(profile.bio, MAX_BIO_LENGTH));
         payload.put("profilePhotoUrl", safe(profile.profilePhotoUrl));
         payload.put("coverImageUrl", safe(profile.coverImageUrl));
         payload.put("coverWallpaperId", profile.coverWallpaperId);
@@ -147,13 +151,20 @@ public class UserProfileStore {
             return;
         }
 
+        String cleanComment = limit(comment, MAX_COMMENT_LENGTH);
+        if (cleanComment.isEmpty()) {
+            callback.onComplete(false, "Comment is required");
+            return;
+        }
+
         Map<String, Object> payload = new HashMap<>();
         payload.put("wallpaperId", wallpaper.id);
         payload.put("imageUrl", wallpaper.imageUrl);
         payload.put("photographer", wallpaper.title);
-        payload.put("comment", safe(comment));
+        payload.put("comment", cleanComment);
         payload.put("aiCategory", safe(wallpaper.aiCategory));
         payload.put("createdAt", System.currentTimeMillis());
+        payload.put("updatedAt", System.currentTimeMillis());
 
         db.collection("users")
                 .document(uid)
@@ -190,6 +201,36 @@ public class UserProfileStore {
                     }
                     callback.onLoaded(posts);
                 });
+    }
+
+    public static void updateBlogPost(String postId, String comment, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (postId == null || postId.trim().isEmpty()) {
+            callback.onComplete(false, "Post not found");
+            return;
+        }
+
+        String cleanComment = limit(comment, MAX_COMMENT_LENGTH);
+        if (cleanComment.isEmpty()) {
+            callback.onComplete(false, "Comment is required");
+            return;
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("comment", cleanComment);
+        payload.put("updatedAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("posts")
+                .document(postId)
+                .update(payload)
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
     }
 
     public static void deleteBlogPost(String postId, ActionCallback callback) {
@@ -272,6 +313,12 @@ public class UserProfileStore {
 
     private static String currentUid() {
         return FirebaseAuth.getInstance().getUid();
+    }
+
+    private static String limit(String value, int maxLength) {
+        String clean = safe(value);
+        if (clean.length() <= maxLength) return clean;
+        return clean.substring(0, maxLength);
     }
 
     private static String safe(String value) {
