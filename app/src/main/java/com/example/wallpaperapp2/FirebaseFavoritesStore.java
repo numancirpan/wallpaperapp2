@@ -138,6 +138,7 @@ public class FirebaseFavoritesStore {
         String lowerL = l.toLowerCase(Locale.ROOT);
 
         if (c.isEmpty() || l.isEmpty()) return false;
+        if (lowerC.equals("unknown") || lowerL.equals("unknown") || lowerL.startsWith("unknown ")) return false;
         if (lowerC.equals("uncategorized") || lowerC.equals("kategorisiz")) return false;
         if (lowerC.equals("analyzing") || lowerC.equals("analiz ediliyor")) return false;
         if (lowerL.contains("visual wallpaper content")) return false;

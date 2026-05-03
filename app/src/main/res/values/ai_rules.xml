@@ -20,6 +20,7 @@
     <string-array name="ai_workspace_keywords">
         <item>laptop</item><item>computer</item><item>keyboard</item><item>desk</item><item>notebook</item><item>pen</item><item>writing</item>
         <item>paper</item><item>office</item><item>workspace</item><item>work</item><item>study</item><item>mobile phone</item><item>phone</item><item>screen</item><item>book</item>
+        <item>table</item><item>wood</item><item>personal computer</item><item>computer hardware</item><item>electronic device</item><item>technology</item><item>gadget</item><item>input device</item><item>display device</item><item>monitor</item>
         <item>hand</item><item>nail</item><item>gesture</item><item>wrist</item><item>watch</item><item>arm</item>
     </string-array>
 
@@ -92,11 +93,11 @@
     </string-array>
 
     <string-array name="ai_high_weight_keywords">
-        <item>laptop</item><item>computer</item><item>beach</item><item>forest</item><item>car</item><item>cat</item><item>shoe</item>
+        <item>laptop</item><item>computer</item><item>keyboard</item><item>personal computer</item><item>computer hardware</item><item>beach</item><item>forest</item><item>car</item><item>cat</item><item>shoe</item>
     </string-array>
 
     <string-array name="ai_medium_weight_keywords">
-        <item>desk</item><item>keyboard</item><item>coast</item><item>field</item><item>prairie</item><item>coffee</item><item>chair</item><item>branch</item><item>asphalt</item>
+        <item>desk</item><item>table</item><item>screen</item><item>electronic device</item><item>technology</item><item>coast</item><item>field</item><item>prairie</item><item>coffee</item><item>chair</item><item>branch</item><item>asphalt</item>
         <item>hand</item><item>nail</item><item>gesture</item><item>wrist</item><item>watch</item><item>arm</item>
     </string-array>
 </resources>

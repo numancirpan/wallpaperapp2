@@ -132,6 +132,15 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
                         R.string.on_device_suffix,
                         DynamicCategoryGenerator.labelsToDisplay(holder.itemView.getContext(), labels)
                 );
+
+                if (!FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels)) {
+                    wallpaper.aiCategory = holder.itemView.getContext().getString(R.string.uncategorized);
+                    wallpaper.aiLabels = holder.itemView.getContext().getString(R.string.not_available);
+                    FirebaseFavoritesStore.saveFavorite(wallpaper);
+                    holder.itemView.post(() -> notifyItemChanged(position));
+                    return;
+                }
+
                 FirebaseFavoritesStore.saveFavorite(wallpaper);
                 FirebaseFavoritesStore.saveAiCache(wallpaper);
                 holder.itemView.post(() -> notifyItemChanged(position));

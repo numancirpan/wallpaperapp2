@@ -84,9 +84,6 @@ public class AiClassifier {
                         result.add(new AiLabelData(label.getText(), label.getConfidence()));
                     }
 
-                    if (result.isEmpty()) {
-                        result.add(new AiLabelData("Unknown", 0f));
-                    }
                     listener.onSuccess(result);
                 })
                 .addOnFailureListener(listener::onError);

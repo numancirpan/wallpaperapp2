@@ -44,7 +44,17 @@ public class WallpaperAiMetadataIndexer {
                             DynamicCategoryGenerator.labelsToDisplay(context, labels)
                     );
 
+                    if (!FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels)) {
+                        wallpaper.aiCategory = "";
+                        wallpaper.aiLabels = "";
+                        callback.onUpdated(wallpaper);
+                        return;
+                    }
+
                     FirebaseFavoritesStore.saveAiCache(wallpaper);
+                    if (wallpaper.isFavorite) {
+                        FirebaseFavoritesStore.saveFavorite(wallpaper);
+                    }
                     callback.onUpdated(wallpaper);
                 }
 

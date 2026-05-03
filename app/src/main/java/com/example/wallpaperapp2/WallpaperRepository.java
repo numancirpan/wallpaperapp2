@@ -128,8 +128,16 @@ public class WallpaperRepository {
             }
 
             wallpaper.isFavorite = true;
-            wallpaper.aiCategory = normalizeCategoryKey(safeString(data.get("aiCategory")));
-            wallpaper.aiLabels = safeString(data.get("aiLabels"));
+
+            String cloudCategory = normalizeCategoryKey(safeString(data.get("aiCategory")));
+            String cloudLabels = safeString(data.get("aiLabels"));
+            boolean cloudHasUsableAi = FirebaseFavoritesStore.isUsableAiData(cloudCategory, cloudLabels);
+            boolean localHasUsableAi = FirebaseFavoritesStore.isUsableAiData(wallpaper.aiCategory, wallpaper.aiLabels);
+
+            if (cloudHasUsableAi || !localHasUsableAi) {
+                wallpaper.aiCategory = cloudCategory;
+                wallpaper.aiLabels = cloudLabels;
+            }
         }
     }
 
