@@ -1,8 +1,6 @@
 package com.example.wallpaperapp2;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,18 +14,13 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
-import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
-    private static final long THEME_APPLY_DELAY_MS = 520L;
-    private static final float LIGHT_PROGRESS = 0f;
-    private static final float DARK_PROGRESS = 1f;
-    private static final float TOGGLE_ANIMATION_SPEED = 2.2f;
-
-    private LottieAnimationView themeToggleAnimation;
+    private MaterialSwitch switchThemeMode;
     private TextView txtThemeMode;
     private RadioGroup radioGroupColumns;
     private RadioButton radioTwoColumns;
@@ -37,7 +30,7 @@ public class SettingsFragment extends Fragment {
 
     private AppSettingsManager settingsManager;
     private boolean isInitializingLanguage = true;
-    private boolean isThemeChanging = false;
+    private boolean isInitializingTheme = true;
 
     public SettingsFragment() {
     }
@@ -48,7 +41,7 @@ public class SettingsFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        themeToggleAnimation = view.findViewById(R.id.themeToggleAnimation);
+        switchThemeMode = view.findViewById(R.id.switchThemeMode);
         txtThemeMode = view.findViewById(R.id.txtThemeMode);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
@@ -77,8 +70,9 @@ public class SettingsFragment extends Fragment {
 
     private void loadSavedSettings() {
         boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
+        switchThemeMode.setChecked(darkModeEnabled);
         updateThemeLabel(darkModeEnabled);
-        updateThemeAnimationState(darkModeEnabled);
+        isInitializingTheme = false;
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -101,7 +95,10 @@ public class SettingsFragment extends Fragment {
     }
 
     private void registerListeners() {
-        themeToggleAnimation.setOnClickListener(v -> applyThemeWithAnimation(!settingsManager.isDarkModeEnabled()));
+        switchThemeMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isInitializingTheme) return;
+            applyTheme(isChecked);
+        });
 
         radioGroupColumns.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radioThreeColumns) {
@@ -140,46 +137,16 @@ public class SettingsFragment extends Fragment {
         });
     }
 
-    private void applyThemeWithAnimation(boolean darkModeEnabled) {
-        if (isThemeChanging || darkModeEnabled == settingsManager.isDarkModeEnabled()) return;
-
-        isThemeChanging = true;
-        setThemeToggleEnabled(false);
+    private void applyTheme(boolean darkModeEnabled) {
         settingsManager.setDarkMode(darkModeEnabled);
         updateThemeLabel(darkModeEnabled);
-        playThemeToggleAnimation(darkModeEnabled);
-
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (!isAdded()) return;
-            AppCompatDelegate.setDefaultNightMode(
-                    darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-            );
-        }, THEME_APPLY_DELAY_MS);
-    }
-
-    private void playThemeToggleAnimation(boolean darkModeEnabled) {
-        if (themeToggleAnimation == null) return;
-        themeToggleAnimation.cancelAnimation();
-        themeToggleAnimation.setMinAndMaxProgress(LIGHT_PROGRESS, DARK_PROGRESS);
-        themeToggleAnimation.setSpeed(darkModeEnabled ? TOGGLE_ANIMATION_SPEED : -TOGGLE_ANIMATION_SPEED);
-        themeToggleAnimation.setProgress(darkModeEnabled ? LIGHT_PROGRESS : DARK_PROGRESS);
-        themeToggleAnimation.playAnimation();
-    }
-
-    private void updateThemeAnimationState(boolean darkModeEnabled) {
-        if (themeToggleAnimation == null) return;
-        themeToggleAnimation.setMinAndMaxProgress(LIGHT_PROGRESS, DARK_PROGRESS);
-        themeToggleAnimation.setProgress(darkModeEnabled ? DARK_PROGRESS : LIGHT_PROGRESS);
+        AppCompatDelegate.setDefaultNightMode(
+                darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+        );
     }
 
     private void updateThemeLabel(boolean darkModeEnabled) {
         if (txtThemeMode == null) return;
         txtThemeMode.setText(darkModeEnabled ? R.string.dark_mode : R.string.light_mode);
-    }
-
-    private void setThemeToggleEnabled(boolean enabled) {
-        if (themeToggleAnimation == null) return;
-        themeToggleAnimation.setEnabled(enabled);
-        themeToggleAnimation.setAlpha(enabled ? 1f : 0.72f);
     }
 }
