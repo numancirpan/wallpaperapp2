@@ -1,7 +1,5 @@
 package com.example.wallpaperapp2;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -11,12 +9,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
@@ -26,14 +22,11 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
-    private static final long THEME_ANIMATION_DELAY_MS = 900L;
-    private static final long BACKGROUND_ANIMATION_DURATION_MS = 900L;
+    private static final long THEME_APPLY_DELAY_MS = 520L;
     private static final float LIGHT_PROGRESS = 0f;
-    private static final float DARK_PROGRESS = 0.5f;
-    private static final float TOGGLE_ANIMATION_SPEED = 1.65f;
+    private static final float DARK_PROGRESS = 1f;
+    private static final float TOGGLE_ANIMATION_SPEED = 2.2f;
 
-    private ScrollView settingsScrollView;
-    private View settingsRoot;
     private LottieAnimationView themeToggleAnimation;
     private TextView txtThemeMode;
     private RadioGroup radioGroupColumns;
@@ -55,8 +48,6 @@ public class SettingsFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        settingsScrollView = view.findViewById(R.id.settingsScrollView);
-        settingsRoot = view.findViewById(R.id.settingsRoot);
         themeToggleAnimation = view.findViewById(R.id.themeToggleAnimation);
         txtThemeMode = view.findViewById(R.id.txtThemeMode);
         radioGroupColumns = view.findViewById(R.id.radioGroupColumns);
@@ -88,7 +79,6 @@ public class SettingsFragment extends Fragment {
         boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
         updateThemeLabel(darkModeEnabled);
         updateThemeAnimationState(darkModeEnabled);
-        applyInstantSettingsBackground(darkModeEnabled);
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -154,17 +144,17 @@ public class SettingsFragment extends Fragment {
         if (isThemeChanging || darkModeEnabled == settingsManager.isDarkModeEnabled()) return;
 
         isThemeChanging = true;
+        setThemeToggleEnabled(false);
         settingsManager.setDarkMode(darkModeEnabled);
         updateThemeLabel(darkModeEnabled);
         playThemeToggleAnimation(darkModeEnabled);
-        animateSettingsBackground(darkModeEnabled);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
             AppCompatDelegate.setDefaultNightMode(
                     darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
             );
-        }, THEME_ANIMATION_DELAY_MS);
+        }, THEME_APPLY_DELAY_MS);
     }
 
     private void playThemeToggleAnimation(boolean darkModeEnabled) {
@@ -187,28 +177,9 @@ public class SettingsFragment extends Fragment {
         txtThemeMode.setText(darkModeEnabled ? R.string.dark_mode : R.string.light_mode);
     }
 
-    private void applyInstantSettingsBackground(boolean darkModeEnabled) {
-        int color = getSettingsBackgroundColor(darkModeEnabled);
-        setSettingsBackgroundColor(color);
-    }
-
-    private void animateSettingsBackground(boolean darkModeEnabled) {
-        int startColor = getSettingsBackgroundColor(!darkModeEnabled);
-        int endColor = getSettingsBackgroundColor(darkModeEnabled);
-        ValueAnimator animator = ValueAnimator.ofObject(new ArgbEvaluator(), startColor, endColor);
-        animator.setDuration(BACKGROUND_ANIMATION_DURATION_MS);
-        animator.addUpdateListener(animation -> setSettingsBackgroundColor((int) animation.getAnimatedValue()));
-        animator.start();
-    }
-
-    private int getSettingsBackgroundColor(boolean darkModeEnabled) {
-        return darkModeEnabled
-                ? ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral10)
-                : ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral99);
-    }
-
-    private void setSettingsBackgroundColor(int color) {
-        if (settingsScrollView != null) settingsScrollView.setBackgroundColor(color);
-        if (settingsRoot != null) settingsRoot.setBackgroundColor(color);
+    private void setThemeToggleEnabled(boolean enabled) {
+        if (themeToggleAnimation == null) return;
+        themeToggleAnimation.setEnabled(enabled);
+        themeToggleAnimation.setAlpha(enabled ? 1f : 0.72f);
     }
 }
