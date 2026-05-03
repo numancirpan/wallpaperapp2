@@ -11,6 +11,7 @@
     <string name="language_settings">Language</string>
     <string name="account_settings">Account</string>
     <string name="dark_mode">Dark Mode</string>
+    <string name="light_mode">Light Mode</string>
     <string name="dark_mode_description">Use a darker interface for comfortable viewing.</string>
     <string name="grid_columns">Grid Columns</string>
     <string name="grid_columns_description">Choose how many wallpapers appear in each row on the home screen.</string>
@@ -76,6 +77,11 @@
     <string name="post_saved">Reposted.</string>
     <string name="post_failed">Post could not be saved: %1$s</string>
     <string name="comment_required">Please write a comment first.</string>
+    <string name="comment_too_long">Comment must be %1$d characters or less.</string>
+    <string name="posting">Posting...</string>
+    <string name="edit_post">Edit</string>
+    <string name="edit_post_title">Edit post</string>
+    <string name="post_updated">Post updated.</string>
 
     <string name="loading_favorites">Loading favorites...</string>
     <string name="no_favorites_yet">No favorites yet.</string>
@@ -98,8 +104,10 @@
     <string name="photo_updated">Profile photo updated.</string>
     <string name="photo_upload_failed">Photo could not be uploaded. Firebase Storage may not be enabled or the selected file cannot be read: %1$s</string>
     <string name="save_profile">Save Profile</string>
+    <string name="saving">Saving...</string>
     <string name="profile_saved">Profile saved.</string>
     <string name="profile_save_failed">Profile could not be saved: %1$s</string>
+    <string name="bio_too_long">Bio must be %1$d characters or less.</string>
     <string name="change_password">Change Password</string>
     <string name="change_password_description">Update your password by confirming your current password.</string>
     <string name="delete_account">Delete Account</string>
@@ -117,8 +125,11 @@
     <string name="my_blog_description">Reposted wallpapers with your personal comments appear here.</string>
     <string name="no_posts_yet">No blog posts yet.</string>
     <string name="no_posts_yet_description">Open a wallpaper detail page and repost it with a comment.</string>
-    <string name="delete_post">Delete Post</string>
+    <string name="delete_post">Delete</string>
     <string name="post_deleted">Post deleted.</string>
+    <string name="favorites_stat">Favorites</string>
+    <string name="posts_stat">Posts</string>
+    <string name="completion_stat">Complete</string>
 
     <string name="checking_ai_cache">Checking AI cache</string>
     <string name="gemini_analysis_in_progress">Gemini analysis in progress</string>
