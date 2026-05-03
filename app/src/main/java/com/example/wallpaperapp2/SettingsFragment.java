@@ -37,10 +37,27 @@ public class SettingsFragment extends Fragment {
     private RadioButton radioThreeColumns;
     private Spinner spinnerLanguage;
     private MaterialButton btnLogout;
+    private ValueAnimator trackColorAnimator;
 
     private AppSettingsManager settingsManager;
     private boolean isInitializingLanguage = true;
     private boolean isThemeChanging = false;
+
+    private final Runnable applyPendingThemeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isAdded() || getActivity() == null || settingsManager == null) return;
+
+            boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
+            int targetMode = darkModeEnabled
+                    ? AppCompatDelegate.MODE_NIGHT_YES
+                    : AppCompatDelegate.MODE_NIGHT_NO;
+
+            if (AppCompatDelegate.getDefaultNightMode() != targetMode) {
+                AppCompatDelegate.setDefaultNightMode(targetMode);
+            }
+        }
+    };
 
     public SettingsFragment() {
     }
@@ -71,6 +88,21 @@ public class SettingsFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onDestroyView() {
+        if (themeSwitchTrack != null) {
+            themeSwitchTrack.removeCallbacks(applyPendingThemeRunnable);
+        }
+        if (themeSwitchThumb != null) {
+            themeSwitchThumb.animate().cancel();
+        }
+        if (trackColorAnimator != null) {
+            trackColorAnimator.cancel();
+            trackColorAnimator = null;
+        }
+        super.onDestroyView();
+    }
+
     private void setupLanguageSpinner() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 requireContext(),
@@ -83,7 +115,12 @@ public class SettingsFragment extends Fragment {
 
     private void loadSavedSettings() {
         boolean darkModeEnabled = settingsManager.isDarkModeEnabled();
-        themeSwitchTrack.post(() -> updateThemeSwitch(darkModeEnabled, false));
+        if (themeSwitchTrack != null) {
+            themeSwitchTrack.post(() -> {
+                if (!isAdded()) return;
+                updateThemeSwitch(darkModeEnabled, false);
+            });
+        }
 
         int columnCount = settingsManager.getGridColumns();
         if (columnCount == 3) {
@@ -153,16 +190,12 @@ public class SettingsFragment extends Fragment {
         settingsManager.setDarkMode(darkModeEnabled);
         updateThemeSwitch(darkModeEnabled, true);
 
-        themeSwitchTrack.postDelayed(() -> {
-            if (!isAdded()) return;
-            AppCompatDelegate.setDefaultNightMode(
-                    darkModeEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-            );
-        }, SWITCH_ANIMATION_DURATION_MS);
+        themeSwitchTrack.removeCallbacks(applyPendingThemeRunnable);
+        themeSwitchTrack.postDelayed(applyPendingThemeRunnable, SWITCH_ANIMATION_DURATION_MS + 80L);
     }
 
     private void updateThemeSwitch(boolean darkModeEnabled, boolean animate) {
-        if (themeSwitchTrack == null || themeSwitchThumb == null) return;
+        if (!isAdded() || themeSwitchTrack == null || themeSwitchThumb == null) return;
 
         int trackWidth = themeSwitchTrack.getWidth();
         int thumbWidth = themeSwitchThumb.getWidth();
@@ -175,8 +208,13 @@ public class SettingsFragment extends Fragment {
         txtLightModeLabel.setTextColor(getLabelColor(!darkModeEnabled));
         txtDarkModeLabel.setTextColor(getLabelColor(darkModeEnabled));
 
-        int startColor = getTrackColor(!darkModeEnabled);
-        int endColor = getTrackColor(darkModeEnabled);
+        int currentColor = getTrackColor(!darkModeEnabled);
+        int targetColor = getTrackColor(darkModeEnabled);
+
+        if (trackColorAnimator != null) {
+            trackColorAnimator.cancel();
+            trackColorAnimator = null;
+        }
 
         if (animate) {
             themeSwitchThumb.animate()
@@ -184,13 +222,13 @@ public class SettingsFragment extends Fragment {
                     .setDuration(SWITCH_ANIMATION_DURATION_MS)
                     .start();
 
-            ValueAnimator colorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), startColor, endColor);
-            colorAnimator.setDuration(SWITCH_ANIMATION_DURATION_MS);
-            colorAnimator.addUpdateListener(animation -> setTrackBackgroundColor((int) animation.getAnimatedValue()));
-            colorAnimator.start();
+            trackColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), currentColor, targetColor);
+            trackColorAnimator.setDuration(SWITCH_ANIMATION_DURATION_MS);
+            trackColorAnimator.addUpdateListener(animation -> setTrackBackgroundColor((int) animation.getAnimatedValue()));
+            trackColorAnimator.start();
         } else {
             themeSwitchThumb.setTranslationX(targetTranslation);
-            setTrackBackgroundColor(endColor);
+            setTrackBackgroundColor(targetColor);
         }
     }
 
@@ -201,12 +239,14 @@ public class SettingsFragment extends Fragment {
     }
 
     private int getLabelColor(boolean selected) {
+        if (!isAdded()) return Color.GRAY;
         return selected
                 ? ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral10)
                 : ContextCompat.getColor(requireContext(), com.google.android.material.R.color.m3_ref_palette_neutral50);
     }
 
     private void setTrackBackgroundColor(int color) {
+        if (themeSwitchTrack == null) return;
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
         drawable.setCornerRadius(dpToPx(26));
