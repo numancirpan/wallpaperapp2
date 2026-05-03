@@ -116,11 +116,18 @@
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/checkRememberMe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/remember_me" />
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAuthAction"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_marginTop="26dp"
+                    android:layout_marginTop="18dp"
                     android:text="@string/login"
                     android:textStyle="bold"
                     app:cornerRadius="28dp" />
