@@ -73,7 +73,15 @@ public class OpeningActivity extends AppCompatActivity {
     }
 
     private void openNextScreen() {
+        AuthSessionManager sessionManager = new AuthSessionManager(this);
         boolean loggedIn = FirebaseAuth.getInstance().getCurrentUser() != null;
+        boolean rememberMe = sessionManager.isRememberMeEnabled();
+
+        if (loggedIn && !rememberMe) {
+            FirebaseAuth.getInstance().signOut();
+            loggedIn = false;
+        }
+
         startActivity(new Intent(this, loggedIn ? MainActivity.class : AuthActivity.class));
         finish();
     }
