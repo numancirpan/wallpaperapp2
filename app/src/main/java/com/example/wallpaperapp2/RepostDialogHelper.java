@@ -5,13 +5,11 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
-
 import com.bumptech.glide.Glide;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -20,17 +18,15 @@ import java.util.Locale;
 
 public class RepostDialogHelper {
 
-    private static final long DIALOG_ANIMATION_DURATION_MS = 180L;
-
     public static void show(Context context, View anchorView, Wallpaper wallpaper) {
         if (context == null || anchorView == null || wallpaper == null) return;
 
-        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_repost, null, false);
-        ImageView imageRepostPreview = dialogView.findViewById(R.id.imageRepostPreview);
-        TextInputEditText editComment = dialogView.findViewById(R.id.editRepostComment);
-        TextView txtCounter = dialogView.findViewById(R.id.txtRepostCounter);
-        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelRepost);
-        MaterialButton btnShare = dialogView.findViewById(R.id.btnShareRepost);
+        View sheetView = LayoutInflater.from(context).inflate(R.layout.dialog_repost, null, false);
+        ImageView imageRepostPreview = sheetView.findViewById(R.id.imageRepostPreview);
+        TextInputEditText editComment = sheetView.findViewById(R.id.editRepostComment);
+        TextView txtCounter = sheetView.findViewById(R.id.txtRepostCounter);
+        MaterialButton btnCancel = sheetView.findViewById(R.id.btnCancelRepost);
+        MaterialButton btnShare = sheetView.findViewById(R.id.btnShareRepost);
 
         attachCommentCounter(editComment, txtCounter);
 
@@ -40,13 +36,10 @@ public class RepostDialogHelper {
             imageRepostPreview.setImageResource(wallpaper.imageRes);
         }
 
-        AlertDialog dialog = new AlertDialog.Builder(context)
-                .setView(dialogView)
-                .create();
+        BottomSheetDialog sheet = new BottomSheetDialog(context);
+        sheet.setContentView(sheetView);
 
-        dialog.setOnShowListener(d -> animateDialogIn(dialogView));
-
-        btnCancel.setOnClickListener(v -> dismissWithAnimation(dialog, dialogView));
+        btnCancel.setOnClickListener(v -> sheet.dismiss());
         btnShare.setOnClickListener(v -> {
             String comment = editComment.getText() == null ? "" : editComment.getText().toString().trim();
             if (comment.isEmpty()) {
@@ -61,7 +54,7 @@ public class RepostDialogHelper {
             btnShare.setEnabled(false);
             btnCancel.setEnabled(false);
             btnShare.setText(R.string.posting);
-            dismissWithAnimation(dialog, dialogView);
+            sheet.dismiss();
             Snackbar.make(anchorView, R.string.post_saving, Snackbar.LENGTH_SHORT).show();
 
             UserProfileStore.addBlogPost(wallpaper, comment, (success, errorMessage) -> anchorView.post(() -> {
@@ -75,11 +68,7 @@ public class RepostDialogHelper {
             }));
         });
 
-        dialog.show();
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-        }
+        sheet.show();
     }
 
     public static void attachCommentCounter(TextInputEditText editComment, TextView txtCounter) {
@@ -99,30 +88,6 @@ public class RepostDialogHelper {
             public void afterTextChanged(Editable s) {
             }
         });
-    }
-
-    public static void animateDialogIn(View dialogView) {
-        if (dialogView == null) return;
-        dialogView.setAlpha(0f);
-        dialogView.setScaleX(0.96f);
-        dialogView.setScaleY(0.96f);
-        dialogView.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(DIALOG_ANIMATION_DURATION_MS)
-                .start();
-    }
-
-    public static void dismissWithAnimation(AlertDialog dialog, View dialogView) {
-        if (dialog == null || dialogView == null) return;
-        dialogView.animate()
-                .alpha(0f)
-                .scaleX(0.96f)
-                .scaleY(0.96f)
-                .setDuration(DIALOG_ANIMATION_DURATION_MS)
-                .withEndAction(dialog::dismiss)
-                .start();
     }
 
     private static void updateCounter(TextView txtCounter, int length) {
