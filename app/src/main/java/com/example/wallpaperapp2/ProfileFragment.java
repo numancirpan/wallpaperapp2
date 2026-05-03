@@ -8,6 +8,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -254,7 +255,7 @@ public class ProfileFragment extends Fragment {
         TextView counter = dialogView.findViewById(R.id.txtRepostCounter);
 
         title.setText(R.string.edit_post_title);
-        btnShare.setText(R.string.save_profile);
+        btnShare.setText(R.string.update_post);
         editComment.setText(post.comment);
         RepostDialogHelper.attachCommentCounter(editComment, counter);
 
@@ -263,8 +264,9 @@ public class ProfileFragment extends Fragment {
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setView(dialogView)
                 .create();
+        dialog.setOnShowListener(d -> RepostDialogHelper.animateDialogIn(dialogView));
 
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnCancel.setOnClickListener(v -> RepostDialogHelper.dismissWithAnimation(dialog, dialogView));
         btnShare.setOnClickListener(v -> {
             String comment = getText(editComment);
             if (comment.isEmpty()) {
@@ -276,14 +278,14 @@ public class ProfileFragment extends Fragment {
                 return;
             }
             btnShare.setEnabled(false);
-            btnShare.setText(R.string.saving);
+            btnCancel.setEnabled(false);
+            btnShare.setText(R.string.post_saving);
+            RepostDialogHelper.dismissWithAnimation(dialog, dialogView);
+            showMessage(getString(R.string.post_saving));
             UserProfileStore.updateBlogPost(post.id, comment, (success, errorMessage) -> {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() -> {
-                    btnShare.setEnabled(true);
-                    btnShare.setText(R.string.save_profile);
                     if (success) {
-                        dialog.dismiss();
                         showMessage(getString(R.string.post_updated));
                     } else {
                         showMessage(getString(R.string.post_failed, errorMessage == null ? "Unknown error" : errorMessage));
@@ -293,6 +295,10 @@ public class ProfileFragment extends Fragment {
         });
 
         dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+        }
     }
 
     private void showProfilePhotoOptions() {
