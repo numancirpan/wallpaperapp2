@@ -33,11 +33,16 @@ public class UserProfileStore {
         void onLoaded(List<BlogPost> posts);
     }
 
+    public interface CollectionsCallback {
+        void onLoaded(List<WallpaperCollection> collections);
+    }
+
     public interface ActionCallback {
         void onComplete(boolean success, String errorMessage);
     }
 
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private static List<WallpaperCollection> cachedCollections = new ArrayList<>();
 
     public static ListenerRegistration listenProfile(ProfileCallback callback) {
         String uid = currentUid();
@@ -203,6 +208,167 @@ public class UserProfileStore {
                 });
     }
 
+    public static ListenerRegistration listenCollections(CollectionsCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onLoaded(new ArrayList<>());
+            return null;
+        }
+
+        return db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshot, error) -> {
+                    List<WallpaperCollection> collections = new ArrayList<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            collections.add(mapCollection(doc));
+                        }
+                    }
+                    cachedCollections = collections;
+                    callback.onLoaded(collections);
+                });
+    }
+
+    public static List<WallpaperCollection> getCachedCollections() {
+        return new ArrayList<>(cachedCollections);
+    }
+
+    public static void fetchCollections(CollectionsCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onLoaded(new ArrayList<>());
+            return;
+        }
+
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<WallpaperCollection> collections = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        collections.add(mapCollection(doc));
+                    }
+                    cachedCollections = collections;
+                    callback.onLoaded(collections);
+                })
+                .addOnFailureListener(e -> callback.onLoaded(new ArrayList<>()));
+    }
+
+    public static void addWallpaperToCollection(String collectionId, Wallpaper wallpaper, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (collectionId == null || collectionId.trim().isEmpty()) {
+            callback.onComplete(false, "Collection not found");
+            return;
+        }
+        if (wallpaper == null) {
+            callback.onComplete(false, "Wallpaper not found");
+            return;
+        }
+
+        appendWallpaperToCollection(uid, collectionId, wallpaper, callback);
+    }
+
+    public static void addWallpaperToCollectionByName(String collectionName, Wallpaper wallpaper, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (wallpaper == null) {
+            callback.onComplete(false, "Wallpaper not found");
+            return;
+        }
+
+        String cleanName = limit(collectionName, 40);
+        if (cleanName.isEmpty()) {
+            callback.onComplete(false, "Collection name is required");
+            return;
+        }
+
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    String targetId = "";
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String existingName = safe(doc.getString("name"));
+                        if (existingName.equalsIgnoreCase(cleanName)) {
+                            targetId = doc.getId();
+                            break;
+                        }
+                    }
+
+                    if (targetId.isEmpty()) {
+                        createCollectionWithWallpaper(uid, cleanName, wallpaper, callback);
+                    } else {
+                        appendWallpaperToCollection(uid, targetId, wallpaper, callback);
+                    }
+                })
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private static void createCollectionWithWallpaper(String uid, String collectionName, Wallpaper wallpaper, ActionCallback callback) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        items.add(wallpaperPayload(wallpaper));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("name", collectionName);
+        payload.put("items", items);
+        payload.put("createdAt", System.currentTimeMillis());
+        payload.put("updatedAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .add(payload)
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private static void appendWallpaperToCollection(String uid, String collectionId, Wallpaper wallpaper, ActionCallback callback) {
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .document(collectionId)
+                .get()
+                .addOnSuccessListener(document -> {
+                    List<Map<String, Object>> items = new ArrayList<>();
+                    Object rawItems = document.get("items");
+                    if (rawItems instanceof List<?>) {
+                        for (Object rawItem : (List<?>) rawItems) {
+                            if (!(rawItem instanceof Map<?, ?>)) continue;
+                            Object rawId = ((Map<?, ?>) rawItem).get("id");
+                            int id = rawId instanceof Number ? ((Number) rawId).intValue() : -1;
+                            if (id == wallpaper.id) continue;
+                            Map<String, Object> item = new HashMap<>();
+                            for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawItem).entrySet()) {
+                                if (entry.getKey() != null) item.put(String.valueOf(entry.getKey()), entry.getValue());
+                            }
+                            items.add(item);
+                        }
+                    }
+                    items.add(wallpaperPayload(wallpaper));
+
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("items", items);
+                    update.put("updatedAt", System.currentTimeMillis());
+                    document.getReference()
+                            .update(update)
+                            .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                            .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                })
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
     public static void updateBlogPost(String postId, String comment, ActionCallback callback) {
         String uid = currentUid();
         if (uid == null) {
@@ -306,6 +472,49 @@ public class UserProfileStore {
         return post;
     }
 
+    private static WallpaperCollection mapCollection(DocumentSnapshot doc) {
+        WallpaperCollection collection = new WallpaperCollection();
+        if (doc == null || !doc.exists()) return collection;
+
+        collection.id = doc.getId();
+        collection.name = safe(doc.getString("name"));
+        Object updatedAt = doc.get("updatedAt");
+        collection.updatedAt = updatedAt instanceof Number ? ((Number) updatedAt).longValue() : 0L;
+
+        Object items = doc.get("items");
+        if (items instanceof List<?>) {
+            for (Object item : (List<?>) items) {
+                if (item instanceof Map<?, ?>) {
+                    Wallpaper wallpaper = mapWallpaperItem((Map<?, ?>) item);
+                    if (wallpaper != null) collection.wallpapers.add(wallpaper);
+                }
+            }
+        }
+        return collection;
+    }
+
+    private static Wallpaper mapWallpaperItem(Map<?, ?> item) {
+        Object idValue = item.get("id");
+        int id = idValue instanceof Number ? ((Number) idValue).intValue() : -1;
+        if (id < 0) return null;
+
+        Wallpaper wallpaper = new Wallpaper(id, safeObject(item.get("imageUrl")), safeObject(item.get("title")));
+        wallpaper.aiCategory = safeObject(item.get("aiCategory"));
+        wallpaper.aiLabels = safeObject(item.get("aiLabels"));
+        return wallpaper;
+    }
+
+    private static Map<String, Object> wallpaperPayload(Wallpaper wallpaper) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("id", wallpaper.id);
+        payload.put("title", safe(wallpaper.title));
+        payload.put("imageUrl", safe(wallpaper.imageUrl));
+        payload.put("aiCategory", safe(wallpaper.aiCategory));
+        payload.put("aiLabels", safe(wallpaper.aiLabels));
+        payload.put("addedAt", System.currentTimeMillis());
+        return payload;
+    }
+
     public static String currentEmail() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         return user == null ? "" : safe(user.getEmail());
@@ -323,5 +532,9 @@ public class UserProfileStore {
 
     private static String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private static String safeObject(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
     }
 }

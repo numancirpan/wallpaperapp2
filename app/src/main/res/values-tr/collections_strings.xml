@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add">Ekle</string>
+    <string name="add_to_collection">Koleksiyona Ekle</string>
+    <string name="choose_collection_description">Asagidan bir koleksiyon sec veya yeni bir tane olustur.</string>
+    <string name="add_to_collection_description">Yeni bir koleksiyon adi yaz veya mevcut bir adi tekrar kullan.</string>
+    <string name="collection_name">Koleksiyon adi</string>
+    <string name="collection_name_required">Koleksiyon adi gir.</string>
+    <string name="collection_saved">Koleksiyona eklendi.</string>
+    <string name="collection_save_failed">Koleksiyon kaydedilemedi: %1$s</string>
+    <string name="new_collection">Yeni koleksiyon</string>
+    <string name="my_collections">Koleksiyonlar</string>
+    <string name="no_collections_yet">Henuz koleksiyon yok.</string>
+    <string name="no_collections_yet_description">Isimli bir koleksiyon baslatmak icin duvar kagidindaki arti butonunu kullan.</string>
+    <string name="empty_collection">Bu koleksiyonda duvar kagidi yok.</string>
+
+    <plurals name="collection_photo_count">
+        <item quantity="one">%d duvar kagidi</item>
+        <item quantity="other">%d duvar kagidi</item>
+    </plurals>
+</resources>

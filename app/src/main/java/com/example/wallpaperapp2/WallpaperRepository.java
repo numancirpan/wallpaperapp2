@@ -2,6 +2,7 @@ package com.example.wallpaperapp2;
 
 import android.content.Context;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -47,7 +48,8 @@ public class WallpaperRepository {
                 String displayCategory = CategoryDisplayMapper.toDisplayName(context, wallpaper.aiCategory);
                 String displayLabels = AiLabelDisplayMapper.toDisplayLabels(context, wallpaper.aiLabels);
                 matchesQuery = normalizeSearchText(displayCategory).contains(normalized)
-                        || normalizeSearchText(displayLabels).contains(normalized);
+                        || normalizeSearchText(displayLabels).contains(normalized)
+                        || categorySearchMatches(context, wallpaper, normalized);
             }
 
             if (matchesQuery) {
@@ -182,6 +184,24 @@ public class WallpaperRepository {
     }
 
     private static String normalizeSearchText(String value) {
-        return value == null ? "" : value.toLowerCase(Locale.ROOT).trim();
+        if (value == null) return "";
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase(Locale.ROOT)
+                .replace("ı", "i")
+                .replace("ğ", "g")
+                .replace("ü", "u")
+                .replace("ş", "s")
+                .replace("ö", "o")
+                .replace("ç", "c")
+                .trim();
+        return normalized;
+    }
+
+    private static boolean categorySearchMatches(Context context, Wallpaper wallpaper, String normalizedQuery) {
+        String canonical = CategoryDisplayMapper.canonicalName(wallpaper.aiCategory);
+        String display = CategoryDisplayMapper.toDisplayName(context, canonical);
+        return normalizeSearchText(canonical).contains(normalizedQuery)
+                || normalizeSearchText(display).contains(normalizedQuery);
     }
 }

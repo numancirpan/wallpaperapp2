@@ -86,6 +86,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         }
 
         holder.btnFavoriteRepost.setOnClickListener(v -> RepostDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
+        holder.btnFavoriteCollection.setOnClickListener(v -> CollectionDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
 
         holder.btnFavoriteRemove.setOnClickListener(v -> {
             wallpaper.isFavorite = false;
@@ -129,6 +130,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         ImageView imageFavorite;
         MaterialButton btnFavoriteRemove;
         MaterialButton btnFavoriteRepost;
+        MaterialButton btnFavoriteCollection;
         CircularProgressIndicator progressFavoriteAnalysis;
         TextView txtFavoriteTitle;
         TextView txtFavoriteAiCategory;
@@ -139,6 +141,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             imageFavorite = itemView.findViewById(R.id.imageFavorite);
             btnFavoriteRemove = itemView.findViewById(R.id.btnFavoriteRemove);
             btnFavoriteRepost = itemView.findViewById(R.id.btnFavoriteRepost);
+            btnFavoriteCollection = itemView.findViewById(R.id.btnFavoriteCollection);
             progressFavoriteAnalysis = itemView.findViewById(R.id.progressFavoriteAnalysis);
             txtFavoriteTitle = itemView.findViewById(R.id.txtFavoriteTitle);
             txtFavoriteAiCategory = itemView.findViewById(R.id.txtFavoriteAiCategory);

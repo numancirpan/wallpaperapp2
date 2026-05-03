@@ -73,6 +73,26 @@
                 android:visibility="gone"
                 app:indicatorSize="34dp"
                 app:trackThickness="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFavoriteCollection"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="10dp"
+                android:contentDescription="@string/add_to_collection"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                app:cornerRadius="21dp"
+                app:icon="@android:drawable/ic_menu_add"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp" />
         </FrameLayout>
 
         <LinearLayout

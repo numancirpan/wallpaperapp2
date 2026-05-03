@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -50,15 +51,21 @@ public class ProfileFragment extends Fragment {
     private MaterialButton btnSaveProfile;
     private MaterialButton btnChangePassword;
     private MaterialButton btnDeleteAccount;
+    private MaterialButton btnLogoutProfile;
     private MaterialButton btnChooseCover;
     private MaterialButton btnChooseProfilePhoto;
+    private MaterialButtonToggleGroup profileContentTabs;
     private RecyclerView recyclerBlogPosts;
+    private RecyclerView recyclerCollections;
     private MaterialCardView cardBlogEmptyState;
+    private MaterialCardView cardCollectionsEmptyState;
 
     private UserProfile currentProfile = new UserProfile();
     private BlogPostAdapter blogPostAdapter;
+    private CollectionAdapter collectionAdapter;
     private ListenerRegistration profileListener;
     private ListenerRegistration postsListener;
+    private ListenerRegistration collectionsListener;
     private ActivityResultLauncher<String> imagePickerLauncher;
     private int currentPostCount = 0;
 
@@ -69,6 +76,7 @@ public class ProfileFragment extends Fragment {
         bindViews(view);
         setupBioCounter();
         setupBlogList();
+        setupCollectionsList();
         registerActions();
         startListeners();
         return view;
@@ -96,10 +104,14 @@ public class ProfileFragment extends Fragment {
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
         btnChangePassword = view.findViewById(R.id.btnChangePassword);
         btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
+        btnLogoutProfile = view.findViewById(R.id.btnLogoutProfile);
         btnChooseCover = view.findViewById(R.id.btnChooseCover);
         btnChooseProfilePhoto = view.findViewById(R.id.btnChooseProfilePhoto);
+        profileContentTabs = view.findViewById(R.id.profileContentTabs);
         recyclerBlogPosts = view.findViewById(R.id.recyclerBlogPosts);
+        recyclerCollections = view.findViewById(R.id.recyclerCollections);
         cardBlogEmptyState = view.findViewById(R.id.cardBlogEmptyState);
+        cardCollectionsEmptyState = view.findViewById(R.id.cardCollectionsEmptyState);
     }
 
     private void setupBioCounter() {
@@ -145,10 +157,21 @@ public class ProfileFragment extends Fragment {
         recyclerBlogPosts.setAdapter(blogPostAdapter);
     }
 
+    private void setupCollectionsList() {
+        collectionAdapter = new CollectionAdapter(new ArrayList<>(), this::showCollectionDetail);
+        recyclerCollections.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerCollections.setAdapter(collectionAdapter);
+        profileContentTabs.check(R.id.btnTabBlog);
+        profileContentTabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) renderSelectedProfileTab();
+        });
+    }
+
     private void registerActions() {
         btnSaveProfile.setOnClickListener(v -> saveProfile());
         btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
         btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
+        btnLogoutProfile.setOnClickListener(v -> logout());
         btnChooseCover.setOnClickListener(v -> chooseCoverFromFavorites());
         btnChooseProfilePhoto.setOnClickListener(v -> showProfilePhotoOptions());
     }
@@ -163,6 +186,10 @@ public class ProfileFragment extends Fragment {
         postsListener = UserProfileStore.listenBlogPosts(posts -> {
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> renderPosts(posts));
+        });
+        collectionsListener = UserProfileStore.listenCollections(collections -> {
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(() -> renderCollections(collections));
         });
     }
 
@@ -197,6 +224,38 @@ public class ProfileFragment extends Fragment {
         cardBlogEmptyState.setVisibility(safePosts.isEmpty() ? View.VISIBLE : View.GONE);
         recyclerBlogPosts.setVisibility(safePosts.isEmpty() ? View.GONE : View.VISIBLE);
         renderStats();
+        renderSelectedProfileTab();
+    }
+
+    private void renderCollections(List<WallpaperCollection> collections) {
+        List<WallpaperCollection> safeCollections = collections == null ? new ArrayList<>() : collections;
+        collectionAdapter.updateList(safeCollections);
+        cardCollectionsEmptyState.setVisibility(safeCollections.isEmpty() && isCollectionsTabSelected() ? View.VISIBLE : View.GONE);
+        recyclerCollections.setVisibility(!safeCollections.isEmpty() && isCollectionsTabSelected() ? View.VISIBLE : View.GONE);
+        renderSelectedProfileTab();
+    }
+
+    private void renderSelectedProfileTab() {
+        boolean collectionsSelected = isCollectionsTabSelected();
+
+        recyclerBlogPosts.setVisibility(collectionsSelected ? View.GONE : recyclerBlogPosts.getVisibility());
+        cardBlogEmptyState.setVisibility(collectionsSelected ? View.GONE : cardBlogEmptyState.getVisibility());
+
+        if (collectionsSelected) {
+            boolean hasCollections = collectionAdapter != null && collectionAdapter.getItemCount() > 0;
+            recyclerCollections.setVisibility(hasCollections ? View.VISIBLE : View.GONE);
+            cardCollectionsEmptyState.setVisibility(hasCollections ? View.GONE : View.VISIBLE);
+        } else {
+            recyclerCollections.setVisibility(View.GONE);
+            cardCollectionsEmptyState.setVisibility(View.GONE);
+            boolean hasPosts = blogPostAdapter != null && blogPostAdapter.getItemCount() > 0;
+            recyclerBlogPosts.setVisibility(hasPosts ? View.VISIBLE : View.GONE);
+            cardBlogEmptyState.setVisibility(hasPosts ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private boolean isCollectionsTabSelected() {
+        return profileContentTabs != null && profileContentTabs.getCheckedButtonId() == R.id.btnTabCollections;
     }
 
     private void renderStats() {
@@ -434,6 +493,30 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    private void showCollectionDetail(WallpaperCollection collection) {
+        if (collection == null || !isAdded()) return;
+
+        View pickerView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_wallpaper_picker, null, false);
+        RecyclerView recyclerPicker = pickerView.findViewById(R.id.recyclerWallpaperPicker);
+        recyclerPicker.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+
+        BottomSheetDialog sheet = new BottomSheetDialog(requireContext());
+        sheet.setTitle(collection.name);
+        sheet.setContentView(pickerView);
+        recyclerPicker.setAdapter(new SelectableWallpaperAdapter(collection.wallpapers, wallpaper -> {
+            Wallpaper repositoryWallpaper = WallpaperRepository.getWallpaperById(wallpaper.id);
+            if (repositoryWallpaper == null) {
+                repositoryWallpaper = wallpaper;
+                WallpaperRepository.wallpaperList.add(repositoryWallpaper);
+            }
+            Intent intent = new Intent(requireContext(), WallpaperDetailActivity.class);
+            intent.putExtra("wallpaper_id", repositoryWallpaper.id);
+            startActivity(intent);
+            sheet.dismiss();
+        }));
+        sheet.show();
+    }
+
     private void deleteAccount() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
@@ -448,6 +531,12 @@ public class ProfileFragment extends Fragment {
                     btnDeleteAccount.setEnabled(true);
                     showMessage(getString(R.string.delete_account_failed, e.getMessage()));
                 });
+    }
+
+    private void logout() {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(requireContext(), AuthActivity.class));
+        requireActivity().finish();
     }
 
     private void setTextIfDifferent(TextInputEditText editText, String value) {
@@ -490,6 +579,10 @@ public class ProfileFragment extends Fragment {
         if (postsListener != null) {
             postsListener.remove();
             postsListener = null;
+        }
+        if (collectionsListener != null) {
+            collectionsListener.remove();
+            collectionsListener = null;
         }
     }
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add">Add</string>
+    <string name="add_to_collection">Add to Collection</string>
+    <string name="choose_collection_description">Choose a collection below or create a new one.</string>
+    <string name="add_to_collection_description">Name a collection or reuse an existing collection name.</string>
+    <string name="collection_name">Collection name</string>
+    <string name="collection_name_required">Enter a collection name.</string>
+    <string name="collection_saved">Added to collection.</string>
+    <string name="collection_save_failed">Collection could not be saved: %1$s</string>
+    <string name="new_collection">New collection</string>
+    <string name="my_collections">Collections</string>
+    <string name="no_collections_yet">No collections yet.</string>
+    <string name="no_collections_yet_description">Use the plus button on a wallpaper to start a named collection.</string>
+    <string name="empty_collection">No wallpapers in this collection.</string>
+
+    <plurals name="collection_photo_count">
+        <item quantity="one">%d wallpaper</item>
+        <item quantity="other">%d wallpapers</item>
+    </plurals>
+</resources>

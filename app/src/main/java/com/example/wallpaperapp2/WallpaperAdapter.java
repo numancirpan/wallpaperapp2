@@ -105,6 +105,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         });
 
         holder.btnRepost.setOnClickListener(v -> RepostDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
+        holder.btnAddToCollection.setOnClickListener(v -> CollectionDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), WallpaperDetailActivity.class);
@@ -175,6 +176,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         ImageView imageView;
         MaterialButton btnFavorite;
         MaterialButton btnRepost;
+        MaterialButton btnAddToCollection;
         TextView txtWallpaperTitle;
 
         public ViewHolder(@NonNull View itemView) {
@@ -182,6 +184,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             imageView = itemView.findViewById(R.id.imageView);
             btnFavorite = itemView.findViewById(R.id.btnFavorite);
             btnRepost = itemView.findViewById(R.id.btnRepost);
+            btnAddToCollection = itemView.findViewById(R.id.btnAddToCollection);
             txtWallpaperTitle = itemView.findViewById(R.id.txtWallpaperTitle);
         }
     }
