@@ -2,7 +2,6 @@ package com.example.wallpaperapp2;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
-import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,13 +22,15 @@ import androidx.fragment.app.Fragment;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsFragment extends Fragment {
 
-    private static final long THEME_ANIMATION_DELAY_MS = 430L;
-    private static final long BACKGROUND_ANIMATION_DURATION_MS = 420L;
+    private static final long THEME_ANIMATION_DELAY_MS = 900L;
+    private static final long BACKGROUND_ANIMATION_DURATION_MS = 900L;
+    private static final float LIGHT_PROGRESS = 0f;
+    private static final float DARK_PROGRESS = 0.5f;
+    private static final float TOGGLE_ANIMATION_SPEED = 1.65f;
 
     private ScrollView settingsScrollView;
     private View settingsRoot;
@@ -169,13 +170,16 @@ public class SettingsFragment extends Fragment {
     private void playThemeToggleAnimation(boolean darkModeEnabled) {
         if (themeToggleAnimation == null) return;
         themeToggleAnimation.cancelAnimation();
-        themeToggleAnimation.setSpeed(darkModeEnabled ? 1f : -1f);
+        themeToggleAnimation.setMinAndMaxProgress(LIGHT_PROGRESS, DARK_PROGRESS);
+        themeToggleAnimation.setSpeed(darkModeEnabled ? TOGGLE_ANIMATION_SPEED : -TOGGLE_ANIMATION_SPEED);
+        themeToggleAnimation.setProgress(darkModeEnabled ? LIGHT_PROGRESS : DARK_PROGRESS);
         themeToggleAnimation.playAnimation();
     }
 
     private void updateThemeAnimationState(boolean darkModeEnabled) {
         if (themeToggleAnimation == null) return;
-        themeToggleAnimation.setProgress(darkModeEnabled ? 1f : 0f);
+        themeToggleAnimation.setMinAndMaxProgress(LIGHT_PROGRESS, DARK_PROGRESS);
+        themeToggleAnimation.setProgress(darkModeEnabled ? DARK_PROGRESS : LIGHT_PROGRESS);
     }
 
     private void updateThemeLabel(boolean darkModeEnabled) {
