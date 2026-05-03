@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -18,10 +19,12 @@ import com.google.firebase.auth.FirebaseAuthException;
 public class AuthActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
+    private AuthSessionManager sessionManager;
     private TextInputLayout layoutEmail;
     private TextInputLayout layoutPassword;
     private TextInputEditText editEmail;
     private TextInputEditText editPassword;
+    private MaterialCheckBox checkRememberMe;
     private MaterialButton btnAction;
     private TextView txtToggleMode;
     private TextView txtAuthSubtitle;
@@ -34,14 +37,17 @@ public class AuthActivity extends AppCompatActivity {
 
         FirebaseApp.initializeApp(this);
         auth = FirebaseAuth.getInstance();
+        sessionManager = new AuthSessionManager(this);
         layoutEmail = findViewById(R.id.layoutEmail);
         layoutPassword = findViewById(R.id.layoutPassword);
         editEmail = findViewById(R.id.editEmail);
         editPassword = findViewById(R.id.editPassword);
+        checkRememberMe = findViewById(R.id.checkRememberMe);
         btnAction = findViewById(R.id.btnAuthAction);
         txtToggleMode = findViewById(R.id.txtToggleMode);
         txtAuthSubtitle = findViewById(R.id.txtAuthSubtitle);
 
+        checkRememberMe.setChecked(sessionManager.isRememberMeEnabled());
         updateModeUi();
 
         btnAction.setOnClickListener(v -> authenticate());
@@ -57,10 +63,12 @@ public class AuthActivity extends AppCompatActivity {
             btnAction.setText(R.string.login);
             txtToggleMode.setText(R.string.no_account_register);
             txtAuthSubtitle.setText(R.string.auth_subtitle_login);
+            checkRememberMe.setVisibility(android.view.View.VISIBLE);
         } else {
             btnAction.setText(R.string.register);
             txtToggleMode.setText(R.string.already_have_account_login);
             txtAuthSubtitle.setText(R.string.auth_subtitle_register);
+            checkRememberMe.setVisibility(android.view.View.GONE);
         }
     }
 
@@ -84,6 +92,7 @@ public class AuthActivity extends AppCompatActivity {
         if (isLoginMode) {
             auth.signInWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
+                        sessionManager.setRememberMe(checkRememberMe.isChecked());
                         setLoading(false);
                         openMain();
                     })
@@ -94,6 +103,7 @@ public class AuthActivity extends AppCompatActivity {
         } else {
             auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
+                        sessionManager.setRememberMe(true);
                         setLoading(false);
                         openMain();
                     })
@@ -114,6 +124,7 @@ public class AuthActivity extends AppCompatActivity {
         txtToggleMode.setEnabled(!loading);
         editEmail.setEnabled(!loading);
         editPassword.setEnabled(!loading);
+        checkRememberMe.setEnabled(!loading);
         if (loading) {
             btnAction.setText(R.string.please_wait);
         } else {
