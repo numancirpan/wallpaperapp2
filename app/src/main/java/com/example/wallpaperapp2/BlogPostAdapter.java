@@ -18,16 +18,17 @@ import java.util.List;
 
 public class BlogPostAdapter extends RecyclerView.Adapter<BlogPostAdapter.ViewHolder> {
 
-    public interface OnDeleteClickListener {
+    public interface OnPostActionListener {
+        void onEdit(BlogPost post);
         void onDelete(BlogPost post);
     }
 
     private List<BlogPost> posts;
-    private final OnDeleteClickListener deleteClickListener;
+    private final OnPostActionListener actionListener;
 
-    public BlogPostAdapter(List<BlogPost> posts, OnDeleteClickListener deleteClickListener) {
+    public BlogPostAdapter(List<BlogPost> posts, OnPostActionListener actionListener) {
         this.posts = posts;
-        this.deleteClickListener = deleteClickListener;
+        this.actionListener = actionListener;
     }
 
     public void updateList(List<BlogPost> newPosts) {
@@ -59,8 +60,11 @@ public class BlogPostAdapter extends RecyclerView.Adapter<BlogPostAdapter.ViewHo
                 ? holder.itemView.getContext().getString(R.string.not_available)
                 : CategoryDisplayMapper.toDisplayName(holder.itemView.getContext(), post.aiCategory);
         holder.txtBlogMeta.setText(post.photographer + " • " + category + " • " + dateText);
+        holder.btnEditPost.setOnClickListener(v -> {
+            if (actionListener != null) actionListener.onEdit(post);
+        });
         holder.btnDeletePost.setOnClickListener(v -> {
-            if (deleteClickListener != null) deleteClickListener.onDelete(post);
+            if (actionListener != null) actionListener.onDelete(post);
         });
     }
 
@@ -73,6 +77,7 @@ public class BlogPostAdapter extends RecyclerView.Adapter<BlogPostAdapter.ViewHo
         ImageView imageBlogPost;
         TextView txtBlogComment;
         TextView txtBlogMeta;
+        MaterialButton btnEditPost;
         MaterialButton btnDeletePost;
 
         ViewHolder(@NonNull View itemView) {
@@ -80,6 +85,7 @@ public class BlogPostAdapter extends RecyclerView.Adapter<BlogPostAdapter.ViewHo
             imageBlogPost = itemView.findViewById(R.id.imageBlogPost);
             txtBlogComment = itemView.findViewById(R.id.txtBlogComment);
             txtBlogMeta = itemView.findViewById(R.id.txtBlogMeta);
+            btnEditPost = itemView.findViewById(R.id.btnEditPost);
             btnDeletePost = itemView.findViewById(R.id.btnDeletePost);
         }
     }
