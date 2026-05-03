@@ -55,6 +55,12 @@ public class CategoryDisplayMapper {
             case "lake":
                 return "Water Scenes";
 
+            case "tekne":
+            case "boat":
+            case "ship":
+            case "watercraft":
+                return "Boat";
+
             case "doğa":
             case "nature":
             case "branch":
@@ -156,6 +162,8 @@ public class CategoryDisplayMapper {
                 return context.getString(R.string.category_beach);
             case "water scenes":
                 return context.getString(R.string.category_water_scenes);
+            case "boat":
+                return context.getString(R.string.category_boat);
             case "nature":
                 return context.getString(R.string.category_nature);
             case "urban":
