@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 import java.util.Locale;
@@ -21,16 +22,31 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
         void onCollectionClick(WallpaperCollection collection);
     }
 
+    public interface OnCollectionActionListener {
+        void onRename(WallpaperCollection collection);
+        void onDelete(WallpaperCollection collection);
+    }
+
     private List<WallpaperCollection> collections;
     private final OnCollectionClickListener clickListener;
+    private final OnCollectionActionListener actionListener;
 
     public CollectionAdapter(List<WallpaperCollection> collections) {
         this(collections, null);
     }
 
     public CollectionAdapter(List<WallpaperCollection> collections, OnCollectionClickListener clickListener) {
+        this(collections, clickListener, null);
+    }
+
+    public CollectionAdapter(
+            List<WallpaperCollection> collections,
+            OnCollectionClickListener clickListener,
+            OnCollectionActionListener actionListener
+    ) {
         this.collections = collections;
         this.clickListener = clickListener;
+        this.actionListener = actionListener;
     }
 
     public void updateList(List<WallpaperCollection> newCollections) {
@@ -50,6 +66,12 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
         WallpaperCollection collection = collections.get(position);
         holder.itemView.setOnClickListener(v -> {
             if (clickListener != null) clickListener.onCollectionClick(collection);
+        });
+        holder.btnRenameCollection.setOnClickListener(v -> {
+            if (actionListener != null) actionListener.onRename(collection);
+        });
+        holder.btnDeleteCollection.setOnClickListener(v -> {
+            if (actionListener != null) actionListener.onDelete(collection);
         });
         holder.txtCollectionName.setText(collection.name);
         int count = collection.wallpapers == null ? 0 : collection.wallpapers.size();
@@ -99,6 +121,8 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
         TextView txtCollectionName;
         TextView txtCollectionMeta;
         TextView emptyPreview;
+        MaterialButton btnRenameCollection;
+        MaterialButton btnDeleteCollection;
         LinearLayout previewRow;
 
         ViewHolder(@NonNull View itemView) {
@@ -106,6 +130,8 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Vi
             txtCollectionName = itemView.findViewById(R.id.txtCollectionName);
             txtCollectionMeta = itemView.findViewById(R.id.txtCollectionMeta);
             emptyPreview = itemView.findViewById(R.id.txtCollectionEmptyPreview);
+            btnRenameCollection = itemView.findViewById(R.id.btnRenameCollection);
+            btnDeleteCollection = itemView.findViewById(R.id.btnDeleteCollection);
             previewRow = itemView.findViewById(R.id.collectionPreviewRow);
         }
     }

@@ -14,6 +14,12 @@
     <string name="in_this_collection_hint">Already in this collection - remove it here</string>
     <string name="remove_from_collection">Remove</string>
     <string name="new_collection">New collection</string>
+    <string name="rename_collection">Rename collection</string>
+    <string name="delete_collection">Delete collection</string>
+    <string name="collection_renamed">Collection renamed.</string>
+    <string name="collection_deleted">Collection deleted.</string>
+    <string name="delete_collection_confirm_title">Delete collection?</string>
+    <string name="delete_collection_confirm_message">This removes the collection, but keeps the wallpapers.</string>
     <string name="my_collections">Collections</string>
     <string name="no_collections_yet">No collections yet.</string>
     <string name="no_collections_yet_description">Use the plus button on a wallpaper to start a named collection.</string>

@@ -443,6 +443,71 @@ public class UserProfileStore {
                 .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
     }
 
+    public static void renameCollection(String collectionId, String newName, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (collectionId == null || collectionId.trim().isEmpty()) {
+            callback.onComplete(false, "Collection not found");
+            return;
+        }
+
+        String cleanName = limit(newName, 40);
+        if (cleanName.isEmpty()) {
+            callback.onComplete(false, "Collection name is required");
+            return;
+        }
+
+        String previousName = renameCachedCollection(collectionId, cleanName);
+        Map<String, Object> update = new HashMap<>();
+        update.put("name", cleanName);
+        update.put("updatedAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .document(collectionId)
+                .update(update)
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> {
+                    if (previousName != null) renameCachedCollection(collectionId, previousName);
+                    fetchCollections(ignored -> {
+                    });
+                    callback.onComplete(false, e.getMessage());
+                });
+    }
+
+    public static void deleteCollection(String collectionId, ActionCallback callback) {
+        String uid = currentUid();
+        if (uid == null) {
+            callback.onComplete(false, "User session not found");
+            return;
+        }
+        if (collectionId == null || collectionId.trim().isEmpty()) {
+            callback.onComplete(false, "Collection not found");
+            return;
+        }
+
+        WallpaperCollection removed = removeCachedCollectionAndReturn(collectionId);
+        db.collection("users")
+                .document(uid)
+                .collection("collections")
+                .document(collectionId)
+                .delete()
+                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                .addOnFailureListener(e -> {
+                    if (removed != null) {
+                        cachedCollections.add(0, removed);
+                        notifyCollectionsChanged();
+                    }
+                    fetchCollections(ignored -> {
+                    });
+                    callback.onComplete(false, e.getMessage());
+                });
+    }
+
     private static void createCollectionWithWallpaper(String uid, String collectionName, Wallpaper wallpaper, ActionCallback callback) {
         String pendingId = "pending_" + System.currentTimeMillis();
         addPendingCachedCollection(pendingId, collectionName, wallpaper);
@@ -614,14 +679,32 @@ public class UserProfileStore {
     }
 
     private static void removeCachedCollection(String collectionId) {
+        removeCachedCollectionAndReturn(collectionId);
+    }
+
+    private static WallpaperCollection removeCachedCollectionAndReturn(String collectionId) {
+        WallpaperCollection removed = null;
         List<WallpaperCollection> updated = new ArrayList<>();
         for (WallpaperCollection collection : cachedCollections) {
-            if (collection != null && !collectionId.equals(collection.id)) {
+            if (collection != null && collectionId.equals(collection.id)) {
+                removed = collection;
+            } else if (collection != null) {
                 updated.add(collection);
             }
         }
         cachedCollections = updated;
         notifyCollectionsChanged();
+        return removed;
+    }
+
+    private static String renameCachedCollection(String collectionId, String newName) {
+        WallpaperCollection collection = findCachedCollection(collectionId);
+        if (collection == null) return null;
+        String previousName = collection.name;
+        collection.name = newName;
+        collection.updatedAt = System.currentTimeMillis();
+        notifyCollectionsChanged();
+        return previousName;
     }
 
     private static void notifyCollectionsChanged() {

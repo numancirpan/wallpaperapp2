@@ -14,6 +14,12 @@
     <string name="in_this_collection_hint">Bu koleksiyonda var - buradan cikar</string>
     <string name="remove_from_collection">Cikar</string>
     <string name="new_collection">Yeni koleksiyon</string>
+    <string name="rename_collection">Koleksiyon adini degistir</string>
+    <string name="delete_collection">Koleksiyonu sil</string>
+    <string name="collection_renamed">Koleksiyon adi degistirildi.</string>
+    <string name="collection_deleted">Koleksiyon silindi.</string>
+    <string name="delete_collection_confirm_title">Koleksiyon silinsin mi?</string>
+    <string name="delete_collection_confirm_message">Bu sadece koleksiyonu siler, duvar kagitlari kalir.</string>
     <string name="my_collections">Koleksiyonlar</string>
     <string name="no_collections_yet">Henuz koleksiyon yok.</string>
     <string name="no_collections_yet_description">Isimli bir koleksiyon baslatmak icin duvar kagidindaki arti butonunu kullan.</string>

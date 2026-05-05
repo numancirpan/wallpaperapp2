@@ -149,7 +149,21 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupCollectionsList() {
-        collectionAdapter = new CollectionAdapter(new ArrayList<>(), this::showCollectionDetail);
+        collectionAdapter = new CollectionAdapter(
+                new ArrayList<>(),
+                this::showCollectionDetail,
+                new CollectionAdapter.OnCollectionActionListener() {
+                    @Override
+                    public void onRename(WallpaperCollection collection) {
+                        showRenameCollectionDialog(collection);
+                    }
+
+                    @Override
+                    public void onDelete(WallpaperCollection collection) {
+                        showDeleteCollectionDialog(collection);
+                    }
+                }
+        );
         recyclerCollections.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerCollections.setAdapter(collectionAdapter);
         profileContentTabs.check(R.id.btnTabBlog);
@@ -438,6 +452,65 @@ public class ProfileFragment extends Fragment {
             sheet.dismiss();
         }));
         sheet.show();
+    }
+
+    private void showRenameCollectionDialog(WallpaperCollection collection) {
+        if (collection == null || !isAdded()) return;
+
+        com.google.android.material.textfield.TextInputLayout inputLayout =
+                new com.google.android.material.textfield.TextInputLayout(requireContext());
+        inputLayout.setHint(getString(R.string.collection_name));
+        inputLayout.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        inputLayout.setPadding(padding, 8, padding, 0);
+
+        TextInputEditText input = new TextInputEditText(requireContext());
+        input.setSingleLine(true);
+        input.setText(collection.name);
+        input.setSelection(input.getText() == null ? 0 : input.getText().length());
+        inputLayout.addView(input);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.rename_collection)
+                .setView(inputLayout)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.confirm, null)
+                .create();
+
+        dialog.setOnShowListener(unused -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String name = getText(input);
+            if (name.isEmpty()) {
+                input.setError(getString(R.string.collection_name_required));
+                return;
+            }
+
+            UserProfileStore.renameCollection(collection.id, name, (success, errorMessage) -> {
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> showMessage(success
+                        ? getString(R.string.collection_renamed)
+                        : getString(R.string.collection_save_failed, errorMessage == null ? "Unknown error" : errorMessage)));
+            });
+            dialog.dismiss();
+        }));
+
+        dialog.show();
+    }
+
+    private void showDeleteCollectionDialog(WallpaperCollection collection) {
+        if (collection == null || !isAdded()) return;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_collection_confirm_title)
+                .setMessage(R.string.delete_collection_confirm_message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.confirm, (dialog, which) ->
+                        UserProfileStore.deleteCollection(collection.id, (success, errorMessage) -> {
+                            if (!isAdded()) return;
+                            requireActivity().runOnUiThread(() -> showMessage(success
+                                    ? getString(R.string.collection_deleted)
+                                    : getString(R.string.collection_save_failed, errorMessage == null ? "Unknown error" : errorMessage)));
+                        }))
+                .show();
     }
 
     private void setTextIfDifferent(TextInputEditText editText, String value) {
