@@ -29,7 +29,8 @@ public class DynamicCategoryGenerator {
         if (baseCategory == null || baseCategory.trim().isEmpty()) {
             baseCategory = context.getString(R.string.uncategorized);
         }
-        return matchExistingCategory(baseCategory, normalized, existingCategories);
+        String matchedCategory = matchExistingCategory(baseCategory, normalized, existingCategories);
+        return sanitizeAnimalCategory(matchedCategory, normalized);
     }
 
     public static String labelsToDisplay(Context context, List<AiLabelData> labels) {
@@ -130,6 +131,22 @@ public class DynamicCategoryGenerator {
             }
         }
         return bestScore >= 10 ? bestMatch : baseCategory;
+    }
+
+    private static String sanitizeAnimalCategory(String category, List<String> labels) {
+        if (category == null || !category.equalsIgnoreCase("Animals")) {
+            return category;
+        }
+        if (containsAny(labels, "animal", "animals", "cat", "dog", "bird", "wildlife", "fish", "horse", "pet", "fur", "snout")) {
+            return category;
+        }
+        if (containsAny(labels, "roof", "building", "architecture", "house")) {
+            return "Architecture";
+        }
+        if (containsAny(labels, "boat", "vacation", "sea", "coast", "beach", "water")) {
+            return "Beach";
+        }
+        return "Uncategorized";
     }
 
     private static String fallbackCategory(Context context, List<AiLabelData> labels) {

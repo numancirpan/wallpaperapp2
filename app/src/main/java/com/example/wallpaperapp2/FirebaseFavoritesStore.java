@@ -164,8 +164,20 @@ public class FirebaseFavoritesStore {
         if (lowerL.contains("on-device analysis failed")) return false;
 
         if (lowerC.contains("hand") || lowerC.contains("nail") || lowerC.contains("musical instrument")) return false;
+        if (lowerC.equals("animals") && !hasAnimalEvidence(lowerL)) return false;
         if (lowerC.equals("beach rock") || lowerC.equals("field prairie") || lowerC.equals("mobile phone nail")) return false;
         return true;
+    }
+
+    private static boolean hasAnimalEvidence(String labels) {
+        String normalized = labels == null ? "" : labels.toLowerCase();
+        String[] terms = new String[]{
+                "animal", "cat", "dog", "bird", "wildlife", "fish", "horse", "pet", "fur", "snout"
+        };
+        for (String term : terms) {
+            if (normalized.contains(term)) return true;
+        }
+        return false;
     }
 
     private static String getCacheId(Wallpaper wallpaper) {

@@ -150,6 +150,8 @@ public class AuthActivity extends AppCompatActivity {
                 return getString(R.string.user_not_found);
             case "ERROR_WRONG_PASSWORD":
                 return getString(R.string.wrong_password);
+            case "ERROR_INVALID_CREDENTIAL":
+                return getString(R.string.invalid_login_credentials);
             case "ERROR_EMAIL_ALREADY_IN_USE":
                 return getString(R.string.email_already_registered);
             case "ERROR_WEAK_PASSWORD":

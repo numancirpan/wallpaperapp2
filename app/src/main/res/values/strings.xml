@@ -44,6 +44,7 @@
     <string name="invalid_email_format">Invalid email format.</string>
     <string name="user_not_found">User not found. Register first.</string>
     <string name="wrong_password">Wrong password.</string>
+    <string name="invalid_login_credentials">Email or password is incorrect.</string>
     <string name="email_already_registered">This email is already registered.</string>
     <string name="weak_password">Password is too weak (min 6).</string>
     <string name="enable_email_provider">Enable Email/Password provider in Firebase Authentication.</string>
@@ -56,6 +57,9 @@
     <string name="reset_password">Reset Password</string>
     <string name="password_changed">Password changed successfully.</string>
     <string name="password_change_failed">Password could not be changed: %1$s</string>
+    <string name="password_change_failed_generic">Password could not be changed. Check your current password and try again.</string>
+    <string name="current_password_incorrect">Current password is incorrect.</string>
+    <string name="recent_login_required">Please log in again before changing your password.</string>
     <string name="passwords_do_not_match">New passwords do not match.</string>
     <string name="new_password_same_as_old">Your new password cannot be the same as your old password.</string>
 

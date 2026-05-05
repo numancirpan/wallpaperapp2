@@ -37,12 +37,17 @@ public class UserProfileStore {
         void onLoaded(List<WallpaperCollection> collections);
     }
 
+    public interface CollectionsChangeListener {
+        void onCollectionsChanged();
+    }
+
     public interface ActionCallback {
         void onComplete(boolean success, String errorMessage);
     }
 
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static List<WallpaperCollection> cachedCollections = new ArrayList<>();
+    private static final List<CollectionsChangeListener> collectionChangeListeners = new ArrayList<>();
 
     public static ListenerRegistration listenProfile(ProfileCallback callback) {
         String uid = currentUid();
@@ -227,6 +232,7 @@ public class UserProfileStore {
                         }
                     }
                     cachedCollections = collections;
+                    notifyCollectionsChanged();
                     callback.onLoaded(collections);
                 });
     }
@@ -263,9 +269,23 @@ public class UserProfileStore {
                         collections.add(mapCollection(doc));
                     }
                     cachedCollections = collections;
+                    notifyCollectionsChanged();
                     callback.onLoaded(collections);
                 })
                 .addOnFailureListener(e -> callback.onLoaded(new ArrayList<>()));
+    }
+
+    public static void addCollectionsChangeListener(CollectionsChangeListener listener) {
+        if (listener == null || collectionChangeListeners.contains(listener)) return;
+        collectionChangeListeners.add(listener);
+    }
+
+    public static void removeCollectionsChangeListener(CollectionsChangeListener listener) {
+        collectionChangeListeners.remove(listener);
+    }
+
+    public static void notifyCollectionsUiChanged() {
+        notifyCollectionsChanged();
     }
 
     public static void addWallpaperToCollection(String collectionId, Wallpaper wallpaper, ActionCallback callback) {
@@ -297,6 +317,39 @@ public class UserProfileStore {
             return;
         }
 
+        WallpaperCollection cached = findCachedCollection(collectionId);
+        if (cached != null) {
+            List<Map<String, Object>> items = collectionItemsWithout(cached, wallpaperId);
+            com.google.firebase.firestore.DocumentReference ref = db.collection("users")
+                    .document(uid)
+                    .collection("collections")
+                    .document(collectionId);
+
+            if (items.isEmpty()) {
+                removeCachedCollection(collectionId);
+                ref.delete()
+                        .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                        .addOnFailureListener(e -> {
+                            fetchCollections(ignored -> {
+                            });
+                            callback.onComplete(false, e.getMessage());
+                        });
+            } else {
+                Map<String, Object> update = new HashMap<>();
+                update.put("items", items);
+                update.put("updatedAt", System.currentTimeMillis());
+                removeFromCachedCollection(collectionId, wallpaperId);
+                ref.update(update)
+                        .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                        .addOnFailureListener(e -> {
+                            fetchCollections(ignored -> {
+                            });
+                            callback.onComplete(false, e.getMessage());
+                        });
+            }
+            return;
+        }
+
         db.collection("users")
                 .document(uid)
                 .collection("collections")
@@ -323,10 +376,23 @@ public class UserProfileStore {
                     Map<String, Object> update = new HashMap<>();
                     update.put("items", items);
                     update.put("updatedAt", System.currentTimeMillis());
-                    document.getReference()
-                            .update(update)
-                            .addOnSuccessListener(unused -> callback.onComplete(true, ""))
-                            .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                    if (items.isEmpty()) {
+                        document.getReference()
+                                .delete()
+                                .addOnSuccessListener(unused -> {
+                                    removeCachedCollection(collectionId);
+                                    callback.onComplete(true, "");
+                                })
+                                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                    } else {
+                        document.getReference()
+                                .update(update)
+                                .addOnSuccessListener(unused -> {
+                                    removeFromCachedCollection(collectionId, wallpaperId);
+                                    callback.onComplete(true, "");
+                                })
+                                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                    }
                 })
                 .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
     }
@@ -345,6 +411,12 @@ public class UserProfileStore {
         String cleanName = limit(collectionName, 40);
         if (cleanName.isEmpty()) {
             callback.onComplete(false, "Collection name is required");
+            return;
+        }
+
+        WallpaperCollection cached = findCachedCollectionByName(cleanName);
+        if (cached != null) {
+            appendWallpaperToCollection(uid, cached.id, wallpaper, callback);
             return;
         }
 
@@ -372,6 +444,9 @@ public class UserProfileStore {
     }
 
     private static void createCollectionWithWallpaper(String uid, String collectionName, Wallpaper wallpaper, ActionCallback callback) {
+        String pendingId = "pending_" + System.currentTimeMillis();
+        addPendingCachedCollection(pendingId, collectionName, wallpaper);
+
         List<Map<String, Object>> items = new ArrayList<>();
         items.add(wallpaperPayload(wallpaper));
 
@@ -385,11 +460,41 @@ public class UserProfileStore {
                 .document(uid)
                 .collection("collections")
                 .add(payload)
-                .addOnSuccessListener(unused -> callback.onComplete(true, ""))
-                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                .addOnSuccessListener(documentReference -> {
+                    replaceCachedCollectionId(pendingId, documentReference.getId());
+                    callback.onComplete(true, "");
+                })
+                .addOnFailureListener(e -> {
+                    removeCachedCollection(pendingId);
+                    callback.onComplete(false, e.getMessage());
+                });
     }
 
     private static void appendWallpaperToCollection(String uid, String collectionId, Wallpaper wallpaper, ActionCallback callback) {
+        WallpaperCollection cached = findCachedCollection(collectionId);
+        if (cached != null) {
+            List<Map<String, Object>> items = collectionItemsWithout(cached, wallpaper.id);
+            items.add(wallpaperPayload(wallpaper));
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("items", items);
+            update.put("updatedAt", System.currentTimeMillis());
+
+            addToCachedCollection(collectionId, wallpaper);
+            db.collection("users")
+                    .document(uid)
+                    .collection("collections")
+                    .document(collectionId)
+                    .update(update)
+                    .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                    .addOnFailureListener(e -> {
+                        fetchCollections(ignored -> {
+                        });
+                        callback.onComplete(false, e.getMessage());
+                    });
+            return;
+        }
+
         db.collection("users")
                 .document(uid)
                 .collection("collections")
@@ -418,10 +523,112 @@ public class UserProfileStore {
                     update.put("updatedAt", System.currentTimeMillis());
                     document.getReference()
                             .update(update)
-                            .addOnSuccessListener(unused -> callback.onComplete(true, ""))
+                            .addOnSuccessListener(unused -> {
+                                addToCachedCollection(collectionId, wallpaper);
+                                callback.onComplete(true, "");
+                            })
                             .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
                 })
                 .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private static WallpaperCollection findCachedCollection(String collectionId) {
+        if (collectionId == null) return null;
+        for (WallpaperCollection collection : cachedCollections) {
+            if (collection != null && collectionId.equals(collection.id)) {
+                return collection;
+            }
+        }
+        return null;
+    }
+
+    private static WallpaperCollection findCachedCollectionByName(String collectionName) {
+        if (collectionName == null) return null;
+        for (WallpaperCollection collection : cachedCollections) {
+            if (collection != null && collection.name != null
+                    && collection.name.equalsIgnoreCase(collectionName.trim())) {
+                return collection;
+            }
+        }
+        return null;
+    }
+
+    private static List<Map<String, Object>> collectionItemsWithout(WallpaperCollection collection, int wallpaperId) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        if (collection == null || collection.wallpapers == null) return items;
+
+        for (Wallpaper item : collection.wallpapers) {
+            if (item == null || item.id == wallpaperId) continue;
+            items.add(wallpaperPayload(item));
+        }
+        return items;
+    }
+
+    private static void addToCachedCollection(String collectionId, Wallpaper wallpaper) {
+        WallpaperCollection collection = findCachedCollection(collectionId);
+        if (collection == null || wallpaper == null) return;
+        List<Wallpaper> updated = new ArrayList<>();
+        if (collection.wallpapers != null) {
+            for (Wallpaper item : collection.wallpapers) {
+                if (item != null && item.id != wallpaper.id) {
+                    updated.add(item);
+                }
+            }
+        }
+        updated.add(wallpaper);
+        collection.wallpapers = updated;
+        collection.updatedAt = System.currentTimeMillis();
+        notifyCollectionsChanged();
+    }
+
+    private static void addPendingCachedCollection(String collectionId, String collectionName, Wallpaper wallpaper) {
+        WallpaperCollection collection = new WallpaperCollection();
+        collection.id = collectionId;
+        collection.name = collectionName;
+        if (wallpaper != null) {
+            collection.wallpapers.add(wallpaper);
+        }
+        collection.updatedAt = System.currentTimeMillis();
+        cachedCollections.add(0, collection);
+        notifyCollectionsChanged();
+    }
+
+    private static void replaceCachedCollectionId(String oldId, String newId) {
+        WallpaperCollection collection = findCachedCollection(oldId);
+        if (collection == null) return;
+        collection.id = newId;
+    }
+
+    private static void removeFromCachedCollection(String collectionId, int wallpaperId) {
+        WallpaperCollection collection = findCachedCollection(collectionId);
+        if (collection == null || collection.wallpapers == null) return;
+        List<Wallpaper> updated = new ArrayList<>();
+        for (Wallpaper item : collection.wallpapers) {
+            if (item != null && item.id != wallpaperId) {
+                updated.add(item);
+            }
+        }
+        collection.wallpapers = updated;
+        collection.updatedAt = System.currentTimeMillis();
+        notifyCollectionsChanged();
+    }
+
+    private static void removeCachedCollection(String collectionId) {
+        List<WallpaperCollection> updated = new ArrayList<>();
+        for (WallpaperCollection collection : cachedCollections) {
+            if (collection != null && !collectionId.equals(collection.id)) {
+                updated.add(collection);
+            }
+        }
+        cachedCollections = updated;
+        notifyCollectionsChanged();
+    }
+
+    private static void notifyCollectionsChanged() {
+        List<CollectionsChangeListener> listeners = new ArrayList<>(collectionChangeListeners);
+        for (CollectionsChangeListener listener : listeners) {
+            listener.onCollectionsChanged();
+        }
     }
 
     public static void updateBlogPost(String postId, String comment, ActionCallback callback) {

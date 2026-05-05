@@ -2,6 +2,7 @@
 <resources>
     <string name="add">Ekle</string>
     <string name="add_to_collection">Koleksiyona Ekle</string>
+    <string name="in_collection_button">%1$s Koleksiyonunda</string>
     <string name="choose_collection_description">Asagidan bir koleksiyon sec veya yeni bir tane olustur.</string>
     <string name="add_to_collection_description">Yeni bir koleksiyon adi yaz veya mevcut bir adi tekrar kullan.</string>
     <string name="collection_name">Koleksiyon adi</string>
@@ -10,6 +11,7 @@
     <string name="collection_removed">Koleksiyondan cikarildi.</string>
     <string name="collection_save_failed">Koleksiyon kaydedilemedi: %1$s</string>
     <string name="in_this_collection">Bu koleksiyonda var</string>
+    <string name="in_this_collection_hint">Bu koleksiyonda var - buradan cikar</string>
     <string name="remove_from_collection">Cikar</string>
     <string name="new_collection">Yeni koleksiyon</string>
     <string name="my_collections">Koleksiyonlar</string>

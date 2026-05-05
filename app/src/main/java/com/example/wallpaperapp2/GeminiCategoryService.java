@@ -245,6 +245,7 @@ public class GeminiCategoryService {
                 labels.add("No labels returned");
             }
 
+            category = WallpaperRepository.sanitizeCategoryForLabels(category, String.join(", ", labels));
             return new AnalysisResult(category, String.join(", ", labels));
         } catch (Exception e) {
             return new AnalysisResult("Uncategorized", "Gemini parse failed: " + shortMessage(e.getMessage()));

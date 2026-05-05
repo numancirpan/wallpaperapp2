@@ -95,16 +95,18 @@ public class CollectionDialogHelper {
             listContainer.addView(collectionRow(context, collection, containsWallpaper, v -> {
                 if (containsWallpaper) return;
                 UserProfileStore.addWallpaperToCollection(collection.id, wallpaper, (success, errorMessage) -> {
+                    if (success) {
+                        UserProfileStore.notifyCollectionsUiChanged();
+                    }
                     showResult(context, anchor, success, errorMessage);
-                    UserProfileStore.fetchCollections(ignored -> {
-                    });
                 });
                 sheet.dismiss();
             }, v -> {
                 UserProfileStore.removeWallpaperFromCollection(collection.id, wallpaper.id, (success, errorMessage) -> {
+                    if (success) {
+                        UserProfileStore.notifyCollectionsUiChanged();
+                    }
                     showRemoveResult(context, anchor, success, errorMessage);
-                    UserProfileStore.fetchCollections(ignored -> {
-                    });
                 });
                 sheet.dismiss();
             }));
@@ -153,7 +155,7 @@ public class CollectionDialogHelper {
         int count = collection.wallpapers == null ? 0 : collection.wallpapers.size();
         TextView meta = new TextView(context);
         meta.setText(containsWallpaper
-                ? context.getString(R.string.in_this_collection)
+                ? context.getString(R.string.in_this_collection_hint)
                 : context.getResources().getQuantityString(R.plurals.collection_photo_count, count, count));
         meta.setAlpha(0.68f);
         meta.setTextSize(13);
@@ -162,12 +164,15 @@ public class CollectionDialogHelper {
         if (containsWallpaper) {
             MaterialButton remove = new MaterialButton(context);
             remove.setText(R.string.remove_from_collection);
+            remove.setIconResource(android.R.drawable.ic_menu_delete);
             remove.setTextSize(12);
             remove.setMinWidth(0);
             remove.setCornerRadius(dp(context, 18));
-            remove.setTextColor(0xFF6E4BA8);
+            remove.setTextColor(0xFFFFFFFF);
+            remove.setIconTint(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+            remove.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF6E4BA8));
             remove.setOnClickListener(removeListener);
-            row.addView(remove, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(context, 40)));
+            row.addView(remove, new LinearLayout.LayoutParams(dp(context, 116), dp(context, 40)));
         } else {
             TextView arrow = new TextView(context);
             arrow.setText(">");
@@ -212,7 +217,12 @@ public class CollectionDialogHelper {
             }
 
             UserProfileStore.addWallpaperToCollectionByName(name, wallpaper, (success, errorMessage) ->
-                    showResult(context, anchor, success, errorMessage)
+            {
+                if (success) {
+                    UserProfileStore.notifyCollectionsUiChanged();
+                }
+                showResult(context, anchor, success, errorMessage);
+            }
             );
             dialog.dismiss();
         }));

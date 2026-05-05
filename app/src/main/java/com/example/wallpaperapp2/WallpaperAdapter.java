@@ -56,8 +56,6 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             FavoriteButtonStyler.apply(holder.btnFavorite, wallpaper.isFavorite);
 
             if (!wallpaper.isFavorite) {
-                wallpaper.aiCategory = "";
-                wallpaper.aiLabels = "";
                 FirebaseFavoritesStore.removeFavorite(wallpaper);
                 notifyItemChanged(position);
                 return;

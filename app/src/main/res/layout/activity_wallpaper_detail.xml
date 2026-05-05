@@ -112,8 +112,12 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="18dp"
+            android:textColor="#6750A4"
             android:text="@string/repost_wallpaper"
-            app:cornerRadius="28dp" />
+            app:cornerRadius="28dp"
+            app:icon="@android:drawable/ic_menu_share"
+            app:iconTint="#6750A4"
+            app:strokeColor="#6750A4" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDetailCollection"
@@ -121,9 +125,12 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
+            android:textColor="#6750A4"
             android:text="@string/add_to_collection"
             app:cornerRadius="28dp"
-            app:icon="@android:drawable/ic_menu_add" />
+            app:icon="@android:drawable/ic_menu_add"
+            app:iconTint="#6750A4"
+            app:strokeColor="#6750A4" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDownloadWallpaper"
@@ -131,17 +138,24 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
+            android:backgroundTint="#EADDFF"
+            android:textColor="#3A2E4F"
             android:text="@string/download_wallpaper"
             app:cornerRadius="28dp"
-            app:icon="@android:drawable/stat_sys_download_done" />
+            app:icon="@android:drawable/stat_sys_download_done"
+            app:iconTint="#3A2E4F" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSetHomeWallpaper"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
+            android:backgroundTint="#6750A4"
             android:text="@string/set_home_screen"
-            app:cornerRadius="28dp" />
+            android:textColor="@android:color/white"
+            app:cornerRadius="28dp"
+            app:icon="@android:drawable/ic_menu_set_as"
+            app:iconTint="@android:color/white" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSetLockWallpaper"
@@ -149,8 +163,12 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
+            android:backgroundTint="#EADDFF"
+            android:textColor="#3A2E4F"
             android:text="@string/set_lock_screen"
-            app:cornerRadius="28dp" />
+            app:cornerRadius="28dp"
+            app:icon="@android:drawable/ic_lock_lock"
+            app:iconTint="#3A2E4F" />
 
     </LinearLayout>
 </ScrollView>

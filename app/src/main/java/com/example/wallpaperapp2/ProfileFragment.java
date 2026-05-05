@@ -26,9 +26,6 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.EmailAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
@@ -49,9 +46,6 @@ public class ProfileFragment extends Fragment {
     private TextInputEditText editLastName;
     private TextInputEditText editBio;
     private MaterialButton btnSaveProfile;
-    private MaterialButton btnChangePassword;
-    private MaterialButton btnDeleteAccount;
-    private MaterialButton btnLogoutProfile;
     private MaterialButton btnChooseCover;
     private MaterialButton btnChooseProfilePhoto;
     private MaterialButtonToggleGroup profileContentTabs;
@@ -102,9 +96,6 @@ public class ProfileFragment extends Fragment {
         editLastName = view.findViewById(R.id.editLastName);
         editBio = view.findViewById(R.id.editBio);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
-        btnChangePassword = view.findViewById(R.id.btnChangePassword);
-        btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
-        btnLogoutProfile = view.findViewById(R.id.btnLogoutProfile);
         btnChooseCover = view.findViewById(R.id.btnChooseCover);
         btnChooseProfilePhoto = view.findViewById(R.id.btnChooseProfilePhoto);
         profileContentTabs = view.findViewById(R.id.profileContentTabs);
@@ -169,9 +160,6 @@ public class ProfileFragment extends Fragment {
 
     private void registerActions() {
         btnSaveProfile.setOnClickListener(v -> saveProfile());
-        btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
-        btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
-        btnLogoutProfile.setOnClickListener(v -> logout());
         btnChooseCover.setOnClickListener(v -> chooseCoverFromFavorites());
         btnChooseProfilePhoto.setOnClickListener(v -> showProfilePhotoOptions());
     }
@@ -428,71 +416,6 @@ public class ProfileFragment extends Fragment {
         dialog.show();
     }
 
-    private void showChangePasswordDialog() {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_change_password, null, false);
-        TextInputEditText oldPassword = dialogView.findViewById(R.id.editOldPassword);
-        TextInputEditText newPassword = dialogView.findViewById(R.id.editNewPassword);
-        TextInputEditText confirmPassword = dialogView.findViewById(R.id.editConfirmPassword);
-
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.change_password)
-                .setView(dialogView)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.reset_password, null)
-                .create();
-
-        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String oldPass = getText(oldPassword);
-            String newPass = getText(newPassword);
-            String confirmPass = getText(confirmPassword);
-
-            if (oldPass.length() < 6) {
-                oldPassword.setError(getString(R.string.weak_password));
-                return;
-            }
-            if (newPass.length() < 6) {
-                newPassword.setError(getString(R.string.weak_password));
-                return;
-            }
-            if (oldPass.equals(newPass)) {
-                newPassword.setError(getString(R.string.new_password_same_as_old));
-                return;
-            }
-            if (!newPass.equals(confirmPass)) {
-                confirmPassword.setError(getString(R.string.passwords_do_not_match));
-                return;
-            }
-
-            changePassword(oldPass, newPass, dialog);
-        }));
-
-        dialog.show();
-    }
-
-    private void changePassword(String oldPassword, String newPassword, AlertDialog dialog) {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        String email = user == null ? "" : user.getEmail();
-        if (user == null || email == null || email.trim().isEmpty()) return;
-
-        user.reauthenticate(EmailAuthProvider.getCredential(email, oldPassword))
-                .addOnSuccessListener(unused -> user.updatePassword(newPassword)
-                        .addOnSuccessListener(update -> {
-                            showMessage(getString(R.string.password_changed));
-                            dialog.dismiss();
-                        })
-                        .addOnFailureListener(e -> showMessage(getString(R.string.password_change_failed, e.getMessage()))))
-                .addOnFailureListener(e -> showMessage(getString(R.string.password_change_failed, e.getMessage())));
-    }
-
-    private void showDeleteAccountDialog() {
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.delete_account_confirm_title)
-                .setMessage(R.string.delete_account_confirm_message)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.confirm, (dialog, which) -> deleteAccount())
-                .show();
-    }
-
     private void showCollectionDetail(WallpaperCollection collection) {
         if (collection == null || !isAdded()) return;
 
@@ -515,28 +438,6 @@ public class ProfileFragment extends Fragment {
             sheet.dismiss();
         }));
         sheet.show();
-    }
-
-    private void deleteAccount() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-        btnDeleteAccount.setEnabled(false);
-        user.delete()
-                .addOnSuccessListener(unused -> {
-                    showMessage(getString(R.string.account_deleted));
-                    startActivity(new Intent(requireContext(), AuthActivity.class));
-                    requireActivity().finish();
-                })
-                .addOnFailureListener(e -> {
-                    btnDeleteAccount.setEnabled(true);
-                    showMessage(getString(R.string.delete_account_failed, e.getMessage()));
-                });
-    }
-
-    private void logout() {
-        FirebaseAuth.getInstance().signOut();
-        startActivity(new Intent(requireContext(), AuthActivity.class));
-        requireActivity().finish();
     }
 
     private void setTextIfDifferent(TextInputEditText editText, String value) {

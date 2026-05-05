@@ -13,12 +13,13 @@ public class WallpaperRepository {
 
     private static final List<String> CATEGORY_SEARCH_TERMS = Arrays.asList(
             "work", "working", "workspace",
-            "animal", "animals",
-            "nature", "beach", "water", "ocean", "sea",
+            "calisma", "is",
+            "animal", "animals", "hayvan", "hayvanlar",
+            "nature", "doga", "beach", "sahil", "water", "ocean", "sea",
             "city", "urban", "architecture",
             "vehicle", "vehicles",
             "people", "person", "portrait",
-            "art", "abstract", "space", "food", "phone", "dark", "minimal"
+            "art", "abstract", "soyut", "space", "food", "phone", "dark", "minimal"
     );
 
     public static List<Wallpaper> wallpaperList = new ArrayList<>();
@@ -68,6 +69,9 @@ public class WallpaperRepository {
                 String categoryOnlySearchable = normalizeSearch(rawCategory + " " + displayCategory);
                 matchesQuery = categoryOnlySearchable.contains(normalizedQuery)
                         || CategoryResolver.matchesQuery(normalizedQuery, rawCategory, "");
+                if (matchesQuery && isAnimalQuery(normalizedQuery)) {
+                    matchesQuery = hasAnimalEvidence(wallpaper, rawLabels, displayLabels);
+                }
             } else if (isShortSpecificQuery(normalizedQuery)) {
                 matchesQuery = matchesTokenPrefix(searchableTokens, normalizedQuery);
             } else {
@@ -98,7 +102,7 @@ public class WallpaperRepository {
         for (Wallpaper wallpaper : wallpaperList) {
             if (!wallpaper.isFavorite) continue;
 
-            String category = normalizeCategoryKey(wallpaper.aiCategory);
+            String category = sanitizeCategoryForLabels(wallpaper.aiCategory, wallpaper.aiLabels);
             wallpaper.aiCategory = category;
 
             if (!groupedMap.containsKey(category)) {
@@ -153,15 +157,39 @@ public class WallpaperRepository {
             }
 
             wallpaper.isFavorite = true;
-            wallpaper.aiCategory = normalizeCategoryKey(safeString(data.get("aiCategory")));
+            wallpaper.aiCategory = sanitizeCategoryForLabels(
+                    normalizeCategoryKey(safeString(data.get("aiCategory"))),
+                    safeString(data.get("aiLabels"))
+            );
             wallpaper.aiLabels = safeString(data.get("aiLabels"));
         }
     }
 
     public static void replaceAll(List<Wallpaper> newWallpapers) {
+        Map<Integer, Wallpaper> existingById = new LinkedHashMap<>();
+        Map<String, Wallpaper> existingByUrl = new LinkedHashMap<>();
+        for (Wallpaper existing : wallpaperList) {
+            existingById.put(existing.id, existing);
+            if (existing.imageUrl != null && !existing.imageUrl.trim().isEmpty()) {
+                existingByUrl.put(existing.imageUrl.trim(), existing);
+            }
+        }
+
         wallpaperList.clear();
         if (newWallpapers != null) {
-            wallpaperList.addAll(newWallpapers);
+            for (Wallpaper wallpaper : newWallpapers) {
+                Wallpaper previous = existingById.get(wallpaper.id);
+                if (previous == null && wallpaper.imageUrl != null) {
+                    previous = existingByUrl.get(wallpaper.imageUrl.trim());
+                }
+                if (previous != null) {
+                    wallpaper.isFavorite = previous.isFavorite;
+                    wallpaper.aiCategory = previous.aiCategory;
+                    wallpaper.aiLabels = previous.aiLabels;
+                }
+                wallpaper.aiCategory = sanitizeCategoryForLabels(wallpaper.aiCategory, wallpaper.aiLabels);
+                wallpaperList.add(wallpaper);
+            }
         }
     }
 
@@ -194,6 +222,28 @@ public class WallpaperRepository {
         return rawCategory.trim();
     }
 
+    public static String sanitizeCategoryForLabels(String category, String labels) {
+        String normalized = normalizeCategoryKey(category);
+        if (!"Animals".equalsIgnoreCase(normalized)) {
+            return normalized;
+        }
+        if (hasAnimalEvidence(null, labels, labels)) {
+            return normalized;
+        }
+
+        String labelText = normalizeSearch(labels);
+        if (labelText.contains("roof") || labelText.contains("building")
+                || labelText.contains("architecture") || labelText.contains("house")) {
+            return "Architecture";
+        }
+        if (labelText.contains("boat") || labelText.contains("vacation")
+                || labelText.contains("sea") || labelText.contains("coast")
+                || labelText.contains("beach") || labelText.contains("water")) {
+            return "Beach";
+        }
+        return "Uncategorized";
+    }
+
     private static String safeString(Object value) {
         return value == null ? "" : String.valueOf(value);
     }
@@ -224,6 +274,30 @@ public class WallpaperRepository {
 
     private static boolean isShortSpecificQuery(String query) {
         return query.length() <= 4 && !isCategoryStyleQuery(query);
+    }
+
+    private static boolean isAnimalQuery(String query) {
+        return "animal".equals(query) || "animals".equals(query)
+                || "hayvan".equals(query) || "hayvanlar".equals(query);
+    }
+
+    private static boolean hasAnimalEvidence(Wallpaper wallpaper, String rawLabels, String displayLabels) {
+        String evidence = normalizeSearch(
+                (wallpaper == null ? "" : safeString(wallpaper.title)) + " " + rawLabels + " " + displayLabels
+        );
+        List<String> tokens = tokenize(evidence);
+        String[] animalTerms = new String[]{
+                "animal", "animals", "cat", "dog", "bird", "horse", "lion", "tiger",
+                "bear", "fish", "deer", "fox", "wolf", "elephant", "zebra", "giraffe",
+                "pet", "wildlife", "mammal", "reptile", "insect"
+        };
+
+        for (String term : animalTerms) {
+            if (tokens.contains(term)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<String> tokenize(String value) {

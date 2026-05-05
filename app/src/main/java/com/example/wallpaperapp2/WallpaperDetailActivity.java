@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +38,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private MaterialButton btnSetLockWallpaper;
 
     private Wallpaper wallpaper;
+    private ListenerRegistration collectionsListener;
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -72,6 +74,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             bindRepostAction();
             bindCollectionAction();
             bindDownloadAction();
+            watchCollections();
             imageWallpaper.setOnClickListener(v -> showFullscreenPreview());
         }
     }
@@ -93,8 +96,6 @@ public class WallpaperDetailActivity extends AppCompatActivity {
             updateFavoriteIcon();
 
             if (!wallpaper.isFavorite) {
-                wallpaper.aiCategory = "";
-                wallpaper.aiLabels = "";
                 FirebaseFavoritesStore.removeFavorite(wallpaper);
                 updateAiTexts();
                 return;
@@ -121,6 +122,48 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         btnDetailCollection.setOnClickListener(v ->
                 CollectionDialogHelper.show(this, findViewById(android.R.id.content), wallpaper)
         );
+    }
+
+    private void watchCollections() {
+        updateCollectionButton(UserProfileStore.getCachedCollections());
+        collectionsListener = UserProfileStore.listenCollections(collections ->
+                runOnUiThread(() -> updateCollectionButton(collections))
+        );
+    }
+
+    private void updateCollectionButton(java.util.List<WallpaperCollection> collections) {
+        if (wallpaper == null || btnDetailCollection == null) return;
+
+        String collectionName = findContainingCollectionName(collections);
+        if (collectionName.isEmpty()) {
+            btnDetailCollection.setText(R.string.add_to_collection);
+            btnDetailCollection.setIconResource(android.R.drawable.ic_menu_add);
+            btnDetailCollection.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.TRANSPARENT));
+            btnDetailCollection.setTextColor(android.graphics.Color.rgb(103, 80, 164));
+            btnDetailCollection.setIconTint(android.content.res.ColorStateList.valueOf(android.graphics.Color.rgb(103, 80, 164)));
+            btnDetailCollection.setStrokeColor(android.content.res.ColorStateList.valueOf(android.graphics.Color.rgb(103, 80, 164)));
+            return;
+        }
+
+        btnDetailCollection.setText(getString(R.string.in_collection_button, collectionName));
+        btnDetailCollection.setIconResource(android.R.drawable.checkbox_on_background);
+        btnDetailCollection.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.rgb(103, 80, 164)));
+        btnDetailCollection.setTextColor(android.graphics.Color.WHITE);
+        btnDetailCollection.setIconTint(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+        btnDetailCollection.setStrokeColor(android.content.res.ColorStateList.valueOf(android.graphics.Color.rgb(103, 80, 164)));
+    }
+
+    private String findContainingCollectionName(java.util.List<WallpaperCollection> collections) {
+        if (collections == null) return "";
+        for (WallpaperCollection collection : collections) {
+            if (collection == null || collection.wallpapers == null) continue;
+            for (Wallpaper item : collection.wallpapers) {
+                if (item != null && item.id == wallpaper.id) {
+                    return collection.name == null ? "" : collection.name.trim();
+                }
+            }
+        }
+        return "";
     }
 
     private void downloadWallpaper() {
@@ -319,6 +362,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
             txtAiCategory.setText(getString(R.string.ai_category_prefix, getString(R.string.not_analyzed_yet)));
         } else {
+            wallpaper.aiCategory = WallpaperRepository.sanitizeCategoryForLabels(wallpaper.aiCategory, wallpaper.aiLabels);
             txtAiCategory.setText(getString(
                     R.string.ai_category_prefix,
                     CategoryDisplayMapper.toDisplayName(this, wallpaper.aiCategory)
@@ -347,6 +391,10 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (collectionsListener != null) {
+            collectionsListener.remove();
+            collectionsListener = null;
+        }
         backgroundExecutor.shutdownNow();
     }
 }

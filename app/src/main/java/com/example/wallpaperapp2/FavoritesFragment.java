@@ -32,6 +32,10 @@ public class FavoritesFragment extends Fragment {
     private TextInputEditText editFavoritesSearch;
     private boolean isLoadingFavorites = false;
     private ListenerRegistration favoritesListener;
+    private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
+        if (!isAdded()) return;
+        requireActivity().runOnUiThread(this::renderFavoriteGroups);
+    };
 
     public FavoritesFragment() {
     }
@@ -63,6 +67,8 @@ public class FavoritesFragment extends Fragment {
             }
         });
 
+        UserProfileStore.addCollectionsChangeListener(collectionsChangeListener);
+        loadCollectionsForBadges();
         startFavoritesListener();
         return view;
     }
@@ -82,6 +88,7 @@ public class FavoritesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        UserProfileStore.removeCollectionsChangeListener(collectionsChangeListener);
         stopFavoritesListener();
     }
 
@@ -95,6 +102,13 @@ public class FavoritesFragment extends Fragment {
         favoritesListener = FirebaseFavoritesStore.listenFavorites(favoritesById -> {
             WallpaperRepository.applyFavoriteData(favoritesById);
             isLoadingFavorites = false;
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(this::renderFavoriteGroups);
+        });
+    }
+
+    private void loadCollectionsForBadges() {
+        UserProfileStore.fetchCollections(collections -> {
             if (!isAdded()) return;
             requireActivity().runOnUiThread(this::renderFavoriteGroups);
         });

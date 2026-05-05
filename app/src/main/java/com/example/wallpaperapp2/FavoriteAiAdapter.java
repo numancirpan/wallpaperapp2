@@ -1,6 +1,8 @@
 package com.example.wallpaperapp2;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,6 +53,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         }
         holder.txtFavoriteTitle.setText(wallpaper.title);
         FavoriteButtonStyler.apply(holder.btnFavoriteRemove, true);
+        applyCollectionButtonStyle(holder.btnFavoriteCollection, UserProfileStore.isWallpaperInCachedCollection(wallpaper.id));
         holder.progressFavoriteAnalysis.setVisibility(isAnalyzing(wallpaper) ? View.VISIBLE : View.GONE);
 
         if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
@@ -86,11 +89,10 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         }
 
         holder.btnFavoriteRepost.setOnClickListener(v -> RepostDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
+        holder.btnFavoriteCollection.setOnClickListener(v -> CollectionDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
 
         holder.btnFavoriteRemove.setOnClickListener(v -> {
             wallpaper.isFavorite = false;
-            wallpaper.aiCategory = "";
-            wallpaper.aiLabels = "";
             FirebaseFavoritesStore.removeFavorite(wallpaper);
             int adapterPosition = holder.getBindingAdapterPosition();
             if (adapterPosition != RecyclerView.NO_POSITION) {
@@ -120,6 +122,14 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
                 || labels.contains("önbellek");
     }
 
+    private void applyCollectionButtonStyle(MaterialButton button, boolean inCollection) {
+        int background = inCollection ? Color.parseColor("#6E4BA8") : Color.parseColor("#33FFFFFF");
+        int icon = inCollection ? Color.WHITE : Color.parseColor("#E8DEF8");
+        button.setBackgroundTintList(ColorStateList.valueOf(background));
+        button.setIconTint(ColorStateList.valueOf(icon));
+        button.setAlpha(inCollection ? 1f : 0.82f);
+    }
+
     @Override
     public int getItemCount() {
         return list.size();
@@ -129,6 +139,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         ImageView imageFavorite;
         MaterialButton btnFavoriteRemove;
         MaterialButton btnFavoriteRepost;
+        MaterialButton btnFavoriteCollection;
         CircularProgressIndicator progressFavoriteAnalysis;
         TextView txtFavoriteTitle;
         TextView txtFavoriteAiCategory;
@@ -139,6 +150,7 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             imageFavorite = itemView.findViewById(R.id.imageFavorite);
             btnFavoriteRemove = itemView.findViewById(R.id.btnFavoriteRemove);
             btnFavoriteRepost = itemView.findViewById(R.id.btnFavoriteRepost);
+            btnFavoriteCollection = itemView.findViewById(R.id.btnFavoriteCollection);
             progressFavoriteAnalysis = itemView.findViewById(R.id.progressFavoriteAnalysis);
             txtFavoriteTitle = itemView.findViewById(R.id.txtFavoriteTitle);
             txtFavoriteAiCategory = itemView.findViewById(R.id.txtFavoriteAiCategory);

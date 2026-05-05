@@ -28,7 +28,6 @@ public class HomeFragment extends Fragment {
             "work",
             "animals",
             "beach",
-            "city",
             "abstract"
     );
 
@@ -37,6 +36,10 @@ public class HomeFragment extends Fragment {
     List<Wallpaper> list;
     TextInputEditText editSearch;
     ChipGroup chipGroupSuggestions;
+    private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
+        if (!isAdded() || adapter == null) return;
+        requireActivity().runOnUiThread(this::filterWallpapers);
+    };
 
     public HomeFragment() {
     }
@@ -61,6 +64,8 @@ public class HomeFragment extends Fragment {
         adapter = new WallpaperAdapter(list);
         recyclerView.setAdapter(adapter);
         setupQuickSearchChips();
+        UserProfileStore.addCollectionsChangeListener(collectionsChangeListener);
+        loadCollectionsForBadges();
         loadWallpapersFromApi();
 
         editSearch.addTextChangedListener(new TextWatcher() {
@@ -81,13 +86,20 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onDestroyView() {
+        UserProfileStore.removeCollectionsChangeListener(collectionsChangeListener);
+        super.onDestroyView();
+    }
+
     private void setupQuickSearchChips() {
         if (chipGroupSuggestions == null) return;
 
         chipGroupSuggestions.removeAllViews();
         for (String quickSearch : QUICK_SEARCHES) {
             Chip chip = new Chip(requireContext());
-            chip.setText(capitalizeLabel(quickSearch));
+            chip.setTag(quickSearch);
+            chip.setText(quickSearchLabel(quickSearch));
             chip.setCheckable(true);
             chip.setClickable(true);
             chip.setEnsureMinTouchTargetSize(true);
@@ -98,8 +110,9 @@ public class HomeFragment extends Fragment {
             chip.setChipCornerRadius(24f);
             chip.setOnClickListener(v -> {
                 if (editSearch == null) return;
-                editSearch.setText(quickSearch);
-                editSearch.setSelection(quickSearch.length());
+                String label = quickSearchLabel(quickSearch);
+                editSearch.setText(label);
+                editSearch.setSelection(label.length());
             });
             chipGroupSuggestions.addView(chip);
         }
@@ -123,6 +136,13 @@ public class HomeFragment extends Fragment {
                         Snackbar.make(requireView(), R.string.api_fetch_failed_cached, Snackbar.LENGTH_SHORT).show()
                 );
             }
+        });
+    }
+
+    private void loadCollectionsForBadges() {
+        UserProfileStore.fetchCollections(collections -> {
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(this::filterWallpapers);
         });
     }
 
@@ -187,22 +207,40 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private String capitalizeLabel(String value) {
-        if (value == null || value.isEmpty()) return "";
-        return value.substring(0, 1).toUpperCase() + value.substring(1);
+    private String quickSearchLabel(String value) {
+        if ("work".equalsIgnoreCase(value)) {
+            return getString(R.string.category_workspace);
+        }
+        return CategoryDisplayMapper.toDisplayName(requireContext(), value);
     }
 
     private void updateQuickSearchSelection(String query) {
         if (chipGroupSuggestions == null) return;
 
-        String normalizedQuery = query == null ? "" : query.trim();
+        String normalizedQuery = normalizeQuickSearch(query);
         for (int i = 0; i < chipGroupSuggestions.getChildCount(); i++) {
             View child = chipGroupSuggestions.getChildAt(i);
             if (!(child instanceof Chip)) continue;
 
             Chip chip = (Chip) child;
+            String quickSearch = chip.getTag() == null ? "" : chip.getTag().toString();
             String chipText = chip.getText() == null ? "" : chip.getText().toString();
-            chip.setChecked(chipText.equalsIgnoreCase(normalizedQuery));
+            chip.setChecked(normalizedQuery.equals(normalizeQuickSearch(quickSearch))
+                    || normalizedQuery.equals(normalizeQuickSearch(chipText)));
         }
+    }
+
+    private String normalizeQuickSearch(String value) {
+        if (value == null) return "";
+        return value.toLowerCase(java.util.Locale.ROOT)
+                .replace("ı", "i")
+                .replace("ğ", "g")
+                .replace("ü", "u")
+                .replace("ş", "s")
+                .replace("ö", "o")
+                .replace("ç", "c")
+                .replaceAll("[^a-z0-9\\s-]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 }

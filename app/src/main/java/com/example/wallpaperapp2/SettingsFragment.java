@@ -2,6 +2,7 @@ package com.example.wallpaperapp2;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -16,12 +17,18 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SettingsFragment extends Fragment {
 
@@ -36,6 +43,8 @@ public class SettingsFragment extends Fragment {
     private RadioButton radioTwoColumns;
     private RadioButton radioThreeColumns;
     private Spinner spinnerLanguage;
+    private MaterialButton btnChangePassword;
+    private MaterialButton btnDeleteAccount;
     private MaterialButton btnLogout;
     private ValueAnimator trackColorAnimator;
 
@@ -77,6 +86,8 @@ public class SettingsFragment extends Fragment {
         radioTwoColumns = view.findViewById(R.id.radioTwoColumns);
         radioThreeColumns = view.findViewById(R.id.radioThreeColumns);
         spinnerLanguage = view.findViewById(R.id.spinnerLanguage);
+        btnChangePassword = view.findViewById(R.id.btnChangePassword);
+        btnDeleteAccount = view.findViewById(R.id.btnDeleteAccount);
         btnLogout = view.findViewById(R.id.btnLogout);
 
         settingsManager = new AppSettingsManager(requireContext());
@@ -175,11 +186,132 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        btnLogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            startActivity(new android.content.Intent(requireContext(), AuthActivity.class));
-            requireActivity().finish();
-        });
+        btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
+        btnDeleteAccount.setOnClickListener(v -> showDeleteAccountDialog());
+        btnLogout.setOnClickListener(v -> logout());
+    }
+
+    private void showChangePasswordDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_change_password, null, false);
+        TextInputEditText oldPassword = dialogView.findViewById(R.id.editOldPassword);
+        TextInputEditText newPassword = dialogView.findViewById(R.id.editNewPassword);
+        TextInputEditText confirmPassword = dialogView.findViewById(R.id.editConfirmPassword);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.change_password)
+                .setView(dialogView)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.reset_password, null)
+                .create();
+
+        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String oldPass = getText(oldPassword);
+            String newPass = getText(newPassword);
+            String confirmPass = getText(confirmPassword);
+
+            if (oldPass.length() < 6) {
+                oldPassword.setError(getString(R.string.weak_password));
+                return;
+            }
+            if (newPass.length() < 6) {
+                newPassword.setError(getString(R.string.weak_password));
+                return;
+            }
+            if (oldPass.equals(newPass)) {
+                newPassword.setError(getString(R.string.new_password_same_as_old));
+                return;
+            }
+            if (!newPass.equals(confirmPass)) {
+                confirmPassword.setError(getString(R.string.passwords_do_not_match));
+                return;
+            }
+
+            changePassword(oldPass, newPass, dialog);
+        }));
+
+        dialog.show();
+    }
+
+    private void changePassword(String oldPassword, String newPassword, AlertDialog dialog) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String email = user == null ? "" : user.getEmail();
+        if (user == null || email == null || email.trim().isEmpty()) return;
+
+        final boolean[] completed = {false};
+        user.reauthenticate(EmailAuthProvider.getCredential(email, oldPassword))
+                .addOnSuccessListener(unused -> user.updatePassword(newPassword)
+                        .addOnSuccessListener(update -> {
+                            completed[0] = true;
+                            showMessage(getString(R.string.password_changed));
+                            dialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> {
+                            if (!completed[0]) {
+                                showMessage(mapPasswordChangeError(e));
+                            }
+                        }))
+                .addOnFailureListener(e -> {
+                    if (!completed[0]) {
+                        showMessage(mapPasswordChangeError(e));
+                    }
+                });
+    }
+
+    private String mapPasswordChangeError(Exception error) {
+        if (error instanceof FirebaseAuthException) {
+            String code = ((FirebaseAuthException) error).getErrorCode();
+            if ("ERROR_INVALID_CREDENTIAL".equals(code) || "ERROR_WRONG_PASSWORD".equals(code)) {
+                return getString(R.string.current_password_incorrect);
+            }
+            if ("ERROR_WEAK_PASSWORD".equals(code)) {
+                return getString(R.string.weak_password);
+            }
+            if ("ERROR_REQUIRES_RECENT_LOGIN".equals(code)) {
+                return getString(R.string.recent_login_required);
+            }
+        }
+        return getString(R.string.password_change_failed_generic);
+    }
+
+    private void showDeleteAccountDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.delete_account_confirm_title)
+                .setMessage(R.string.delete_account_confirm_message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.confirm, (dialog, which) -> deleteAccount())
+                .show();
+    }
+
+    private void deleteAccount() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        btnDeleteAccount.setEnabled(false);
+        user.delete()
+                .addOnSuccessListener(unused -> {
+                    showMessage(getString(R.string.account_deleted));
+                    startActivity(new Intent(requireContext(), AuthActivity.class));
+                    requireActivity().finish();
+                })
+                .addOnFailureListener(e -> {
+                    btnDeleteAccount.setEnabled(true);
+                    showMessage(getString(R.string.delete_account_failed, e.getMessage()));
+                });
+    }
+
+    private void logout() {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(requireContext(), AuthActivity.class));
+        requireActivity().finish();
+    }
+
+    private String getText(TextInputEditText editText) {
+        return editText.getText() == null ? "" : editText.getText().toString().trim();
+    }
+
+    private void showMessage(String message) {
+        if (getView() != null) {
+            Snackbar.make(getView(), message, Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     private void applyTheme(boolean darkModeEnabled) {

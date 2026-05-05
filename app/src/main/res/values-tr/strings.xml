@@ -32,6 +32,7 @@
     <string name="auth_subtitle_register">Favorilerini kaydetmek ve AI koleksiyonlarını senkronize tutmak için hesap oluştur.</string>
     <string name="email">E-posta</string>
     <string name="password">Şifre</string>
+    <string name="remember_me">Beni hatırla</string>
     <string name="login">Giriş Yap</string>
     <string name="register">Kayıt Ol</string>
     <string name="no_account_register">Hesabın yok mu? Kayıt ol</string>
@@ -43,6 +44,7 @@
     <string name="invalid_email_format">Geçersiz e-posta formatı.</string>
     <string name="user_not_found">Kullanıcı bulunamadı. Önce kayıt ol.</string>
     <string name="wrong_password">Şifre yanlış.</string>
+    <string name="invalid_login_credentials">E-posta veya şifre yanlış.</string>
     <string name="email_already_registered">Bu e-posta zaten kayıtlı.</string>
     <string name="weak_password">Şifre çok zayıf (en az 6 karakter).</string>
     <string name="enable_email_provider">Firebase Authentication içinde Email/Password sağlayıcısını etkinleştir.</string>
@@ -55,6 +57,9 @@
     <string name="reset_password">Şifreyi Değiştir</string>
     <string name="password_changed">Şifre başarıyla değiştirildi.</string>
     <string name="password_change_failed">Şifre değiştirilemedi: %1$s</string>
+    <string name="password_change_failed_generic">Şifre değiştirilemedi. Mevcut şifreni kontrol edip tekrar dene.</string>
+    <string name="current_password_incorrect">Mevcut şifre yanlış.</string>
+    <string name="recent_login_required">Şifreni değiştirmeden önce tekrar giriş yap.</string>
     <string name="passwords_do_not_match">Yeni şifreler eşleşmiyor.</string>
     <string name="new_password_same_as_old">Yeni şifren eski şifrenle aynı olamaz.</string>
 
