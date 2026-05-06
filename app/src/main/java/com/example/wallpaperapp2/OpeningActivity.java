@@ -79,6 +79,8 @@ public class OpeningActivity extends AppCompatActivity {
 
         if (loggedIn && !rememberMe) {
             FirebaseAuth.getInstance().signOut();
+            WallpaperRepository.clearUserState();
+            UserProfileStore.clearUserState();
             loggedIn = false;
         }
 

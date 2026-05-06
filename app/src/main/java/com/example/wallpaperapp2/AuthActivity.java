@@ -93,6 +93,7 @@ public class AuthActivity extends AppCompatActivity {
             auth.signInWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
                         sessionManager.setRememberMe(checkRememberMe.isChecked());
+                        clearUserScopedCaches();
                         setLoading(false);
                         openMain();
                     })
@@ -104,6 +105,7 @@ public class AuthActivity extends AppCompatActivity {
             auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
                         sessionManager.setRememberMe(true);
+                        clearUserScopedCaches();
                         setLoading(false);
                         openMain();
                     })
@@ -176,5 +178,10 @@ public class AuthActivity extends AppCompatActivity {
     private void openMain() {
         startActivity(new Intent(this, MainActivity.class));
         finish();
+    }
+
+    private void clearUserScopedCaches() {
+        WallpaperRepository.clearUserState();
+        UserProfileStore.clearUserState();
     }
 }

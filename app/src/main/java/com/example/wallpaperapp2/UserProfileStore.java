@@ -47,6 +47,7 @@ public class UserProfileStore {
 
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static List<WallpaperCollection> cachedCollections = new ArrayList<>();
+    private static String cachedCollectionsUid = null;
     private static final List<CollectionsChangeListener> collectionChangeListeners = new ArrayList<>();
 
     public static ListenerRegistration listenProfile(ProfileCallback callback) {
@@ -215,6 +216,7 @@ public class UserProfileStore {
 
     public static ListenerRegistration listenCollections(CollectionsCallback callback) {
         String uid = currentUid();
+        ensureCollectionsCacheForUid(uid);
         if (uid == null) {
             callback.onLoaded(new ArrayList<>());
             return null;
@@ -225,6 +227,7 @@ public class UserProfileStore {
                 .collection("collections")
                 .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshot, error) -> {
+                    if (!uid.equals(currentUid())) return;
                     List<WallpaperCollection> collections = new ArrayList<>();
                     if (snapshot != null) {
                         for (DocumentSnapshot doc : snapshot.getDocuments()) {
@@ -238,10 +241,12 @@ public class UserProfileStore {
     }
 
     public static List<WallpaperCollection> getCachedCollections() {
+        ensureCollectionsCacheForUid(currentUid());
         return new ArrayList<>(cachedCollections);
     }
 
     public static boolean isWallpaperInCachedCollection(int wallpaperId) {
+        ensureCollectionsCacheForUid(currentUid());
         for (WallpaperCollection collection : cachedCollections) {
             if (collection.wallpapers == null) continue;
             for (Wallpaper wallpaper : collection.wallpapers) {
@@ -253,6 +258,7 @@ public class UserProfileStore {
 
     public static void fetchCollections(CollectionsCallback callback) {
         String uid = currentUid();
+        ensureCollectionsCacheForUid(uid);
         if (uid == null) {
             callback.onLoaded(new ArrayList<>());
             return;
@@ -264,6 +270,7 @@ public class UserProfileStore {
                 .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    if (!uid.equals(currentUid())) return;
                     List<WallpaperCollection> collections = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         collections.add(mapCollection(doc));
@@ -273,6 +280,12 @@ public class UserProfileStore {
                     callback.onLoaded(collections);
                 })
                 .addOnFailureListener(e -> callback.onLoaded(new ArrayList<>()));
+    }
+
+    public static void clearUserState() {
+        cachedCollectionsUid = currentUid();
+        cachedCollections = new ArrayList<>();
+        notifyCollectionsChanged();
     }
 
     public static void addCollectionsChangeListener(CollectionsChangeListener listener) {
@@ -712,6 +725,16 @@ public class UserProfileStore {
         for (CollectionsChangeListener listener : listeners) {
             listener.onCollectionsChanged();
         }
+    }
+
+    private static void ensureCollectionsCacheForUid(String uid) {
+        String normalizedUid = uid == null ? "" : uid;
+        String normalizedCachedUid = cachedCollectionsUid == null ? "" : cachedCollectionsUid;
+        if (normalizedUid.equals(normalizedCachedUid)) return;
+
+        cachedCollectionsUid = uid;
+        cachedCollections = new ArrayList<>();
+        notifyCollectionsChanged();
     }
 
     public static void updateBlogPost(String postId, String comment, ActionCallback callback) {

@@ -289,6 +289,7 @@ public class SettingsFragment extends Fragment {
         user.delete()
                 .addOnSuccessListener(unused -> {
                     showMessage(getString(R.string.account_deleted));
+                    clearUserScopedCaches();
                     startActivity(new Intent(requireContext(), AuthActivity.class));
                     requireActivity().finish();
                 })
@@ -300,8 +301,14 @@ public class SettingsFragment extends Fragment {
 
     private void logout() {
         FirebaseAuth.getInstance().signOut();
+        clearUserScopedCaches();
         startActivity(new Intent(requireContext(), AuthActivity.class));
         requireActivity().finish();
+    }
+
+    private void clearUserScopedCaches() {
+        WallpaperRepository.clearUserState();
+        UserProfileStore.clearUserState();
     }
 
     private String getText(TextInputEditText editText) {

@@ -65,6 +65,7 @@ public class FirebaseFavoritesStore {
                 .collection("favorites")
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    if (!uid.equals(FirebaseAuth.getInstance().getUid())) return;
                     Map<Integer, Map<String, Object>> mapped = new HashMap<>();
                     snapshot.getDocuments().forEach(doc -> {
                         Object idValue = doc.get("id");
@@ -87,6 +88,7 @@ public class FirebaseFavoritesStore {
                 .document(uid)
                 .collection("favorites")
                 .addSnapshotListener((snapshot, error) -> {
+                    if (!uid.equals(FirebaseAuth.getInstance().getUid())) return;
                     if (error != null || snapshot == null) {
                         callback.onLoaded(new HashMap<>());
                         return;

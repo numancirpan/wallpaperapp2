@@ -140,6 +140,7 @@ public class WallpaperRepository {
     }
 
     public static void applyFavoriteData(Map<Integer, Map<String, Object>> favoritesById) {
+        clearFavoriteState();
         if (favoritesById == null || favoritesById.isEmpty()) return;
 
         for (Map.Entry<Integer, Map<String, Object>> entry : favoritesById.entrySet()) {
@@ -162,6 +163,16 @@ public class WallpaperRepository {
                     safeString(data.get("aiLabels"))
             );
             wallpaper.aiLabels = safeString(data.get("aiLabels"));
+        }
+    }
+
+    public static void clearUserState() {
+        clearFavoriteState();
+    }
+
+    private static void clearFavoriteState() {
+        for (Wallpaper wallpaper : wallpaperList) {
+            wallpaper.isFavorite = false;
         }
     }
 
