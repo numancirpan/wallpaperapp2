@@ -33,7 +33,7 @@ public class HomeFragment extends Fragment {
 
     private static final long SEARCH_DELAY_MS = 400;
     private static final int FAST_RESULT_COUNT = 20;
-    private static final int FULL_RESULT_COUNT = 200;
+    private static final int FULL_RESULT_COUNT = 50;
     private static final List<String> QUICK_SEARCHES = Arrays.asList("nature", "urban", "animals", "beach", "space");
     private static final Map<String, String> API_QUERY_MAP = new LinkedHashMap<>();
 
