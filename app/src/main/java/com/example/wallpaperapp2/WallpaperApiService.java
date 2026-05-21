@@ -10,7 +10,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,6 +37,45 @@ public class WallpaperApiService {
     }
 
     private static List<Wallpaper> fetchWallpapersFromUrl(String urlText) throws Exception {
+        if (isPixabayUrl(urlText)) {
+            return fetchPixabayWallpapers(urlText);
+        }
+        return fetchSingleUrl(urlText);
+    }
+
+    private static List<Wallpaper> fetchPixabayWallpapers(String urlText) throws Exception {
+        Map<Integer, Wallpaper> mergedById = new LinkedHashMap<>();
+        List<Exception> errors = new ArrayList<>();
+
+        String firstPageUrl = withQueryParameter(withQueryParameter(urlText, "page", "1"), "per_page", "200");
+        String secondPageUrl = withQueryParameter(withQueryParameter(urlText, "page", "2"), "per_page", "100");
+
+        fetchPixabayPage(firstPageUrl, mergedById, errors);
+        fetchPixabayPage(secondPageUrl, mergedById, errors);
+
+        if (!mergedById.isEmpty()) {
+            return new ArrayList<>(mergedById.values());
+        }
+
+        if (!errors.isEmpty()) {
+            throw errors.get(0);
+        }
+        return new ArrayList<>();
+    }
+
+    private static void fetchPixabayPage(String urlText, Map<Integer, Wallpaper> mergedById, List<Exception> errors) {
+        try {
+            for (Wallpaper wallpaper : fetchSingleUrl(urlText)) {
+                if (!mergedById.containsKey(wallpaper.id)) {
+                    mergedById.put(wallpaper.id, wallpaper);
+                }
+            }
+        } catch (Exception e) {
+            errors.add(e);
+        }
+    }
+
+    private static List<Wallpaper> fetchSingleUrl(String urlText) throws Exception {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlText);
@@ -62,6 +103,18 @@ public class WallpaperApiService {
         }
     }
 
+    private static boolean isPixabayUrl(String urlText) {
+        return urlText != null && urlText.toLowerCase().contains("pixabay.com/api");
+    }
+
+    private static String withQueryParameter(String urlText, String key, String value) {
+        String pattern = "([?&])" + key + "=[^&]*";
+        if (urlText.matches(".*" + pattern + ".*")) {
+            return urlText.replaceAll(pattern, "$1" + key + "=" + value);
+        }
+        return urlText + (urlText.contains("?") ? "&" : "?") + key + "=" + value;
+    }
+
     private static List<Wallpaper> parseWallpaperResponse(String raw) throws Exception {
         Object json = new JSONTokener(raw).nextValue();
         if (json instanceof JSONObject) {
@@ -83,12 +136,20 @@ public class WallpaperApiService {
         for (int i = 0; i < array.length(); i++) {
             JSONObject item = array.getJSONObject(i);
             int id = item.optInt("id", i + 1);
-            String title = item.optString("tags", "Wallpaper " + id);
+            String tags = item.optString("tags", "");
+            String title = tags.trim().isEmpty() ? "Wallpaper " + id : tags;
             String imageUrl = item.optString("largeImageURL",
                     item.optString("webformatURL", ""));
 
             if (!imageUrl.trim().isEmpty()) {
-                result.add(new Wallpaper(id, imageUrl, title));
+                Wallpaper wallpaper = new Wallpaper(id, imageUrl, title);
+                wallpaper.tags = tags;
+                wallpaper.photographer = item.optString("user", "");
+                wallpaper.views = item.optInt("views", 0);
+                wallpaper.downloads = item.optInt("downloads", 0);
+                wallpaper.likes = item.optInt("likes", 0);
+                wallpaper.sourceUrl = item.optString("pageURL", "");
+                result.add(wallpaper);
             }
         }
         return result;
@@ -104,7 +165,10 @@ public class WallpaperApiService {
             String imageUrl = item.optString("download_url", "");
 
             if (!imageUrl.trim().isEmpty()) {
-                result.add(new Wallpaper(id, imageUrl, author));
+                Wallpaper wallpaper = new Wallpaper(id, imageUrl, author);
+                wallpaper.photographer = author;
+                wallpaper.sourceUrl = item.optString("url", "");
+                result.add(wallpaper);
             }
         }
         return result;
