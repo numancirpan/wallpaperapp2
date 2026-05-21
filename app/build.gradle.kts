@@ -33,10 +33,19 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val wallpaperApiUrl = readConfigValue(
-            "WALLPAPER_API_URL",
+        val pixabayApiKey = readConfigValue("PIXABAY_API_KEY")
+        val defaultWallpaperApiUrl = if (pixabayApiKey.isNotBlank()) {
+            "https://pixabay.com/api/?key=$pixabayApiKey" +
+                    "&q=wallpaper+nature" +
+                    "&image_type=photo" +
+                    "&orientation=vertical" +
+                    "&safesearch=true" +
+                    "&order=popular" +
+                    "&per_page=100"
+        } else {
             "https://picsum.photos/v2/list?page=1&limit=60"
-        )
+        }
+        val wallpaperApiUrl = readConfigValue("WALLPAPER_API_URL", defaultWallpaperApiUrl)
         val geminiApiKey = readConfigValue("GEMINI_API_KEY")
 
         buildConfigField("String", "WALLPAPER_API_URL", "\"$wallpaperApiUrl\"")
