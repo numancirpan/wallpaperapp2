@@ -76,7 +76,7 @@ public class FirebaseFavoritesStore {
                     snapshot.getDocuments().forEach(doc -> {
                         Object idValue = doc.get("id");
                         int id = idValue instanceof Number ? ((Number) idValue).intValue() : -1;
-                        if (id > -1) mapped.put(id, doc.getData());
+                        if (id > -1 && WallpaperRepository.getWallpaperById(id) != null) mapped.put(id, doc.getData());
                     });
                     callback.onLoaded(mapped);
                 })
@@ -104,7 +104,7 @@ public class FirebaseFavoritesStore {
                     snapshot.getDocuments().forEach(doc -> {
                         Object idValue = doc.get("id");
                         int id = idValue instanceof Number ? ((Number) idValue).intValue() : -1;
-                        if (id > -1) {
+                        if (id > -1 && WallpaperRepository.getWallpaperById(id) != null) {
                             mapped.put(id, doc.getData());
                         }
                     });
