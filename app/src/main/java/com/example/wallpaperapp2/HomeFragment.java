@@ -21,6 +21,7 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,10 +66,17 @@ public class HomeFragment extends Fragment {
     private int searchRequestCounter = 0;
     private String lastApiQuery = "";
     private boolean chipClickInProgress = false;
+    private boolean apiSearchActive = false;
 
     private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
         if (!isAdded() || adapter == null) return;
-        requireActivity().runOnUiThread(this::filterWallpapers);
+        requireActivity().runOnUiThread(() -> {
+            if (apiSearchActive) {
+                renderApiResultsWithoutLocalFilter();
+            } else {
+                filterWallpapers();
+            }
+        });
     };
 
     public HomeFragment() {
@@ -145,21 +153,23 @@ public class HomeFragment extends Fragment {
         editSearch.setText(label);
         editSearch.setSelection(label.length());
         chipClickInProgress = false;
-        filterWallpapers();
+        updateQuickSearchSelection(label);
         scheduleDynamicApiSearch(quickSearch, label);
     }
 
     private void handleSearchChanged(String rawQuery) {
         String normalized = normalizeQuickSearch(rawQuery);
         if (normalized.isEmpty()) {
+            apiSearchActive = false;
             cancelPendingSearch();
             lastApiQuery = "";
             hideLoading();
-            loadWallpapersFromApi();
             updateQuickSearchSelection("");
+            adapter.updateList(new ArrayList<>());
+            loadWallpapersFromApi();
             return;
         }
-        filterWallpapers();
+        updateQuickSearchSelection(rawQuery);
         scheduleDynamicApiSearch(rawQuery, rawQuery);
     }
 
@@ -170,7 +180,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() -> {
                     WallpaperRepository.replaceAll(wallpapers);
-                    restoreCloudFavoritesAndRender();
+                    restoreCloudFavoritesAndRender(false);
                 });
             }
 
@@ -187,18 +197,17 @@ public class HomeFragment extends Fragment {
         String apiQuery = toApiQuery(rawQuery);
         if (apiQuery.isEmpty()) {
             hideLoading();
+            adapter.updateList(new ArrayList<>());
             return;
         }
+        apiSearchActive = true;
+        adapter.updateList(new ArrayList<>());
         showLoading();
         pendingSearchRunnable = () -> fetchDynamicApiResults(apiQuery, visibleQuery);
         searchHandler.postDelayed(pendingSearchRunnable, SEARCH_DELAY_MS);
     }
 
     private void fetchDynamicApiResults(String apiQuery, String visibleQuery) {
-        if (apiQuery.equals(lastApiQuery)) {
-            hideLoading();
-            return;
-        }
         lastApiQuery = apiQuery;
         int requestId = ++searchRequestCounter;
 
@@ -210,11 +219,11 @@ public class HomeFragment extends Fragment {
                     hideLoading();
                     if (!isSearchStillActive(visibleQuery)) return;
                     if (wallpapers == null || wallpapers.isEmpty()) {
-                        filterWallpapers();
+                        adapter.updateList(new ArrayList<>());
                         return;
                     }
                     WallpaperRepository.replaceAll(wallpapers);
-                    restoreCloudFavoritesAndRender();
+                    restoreCloudFavoritesAndRender(true);
                 });
             }
 
@@ -223,7 +232,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded() || requestId != searchRequestCounter) return;
                 requireActivity().runOnUiThread(() -> {
                     hideLoading();
-                    filterWallpapers();
+                    adapter.updateList(new ArrayList<>());
                 });
             }
         });
@@ -266,19 +275,31 @@ public class HomeFragment extends Fragment {
     private void loadCollectionsForBadges() {
         UserProfileStore.fetchCollections(collections -> {
             if (!isAdded()) return;
-            requireActivity().runOnUiThread(this::filterWallpapers);
+            requireActivity().runOnUiThread(() -> {
+                if (apiSearchActive) renderApiResultsWithoutLocalFilter(); else filterWallpapers();
+            });
         });
     }
 
-    private void restoreCloudFavoritesAndRender() {
+    private void restoreCloudFavoritesAndRender(boolean showApiResultsOnly) {
         FirebaseFavoritesStore.fetchFavorites(favoritesById -> {
             WallpaperRepository.applyFavoriteData(favoritesById);
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
-                filterWallpapers();
+                if (showApiResultsOnly) {
+                    renderApiResultsWithoutLocalFilter();
+                } else {
+                    filterWallpapers();
+                }
                 warmUpSearchMetadata();
             });
         });
+    }
+
+    private void renderApiResultsWithoutLocalFilter() {
+        adapter.updateList(new ArrayList<>(WallpaperRepository.wallpaperList));
+        String query = editSearch != null && editSearch.getText() != null ? editSearch.getText().toString() : "";
+        updateQuickSearchSelection(query);
     }
 
     private void filterWallpapers() {
@@ -293,7 +314,7 @@ public class HomeFragment extends Fragment {
         List<String> existingCategories = WallpaperRepository.getExistingAiCategories();
         for (Wallpaper wallpaper : WallpaperRepository.wallpaperList) {
             WallpaperAiMetadataIndexer.ensureSearchMetadata(requireContext(), wallpaper, existingCategories, updatedWallpaper -> {
-                if (!isAdded()) return;
+                if (!isAdded() || apiSearchActive) return;
                 requireActivity().runOnUiThread(() -> {
                     if (editSearch == null || editSearch.getText() == null) return;
                     if (!editSearch.getText().toString().trim().isEmpty()) filterWallpapers();
@@ -309,7 +330,9 @@ public class HomeFragment extends Fragment {
             AppSettingsManager settingsManager = new AppSettingsManager(requireContext());
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), settingsManager.getGridColumns()));
         }
-        if (adapter != null) filterWallpapers();
+        if (adapter != null) {
+            if (apiSearchActive) renderApiResultsWithoutLocalFilter(); else filterWallpapers();
+        }
     }
 
     private String quickSearchLabel(String value) {
