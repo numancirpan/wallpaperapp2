@@ -52,6 +52,17 @@
             app:singleSelection="true" />
     </HorizontalScrollView>
 
+    <TextView
+        android:id="@+id/txtSearchEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="@string/no_wallpapers_found"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
