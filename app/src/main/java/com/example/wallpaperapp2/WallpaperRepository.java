@@ -17,10 +17,10 @@ public class WallpaperRepository {
             "animal", "animals", "hayvan", "hayvanlar",
             "nature", "doga", "beach", "sahil", "water", "ocean", "sea",
             "city", "urban", "architecture", "sehir",
-            "vehicle", "vehicles",
-            "people", "person", "portrait",
-            "art", "abstract", "soyut", "space", "food", "phone", "dark", "minimal",
-            "dog", "kopek", "cat", "kedi"
+            "vehicle", "vehicles", "arac", "araclar",
+            "people", "person", "portrait", "insan", "insanlar",
+            "art", "abstract", "soyut", "space", "uzay", "food", "phone", "dark", "minimal",
+            "dog", "kopek", "cat", "kedi", "bird", "kus", "horse", "at", "cow", "inek", "flower", "cicek"
     );
 
     private static final Map<String, List<String>> SEARCH_SYNONYMS = new LinkedHashMap<>();
@@ -30,11 +30,19 @@ public class WallpaperRepository {
         SEARCH_SYNONYMS.put("dog", Arrays.asList("kopek", "puppy", "pet", "canine", "animal"));
         SEARCH_SYNONYMS.put("kedi", Arrays.asList("cat", "kitten", "pet", "feline", "animal"));
         SEARCH_SYNONYMS.put("cat", Arrays.asList("kedi", "kitten", "pet", "feline", "animal"));
-        SEARCH_SYNONYMS.put("hayvan", Arrays.asList("animal", "animals", "wildlife", "pet", "dog", "cat", "bird", "horse"));
-        SEARCH_SYNONYMS.put("hayvanlar", Arrays.asList("animal", "animals", "wildlife", "pet", "dog", "cat", "bird", "horse"));
-        SEARCH_SYNONYMS.put("animal", Arrays.asList("hayvan", "hayvanlar", "wildlife", "pet", "dog", "cat", "bird", "horse"));
-        SEARCH_SYNONYMS.put("doga", Arrays.asList("nature", "forest", "landscape", "tree", "mountain", "flower"));
-        SEARCH_SYNONYMS.put("nature", Arrays.asList("doga", "forest", "landscape", "tree", "mountain", "flower"));
+        SEARCH_SYNONYMS.put("kus", Arrays.asList("bird", "animal", "wildlife"));
+        SEARCH_SYNONYMS.put("bird", Arrays.asList("kus", "animal", "wildlife"));
+        SEARCH_SYNONYMS.put("at", Arrays.asList("horse", "animal", "mammal"));
+        SEARCH_SYNONYMS.put("horse", Arrays.asList("at", "animal", "mammal"));
+        SEARCH_SYNONYMS.put("inek", Arrays.asList("cow", "cattle", "calf", "bull", "animal", "mammal"));
+        SEARCH_SYNONYMS.put("cow", Arrays.asList("inek", "cattle", "calf", "bull", "animal", "mammal"));
+        SEARCH_SYNONYMS.put("hayvan", Arrays.asList("animal", "animals", "wildlife", "pet", "dog", "cat", "bird", "horse", "cow"));
+        SEARCH_SYNONYMS.put("hayvanlar", Arrays.asList("animal", "animals", "wildlife", "pet", "dog", "cat", "bird", "horse", "cow"));
+        SEARCH_SYNONYMS.put("animal", Arrays.asList("hayvan", "hayvanlar", "wildlife", "pet", "dog", "cat", "bird", "horse", "cow"));
+        SEARCH_SYNONYMS.put("doga", Arrays.asList("nature", "forest", "landscape", "tree", "mountain", "flower", "leaf"));
+        SEARCH_SYNONYMS.put("nature", Arrays.asList("doga", "forest", "landscape", "tree", "mountain", "flower", "leaf"));
+        SEARCH_SYNONYMS.put("cicek", Arrays.asList("flower", "blossom", "bloom", "nature", "plant"));
+        SEARCH_SYNONYMS.put("flower", Arrays.asList("cicek", "blossom", "bloom", "nature", "plant"));
         SEARCH_SYNONYMS.put("sahil", Arrays.asList("beach", "sea", "ocean", "coast", "shore", "water"));
         SEARCH_SYNONYMS.put("beach", Arrays.asList("sahil", "sea", "ocean", "coast", "shore", "water"));
         SEARCH_SYNONYMS.put("sehir", Arrays.asList("city", "urban", "street", "building", "architecture"));
@@ -42,6 +50,14 @@ public class WallpaperRepository {
         SEARCH_SYNONYMS.put("urban", Arrays.asList("sehir", "city", "street", "building", "architecture"));
         SEARCH_SYNONYMS.put("calisma", Arrays.asList("work", "workspace", "office", "desk", "computer"));
         SEARCH_SYNONYMS.put("work", Arrays.asList("calisma", "workspace", "office", "desk", "computer"));
+        SEARCH_SYNONYMS.put("arac", Arrays.asList("vehicle", "car", "automobile", "transport"));
+        SEARCH_SYNONYMS.put("araclar", Arrays.asList("vehicle", "vehicles", "car", "automobile", "transport"));
+        SEARCH_SYNONYMS.put("vehicle", Arrays.asList("arac", "araclar", "car", "automobile", "transport"));
+        SEARCH_SYNONYMS.put("insan", Arrays.asList("people", "person", "portrait", "human"));
+        SEARCH_SYNONYMS.put("insanlar", Arrays.asList("people", "person", "portrait", "human"));
+        SEARCH_SYNONYMS.put("people", Arrays.asList("insan", "insanlar", "person", "portrait", "human"));
+        SEARCH_SYNONYMS.put("uzay", Arrays.asList("space", "sky", "stars", "galaxy"));
+        SEARCH_SYNONYMS.put("space", Arrays.asList("uzay", "sky", "stars", "galaxy"));
     }
 
     public static List<Wallpaper> wallpaperList = new ArrayList<>();
@@ -78,15 +94,7 @@ public class WallpaperRepository {
             String rawLabels = safeString(wallpaper.aiLabels);
             String displayCategory = CategoryDisplayMapper.toDisplayName(context, rawCategory);
             String displayLabels = AiLabelDisplayMapper.toDisplayLabels(context, rawLabels);
-            String searchable = normalizeSearch(
-                    safeString(wallpaper.title) + " "
-                            + safeString(wallpaper.tags) + " "
-                            + safeString(wallpaper.photographer) + " "
-                            + rawCategory + " "
-                            + rawLabels + " "
-                            + displayCategory + " "
-                            + displayLabels
-            );
+            String searchable = buildSearchableText(wallpaper, rawCategory, rawLabels, displayCategory, displayLabels);
             List<String> searchableTokens = tokenize(searchable);
 
             boolean matchesQuery = false;
@@ -103,6 +111,39 @@ public class WallpaperRepository {
         }
 
         return filteredList;
+    }
+
+    private static String buildSearchableText(Wallpaper wallpaper, String rawCategory, String rawLabels, String displayCategory, String displayLabels) {
+        String baseText = safeString(wallpaper.title) + " "
+                + safeString(wallpaper.tags) + " "
+                + translateKnownLabelsToTurkish(wallpaper.tags) + " "
+                + safeString(wallpaper.photographer) + " "
+                + rawCategory + " "
+                + rawLabels + " "
+                + displayCategory + " "
+                + displayLabels;
+        return normalizeSearch(baseText);
+    }
+
+    private static String translateKnownLabelsToTurkish(String labels) {
+        String normalized = normalizeSearch(labels);
+        List<String> translated = new ArrayList<>();
+        String[][] dictionary = new String[][]{
+                {"dog", "kopek"}, {"puppy", "kopek"}, {"cat", "kedi"}, {"kitten", "kedi"},
+                {"animal", "hayvan"}, {"animals", "hayvan"}, {"wildlife", "hayvan"},
+                {"bird", "kus"}, {"horse", "at"}, {"cow", "inek"}, {"cattle", "inek"}, {"calf", "inek"}, {"bull", "inek"},
+                {"nature", "doga"}, {"forest", "orman"}, {"tree", "agac"}, {"leaf", "yaprak"}, {"flower", "cicek"},
+                {"beach", "sahil"}, {"sea", "deniz"}, {"ocean", "okyanus"}, {"water", "su"},
+                {"city", "sehir"}, {"urban", "sehir"}, {"street", "sokak"}, {"building", "bina"}, {"architecture", "mimari"},
+                {"vehicle", "arac"}, {"car", "araba"}, {"people", "insan"}, {"person", "insan"}, {"portrait", "portre"},
+                {"space", "uzay"}, {"sky", "gokyuzu"}, {"mountain", "dag"}
+        };
+        for (String[] item : dictionary) {
+            if (normalized.contains(item[0])) {
+                translated.add(item[1]);
+            }
+        }
+        return String.join(" ", translated);
     }
 
     private static boolean matchesSingleQuery(Wallpaper wallpaper, String query, String searchable, List<String> searchableTokens,
