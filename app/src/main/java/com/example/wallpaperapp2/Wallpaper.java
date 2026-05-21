@@ -10,6 +10,13 @@ public class Wallpaper {
     public String aiCategory;
     public String aiLabels;
 
+    public String tags;
+    public String photographer;
+    public int views;
+    public int downloads;
+    public int likes;
+    public String sourceUrl;
+
     public Wallpaper(int id, int imageRes, String title) {
         this(id, imageRes, "", title);
     }
@@ -22,10 +29,16 @@ public class Wallpaper {
         this.id = id;
         this.imageRes = imageRes;
         this.imageUrl = imageUrl == null ? "" : imageUrl;
-        this.title = title;
+        this.title = title == null ? "" : title;
         this.isFavorite = false;
         this.aiCategory = "";
         this.aiLabels = "";
+        this.tags = "";
+        this.photographer = "";
+        this.views = 0;
+        this.downloads = 0;
+        this.likes = 0;
+        this.sourceUrl = "";
     }
 
     public boolean hasRemoteImage() {
