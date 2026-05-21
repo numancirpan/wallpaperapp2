@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -30,7 +31,9 @@ import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
-    private static final long SEARCH_DELAY_MS = 700;
+    private static final long SEARCH_DELAY_MS = 400;
+    private static final int FAST_RESULT_COUNT = 20;
+    private static final int FULL_RESULT_COUNT = 200;
     private static final List<String> QUICK_SEARCHES = Arrays.asList("nature", "urban", "animals", "beach", "space");
     private static final Map<String, String> API_QUERY_MAP = new LinkedHashMap<>();
 
@@ -47,6 +50,8 @@ public class HomeFragment extends Fragment {
         API_QUERY_MAP.put("cicek", "flower");
         API_QUERY_MAP.put("araba", "car");
         API_QUERY_MAP.put("arac", "car");
+        API_QUERY_MAP.put("cat", "cat");
+        API_QUERY_MAP.put("dog", "dog");
         API_QUERY_MAP.put("urban", "city");
         API_QUERY_MAP.put("animals", "animals");
         API_QUERY_MAP.put("nature", "nature");
@@ -60,22 +65,18 @@ public class HomeFragment extends Fragment {
     TextInputEditText editSearch;
     ChipGroup chipGroupSuggestions;
     LinearProgressIndicator progressDynamicSearch;
+    TextView txtSearchEmptyState;
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearchRunnable;
     private int searchRequestCounter = 0;
-    private String lastApiQuery = "";
     private boolean chipClickInProgress = false;
     private boolean apiSearchActive = false;
 
     private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
         if (!isAdded() || adapter == null) return;
         requireActivity().runOnUiThread(() -> {
-            if (apiSearchActive) {
-                renderApiResultsWithoutLocalFilter();
-            } else {
-                filterWallpapers();
-            }
+            if (apiSearchActive) renderApiResultsWithoutLocalFilter(); else filterWallpapers();
         });
     };
 
@@ -90,6 +91,7 @@ public class HomeFragment extends Fragment {
         editSearch = view.findViewById(R.id.editSearch);
         chipGroupSuggestions = view.findViewById(R.id.chipGroupSuggestions);
         progressDynamicSearch = view.findViewById(R.id.progressDynamicSearch);
+        txtSearchEmptyState = view.findViewById(R.id.txtSearchEmptyState);
 
         AppSettingsManager settingsManager = new AppSettingsManager(requireContext());
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), settingsManager.getGridColumns()));
@@ -162,8 +164,8 @@ public class HomeFragment extends Fragment {
         if (normalized.isEmpty()) {
             apiSearchActive = false;
             cancelPendingSearch();
-            lastApiQuery = "";
             hideLoading();
+            hideEmptyState();
             updateQuickSearchSelection("");
             adapter.updateList(new ArrayList<>());
             loadWallpapersFromApi();
@@ -174,6 +176,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadWallpapersFromApi() {
+        hideEmptyState();
         WallpaperApiService.fetchWallpapers(new WallpaperApiService.Callback() {
             @Override
             public void onSuccess(List<Wallpaper> wallpapers) {
@@ -197,21 +200,43 @@ public class HomeFragment extends Fragment {
         String apiQuery = toApiQuery(rawQuery);
         if (apiQuery.isEmpty()) {
             hideLoading();
+            hideEmptyState();
             adapter.updateList(new ArrayList<>());
             return;
         }
         apiSearchActive = true;
         adapter.updateList(new ArrayList<>());
+        hideEmptyState();
         showLoading();
-        pendingSearchRunnable = () -> fetchDynamicApiResults(apiQuery, visibleQuery);
+        int requestId = ++searchRequestCounter;
+        pendingSearchRunnable = () -> fetchFastAndFullApiResults(apiQuery, visibleQuery, requestId);
         searchHandler.postDelayed(pendingSearchRunnable, SEARCH_DELAY_MS);
     }
 
-    private void fetchDynamicApiResults(String apiQuery, String visibleQuery) {
-        lastApiQuery = apiQuery;
-        int requestId = ++searchRequestCounter;
+    private void fetchFastAndFullApiResults(String apiQuery, String visibleQuery, int requestId) {
+        WallpaperApiService.fetchWallpapersForQuery(apiQuery, FAST_RESULT_COUNT, new WallpaperApiService.Callback() {
+            @Override
+            public void onSuccess(List<Wallpaper> wallpapers) {
+                if (!isAdded() || requestId != searchRequestCounter) return;
+                requireActivity().runOnUiThread(() -> {
+                    if (!isSearchStillActive(visibleQuery)) return;
+                    if (wallpapers != null && !wallpapers.isEmpty()) {
+                        WallpaperRepository.replaceAll(wallpapers);
+                        restoreCloudFavoritesAndRender(true);
+                    }
+                });
+                fetchFullApiResults(apiQuery, visibleQuery, requestId);
+            }
 
-        WallpaperApiService.fetchWallpapersForQuery(apiQuery, new WallpaperApiService.Callback() {
+            @Override
+            public void onError(Exception exception) {
+                fetchFullApiResults(apiQuery, visibleQuery, requestId);
+            }
+        });
+    }
+
+    private void fetchFullApiResults(String apiQuery, String visibleQuery, int requestId) {
+        WallpaperApiService.fetchWallpapersForQuery(apiQuery, FULL_RESULT_COUNT, new WallpaperApiService.Callback() {
             @Override
             public void onSuccess(List<Wallpaper> wallpapers) {
                 if (!isAdded() || requestId != searchRequestCounter) return;
@@ -220,9 +245,11 @@ public class HomeFragment extends Fragment {
                     if (!isSearchStillActive(visibleQuery)) return;
                     if (wallpapers == null || wallpapers.isEmpty()) {
                         adapter.updateList(new ArrayList<>());
+                        showEmptyState();
                         return;
                     }
                     WallpaperRepository.replaceAll(wallpapers);
+                    hideEmptyState();
                     restoreCloudFavoritesAndRender(true);
                 });
             }
@@ -232,7 +259,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded() || requestId != searchRequestCounter) return;
                 requireActivity().runOnUiThread(() -> {
                     hideLoading();
-                    adapter.updateList(new ArrayList<>());
+                    if (adapter.getItemCount() == 0) showEmptyState();
                 });
             }
         });
@@ -248,11 +275,10 @@ public class HomeFragment extends Fragment {
     private String toApiQuery(String rawQuery) {
         String normalized = normalizeQuickSearch(rawQuery);
         if (normalized.length() < 2) return "";
+        if (normalized.startsWith("kop") || normalized.startsWith("koep") || normalized.startsWith("köp")) return "dog";
         for (Map.Entry<String, String> entry : API_QUERY_MAP.entrySet()) {
             String key = entry.getKey();
-            if (key.startsWith(normalized) || normalized.startsWith(key)) {
-                return entry.getValue();
-            }
+            if (key.startsWith(normalized) || normalized.startsWith(key)) return entry.getValue();
         }
         return normalized;
     }
@@ -262,14 +288,24 @@ public class HomeFragment extends Fragment {
             searchHandler.removeCallbacks(pendingSearchRunnable);
             pendingSearchRunnable = null;
         }
+        searchRequestCounter++;
     }
 
     private void showLoading() {
         if (progressDynamicSearch != null) progressDynamicSearch.setVisibility(View.VISIBLE);
+        hideEmptyState();
     }
 
     private void hideLoading() {
         if (progressDynamicSearch != null) progressDynamicSearch.setVisibility(View.GONE);
+    }
+
+    private void showEmptyState() {
+        if (txtSearchEmptyState != null) txtSearchEmptyState.setVisibility(View.VISIBLE);
+    }
+
+    private void hideEmptyState() {
+        if (txtSearchEmptyState != null) txtSearchEmptyState.setVisibility(View.GONE);
     }
 
     private void loadCollectionsForBadges() {
@@ -286,18 +322,16 @@ public class HomeFragment extends Fragment {
             WallpaperRepository.applyFavoriteData(favoritesById);
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
-                if (showApiResultsOnly) {
-                    renderApiResultsWithoutLocalFilter();
-                } else {
-                    filterWallpapers();
-                }
+                if (showApiResultsOnly) renderApiResultsWithoutLocalFilter(); else filterWallpapers();
                 warmUpSearchMetadata();
             });
         });
     }
 
     private void renderApiResultsWithoutLocalFilter() {
-        adapter.updateList(new ArrayList<>(WallpaperRepository.wallpaperList));
+        List<Wallpaper> results = new ArrayList<>(WallpaperRepository.wallpaperList);
+        adapter.updateList(results);
+        if (results.isEmpty() && apiSearchActive) showEmptyState(); else hideEmptyState();
         String query = editSearch != null && editSearch.getText() != null ? editSearch.getText().toString() : "";
         updateQuickSearchSelection(query);
     }
@@ -306,6 +340,7 @@ public class HomeFragment extends Fragment {
         String query = editSearch.getText() == null ? "" : editSearch.getText().toString().trim();
         List<Wallpaper> filteredList = WallpaperRepository.searchWallpapers(requireContext(), query);
         adapter.updateList(filteredList);
+        if (filteredList.isEmpty() && apiSearchActive) showEmptyState(); else hideEmptyState();
         updateQuickSearchSelection(query);
     }
 
