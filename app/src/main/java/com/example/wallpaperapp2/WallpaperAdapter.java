@@ -3,6 +3,7 @@ package com.example.wallpaperapp2;
 import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,19 +11,33 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
 public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.ViewHolder> {
 
+    public interface ImageLoadListener {
+        void onImageLoadFinished();
+    }
+
     List<Wallpaper> list;
+    private ImageLoadListener imageLoadListener;
 
     public WallpaperAdapter(List<Wallpaper> list) {
         this.list = list;
+    }
+
+    public void setImageLoadListener(ImageLoadListener listener) {
+        this.imageLoadListener = listener;
     }
 
     public void updateList(List<Wallpaper> newList) {
@@ -42,9 +57,26 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         Wallpaper wallpaper = list.get(position);
 
         if (wallpaper.hasRemoteImage()) {
-            Glide.with(holder.itemView.getContext()).load(wallpaper.imageUrl).centerCrop().into(holder.imageView);
+            Glide.with(holder.itemView.getContext())
+                    .load(wallpaper.imageUrl)
+                    .centerCrop()
+                    .listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            notifyImageLoadFinished();
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                            notifyImageLoadFinished();
+                            return false;
+                        }
+                    })
+                    .into(holder.imageView);
         } else {
             holder.imageView.setImageResource(wallpaper.imageRes);
+            notifyImageLoadFinished();
         }
 
         holder.txtWallpaperTitle.setVisibility(View.GONE);
@@ -77,6 +109,12 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
             intent.putExtra("wallpaper_id", wallpaper.id);
             v.getContext().startActivity(intent);
         });
+    }
+
+    private void notifyImageLoadFinished() {
+        if (imageLoadListener != null) {
+            imageLoadListener.onImageLoadFinished();
+        }
     }
 
     private void applyFastApiTagAnalysis(Wallpaper wallpaper) {
