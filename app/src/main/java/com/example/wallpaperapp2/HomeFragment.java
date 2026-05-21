@@ -25,10 +25,10 @@ public class HomeFragment extends Fragment {
 
     private static final List<String> QUICK_SEARCHES = Arrays.asList(
             "nature",
-            "work",
+            "urban",
             "animals",
             "beach",
-            "abstract"
+            "space"
     );
 
     RecyclerView recyclerView;
@@ -208,9 +208,6 @@ public class HomeFragment extends Fragment {
     }
 
     private String quickSearchLabel(String value) {
-        if ("work".equalsIgnoreCase(value)) {
-            return getString(R.string.category_workspace);
-        }
         return CategoryDisplayMapper.toDisplayName(requireContext(), value);
     }
 
