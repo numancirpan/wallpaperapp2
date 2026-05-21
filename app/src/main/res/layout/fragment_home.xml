@@ -31,6 +31,16 @@
             android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:id="@+id/txtDynamicSearchLoading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:alpha="0.72"
+        android:text="@string/searching_wallpapers"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progressDynamicSearch"
         android:layout_width="match_parent"
