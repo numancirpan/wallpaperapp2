@@ -10,9 +10,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,41 +36,9 @@ public class WallpaperApiService {
 
     private static List<Wallpaper> fetchWallpapersFromUrl(String urlText) throws Exception {
         if (isPixabayUrl(urlText)) {
-            return fetchPixabayWallpapers(urlText);
+            return fetchSingleUrl(withQueryParameter(withQueryParameter(urlText, "page", "1"), "per_page", "200"));
         }
         return fetchSingleUrl(urlText);
-    }
-
-    private static List<Wallpaper> fetchPixabayWallpapers(String urlText) throws Exception {
-        Map<Integer, Wallpaper> mergedById = new LinkedHashMap<>();
-        List<Exception> errors = new ArrayList<>();
-
-        String firstPageUrl = withQueryParameter(withQueryParameter(urlText, "page", "1"), "per_page", "200");
-        String secondPageUrl = withQueryParameter(withQueryParameter(urlText, "page", "2"), "per_page", "100");
-
-        fetchPixabayPage(firstPageUrl, mergedById, errors);
-        fetchPixabayPage(secondPageUrl, mergedById, errors);
-
-        if (!mergedById.isEmpty()) {
-            return new ArrayList<>(mergedById.values());
-        }
-
-        if (!errors.isEmpty()) {
-            throw errors.get(0);
-        }
-        return new ArrayList<>();
-    }
-
-    private static void fetchPixabayPage(String urlText, Map<Integer, Wallpaper> mergedById, List<Exception> errors) {
-        try {
-            for (Wallpaper wallpaper : fetchSingleUrl(urlText)) {
-                if (!mergedById.containsKey(wallpaper.id)) {
-                    mergedById.put(wallpaper.id, wallpaper);
-                }
-            }
-        } catch (Exception e) {
-            errors.add(e);
-        }
     }
 
     private static List<Wallpaper> fetchSingleUrl(String urlText) throws Exception {
