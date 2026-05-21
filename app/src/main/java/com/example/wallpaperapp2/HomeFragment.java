@@ -34,6 +34,8 @@ public class HomeFragment extends Fragment {
     private static final long SEARCH_DELAY_MS = 400;
     private static final int FAST_RESULT_COUNT = 20;
     private static final int FULL_RESULT_COUNT = 50;
+    private static final int IMAGE_LOAD_TARGET = 9;
+    private static final long IMAGE_LOAD_TIMEOUT_MS = 3500;
     private static final List<String> QUICK_SEARCHES = Arrays.asList("nature", "urban", "animals", "beach", "space");
     private static final Map<String, String> API_QUERY_MAP = new LinkedHashMap<>();
 
@@ -70,9 +72,13 @@ public class HomeFragment extends Fragment {
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearchRunnable;
+    private Runnable imageLoadTimeoutRunnable;
     private int searchRequestCounter = 0;
+    private int expectedImageLoads = 0;
+    private int finishedImageLoads = 0;
     private boolean chipClickInProgress = false;
     private boolean apiSearchActive = false;
+    private boolean waitForImageLoads = false;
     private String lastScheduledApiQuery = "";
     private String lastCompletedApiQuery = "";
 
@@ -103,6 +109,7 @@ public class HomeFragment extends Fragment {
         WallpaperRepository.initializeData();
         list = WallpaperRepository.wallpaperList;
         adapter = new WallpaperAdapter(list);
+        adapter.setImageLoadListener(this::onWallpaperImageLoaded);
         recyclerView.setAdapter(adapter);
 
         setupQuickSearchChips();
@@ -128,6 +135,7 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         UserProfileStore.removeCollectionsChangeListener(collectionsChangeListener);
         cancelPendingSearch();
+        cancelImageLoadWait();
         super.onDestroyView();
     }
 
@@ -170,6 +178,7 @@ public class HomeFragment extends Fragment {
             lastScheduledApiQuery = "";
             lastCompletedApiQuery = "";
             cancelPendingSearch();
+            cancelImageLoadWait();
             hideLoading();
             hideEmptyState();
             updateQuickSearchSelection("");
@@ -205,6 +214,7 @@ public class HomeFragment extends Fragment {
         String apiQuery = toApiQuery(rawQuery);
         if (apiQuery.isEmpty()) {
             cancelPendingSearch();
+            cancelImageLoadWait();
             hideLoading();
             hideEmptyState();
             adapter.updateList(new ArrayList<>());
@@ -223,6 +233,7 @@ public class HomeFragment extends Fragment {
         }
 
         cancelPendingSearch();
+        cancelImageLoadWait();
         lastScheduledApiQuery = apiQuery;
         apiSearchActive = true;
         adapter.updateList(new ArrayList<>());
@@ -262,9 +273,10 @@ public class HomeFragment extends Fragment {
             public void onSuccess(List<Wallpaper> wallpapers) {
                 if (!isAdded() || requestId != searchRequestCounter) return;
                 requireActivity().runOnUiThread(() -> {
-                    hideLoading();
                     if (!isSearchStillActive(visibleQuery)) return;
                     if (wallpapers == null || wallpapers.isEmpty()) {
+                        cancelImageLoadWait();
+                        hideLoading();
                         adapter.updateList(new ArrayList<>());
                         showEmptyState();
                         return;
@@ -272,6 +284,7 @@ public class HomeFragment extends Fragment {
                     lastCompletedApiQuery = apiQuery;
                     WallpaperRepository.replaceAll(wallpapers);
                     hideEmptyState();
+                    prepareImageLoadWait(wallpapers.size());
                     restoreCloudFavoritesAndRender(true);
                 });
             }
@@ -280,11 +293,44 @@ public class HomeFragment extends Fragment {
             public void onError(Exception exception) {
                 if (!isAdded() || requestId != searchRequestCounter) return;
                 requireActivity().runOnUiThread(() -> {
+                    cancelImageLoadWait();
                     hideLoading();
                     if (adapter.getItemCount() == 0) showEmptyState();
                 });
             }
         });
+    }
+
+    private void prepareImageLoadWait(int resultCount) {
+        cancelImageLoadWait();
+        expectedImageLoads = Math.min(IMAGE_LOAD_TARGET, Math.max(1, resultCount));
+        finishedImageLoads = 0;
+        waitForImageLoads = true;
+        showLoading();
+        imageLoadTimeoutRunnable = () -> {
+            waitForImageLoads = false;
+            hideLoading();
+        };
+        searchHandler.postDelayed(imageLoadTimeoutRunnable, IMAGE_LOAD_TIMEOUT_MS);
+    }
+
+    private void onWallpaperImageLoaded() {
+        if (!waitForImageLoads) return;
+        finishedImageLoads++;
+        if (finishedImageLoads >= expectedImageLoads) {
+            cancelImageLoadWait();
+            hideLoading();
+        }
+    }
+
+    private void cancelImageLoadWait() {
+        waitForImageLoads = false;
+        expectedImageLoads = 0;
+        finishedImageLoads = 0;
+        if (imageLoadTimeoutRunnable != null) {
+            searchHandler.removeCallbacks(imageLoadTimeoutRunnable);
+            imageLoadTimeoutRunnable = null;
+        }
     }
 
     private boolean isSearchStillActive(String visibleQuery) {
