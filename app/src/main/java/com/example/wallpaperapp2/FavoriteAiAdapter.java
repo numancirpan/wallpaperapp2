@@ -55,10 +55,10 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         holder.txtFavoriteTitle.setVisibility(View.GONE);
         holder.txtFavoriteAiCategory.setVisibility(View.GONE);
         holder.txtFavoriteAiLabels.setVisibility(View.GONE);
+        holder.progressFavoriteAnalysis.setVisibility(View.GONE);
 
         FavoriteButtonStyler.apply(holder.btnFavoriteRemove, true);
         applyCollectionButtonStyle(holder.btnFavoriteCollection, UserProfileStore.isWallpaperInCachedCollection(wallpaper.id));
-        holder.progressFavoriteAnalysis.setVisibility(isAnalyzing(wallpaper) ? View.VISIBLE : View.GONE);
 
         holder.btnFavoriteRepost.setOnClickListener(v -> RepostDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
         holder.btnFavoriteCollection.setOnClickListener(v -> CollectionDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
@@ -80,18 +80,6 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
             intent.putExtra("wallpaper_id", wallpaper.id);
             v.getContext().startActivity(intent);
         });
-    }
-
-    private boolean isAnalyzing(Wallpaper wallpaper) {
-        if (wallpaper == null) return false;
-        String category = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory.toLowerCase();
-        String labels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels.toLowerCase();
-        return category.contains("analyzing")
-                || category.contains("analiz")
-                || labels.contains("progress")
-                || labels.contains("devam")
-                || labels.contains("cache")
-                || labels.contains("önbellek");
     }
 
     private void applyCollectionButtonStyle(MaterialButton button, boolean inCollection) {
