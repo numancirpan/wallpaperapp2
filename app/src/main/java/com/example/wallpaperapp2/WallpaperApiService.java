@@ -2,6 +2,7 @@ package com.example.wallpaperapp2;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -53,23 +54,60 @@ public class WallpaperApiService {
                 throw new Exception("Wallpaper API error: " + responseCode + " " + raw);
             }
 
-            JSONArray array = new JSONArray(raw);
-            List<Wallpaper> result = new ArrayList<>();
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject item = array.getJSONObject(i);
-                String idText = item.optString("id", String.valueOf(i + 1));
-                int id = safeParseInt(idText, i + 1);
-                String author = item.optString("author", "Wallpaper " + id);
-                String imageUrl = item.optString("download_url", "");
-                result.add(new Wallpaper(id, imageUrl, author));
-            }
-
-            return result;
+            return parseWallpaperResponse(raw);
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
         }
+    }
+
+    private static List<Wallpaper> parseWallpaperResponse(String raw) throws Exception {
+        Object json = new JSONTokener(raw).nextValue();
+        if (json instanceof JSONObject) {
+            return parsePixabayResponse((JSONObject) json);
+        }
+        if (json instanceof JSONArray) {
+            return parsePicsumResponse((JSONArray) json);
+        }
+        throw new Exception("Unsupported wallpaper API response");
+    }
+
+    private static List<Wallpaper> parsePixabayResponse(JSONObject root) throws Exception {
+        JSONArray array = root.optJSONArray("hits");
+        if (array == null) {
+            throw new Exception("Pixabay response does not contain hits array");
+        }
+
+        List<Wallpaper> result = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject item = array.getJSONObject(i);
+            int id = item.optInt("id", i + 1);
+            String title = item.optString("tags", "Wallpaper " + id);
+            String imageUrl = item.optString("largeImageURL",
+                    item.optString("webformatURL", ""));
+
+            if (!imageUrl.trim().isEmpty()) {
+                result.add(new Wallpaper(id, imageUrl, title));
+            }
+        }
+        return result;
+    }
+
+    private static List<Wallpaper> parsePicsumResponse(JSONArray array) throws Exception {
+        List<Wallpaper> result = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject item = array.getJSONObject(i);
+            String idText = item.optString("id", String.valueOf(i + 1));
+            int id = safeParseInt(idText, i + 1);
+            String author = item.optString("author", "Wallpaper " + id);
+            String imageUrl = item.optString("download_url", "");
+
+            if (!imageUrl.trim().isEmpty()) {
+                result.add(new Wallpaper(id, imageUrl, author));
+            }
+        }
+        return result;
     }
 
     private static String readStream(InputStream stream) throws Exception {
