@@ -30,8 +30,9 @@ public class FavoritesFragment extends Fragment {
     private TextView txtFavoritesEmptyTitle;
     private TextView txtFavoritesEmptyDescription;
     private TextInputEditText editFavoritesSearch;
-    private boolean isLoadingFavorites = false;
     private ListenerRegistration favoritesListener;
+    private boolean hasRenderedLocalFavorites = false;
+
     private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
         if (!isAdded()) return;
         requireActivity().runOnUiThread(this::renderFavoriteGroups);
@@ -68,6 +69,7 @@ public class FavoritesFragment extends Fragment {
         });
 
         UserProfileStore.addCollectionsChangeListener(collectionsChangeListener);
+        renderFavoriteGroups();
         loadCollectionsForBadges();
         startFavoritesListener();
         return view;
@@ -76,13 +78,13 @@ public class FavoritesFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        renderFavoriteGroups();
         startFavoritesListener();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        stopFavoritesListener();
     }
 
     @Override
@@ -96,12 +98,8 @@ public class FavoritesFragment extends Fragment {
         if (favoritesContainer == null || favoritesGroupsContainer == null) return;
         if (favoritesListener != null) return;
 
-        isLoadingFavorites = true;
-        showLoadingStateIfEmpty();
-
         favoritesListener = FirebaseFavoritesStore.listenFavorites(favoritesById -> {
             WallpaperRepository.applyFavoriteData(favoritesById);
-            isLoadingFavorites = false;
             if (!isAdded()) return;
             requireActivity().runOnUiThread(this::renderFavoriteGroups);
         });
@@ -121,20 +119,12 @@ public class FavoritesFragment extends Fragment {
         }
     }
 
-    private void showLoadingStateIfEmpty() {
-        if (!WallpaperRepository.getFavoriteWallpapersGroupedByCategory().isEmpty()) {
-            renderFavoriteGroups();
-            return;
-        }
-        favoritesGroupsContainer.removeAllViews();
-        showEmptyState(R.string.loading_favorites, R.string.no_favorites_yet_description);
-    }
-
     private void renderFavoriteGroups() {
         if (favoritesContainer == null || favoritesGroupsContainer == null) return;
 
         favoritesGroupsContainer.removeAllViews();
         hideEmptyState();
+        hasRenderedLocalFavorites = true;
 
         Map<String, List<Wallpaper>> groupedFavorites =
                 WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
@@ -143,10 +133,7 @@ public class FavoritesFragment extends Fragment {
                 : "";
 
         if (groupedFavorites.isEmpty()) {
-            showEmptyState(
-                    isLoadingFavorites ? R.string.loading_favorites : R.string.no_favorites_yet,
-                    R.string.no_favorites_yet_description
-            );
+            showEmptyState(R.string.no_favorites_yet, R.string.no_favorites_yet_description);
             return;
         }
 
@@ -217,14 +204,12 @@ public class FavoritesFragment extends Fragment {
             String rawCategory = wallpaper.aiCategory == null ? "" : wallpaper.aiCategory;
             String rawLabels = wallpaper.aiLabels == null ? "" : wallpaper.aiLabels;
             String displayCategory = CategoryDisplayMapper.toDisplayName(requireContext(), rawCategory);
-            String displayLabels = AiLabelDisplayMapper.toDisplayLabels(requireContext(), rawLabels);
 
             String searchable = normalizeSearch(
                     wallpaper.title + " "
                             + rawCategory + " "
                             + rawLabels + " "
-                            + displayCategory + " "
-                            + displayLabels
+                            + displayCategory
             );
 
             if (searchable.contains(query)) {
