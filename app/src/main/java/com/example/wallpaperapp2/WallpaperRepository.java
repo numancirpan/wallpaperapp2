@@ -16,11 +16,33 @@ public class WallpaperRepository {
             "calisma", "is",
             "animal", "animals", "hayvan", "hayvanlar",
             "nature", "doga", "beach", "sahil", "water", "ocean", "sea",
-            "city", "urban", "architecture",
+            "city", "urban", "architecture", "sehir",
             "vehicle", "vehicles",
             "people", "person", "portrait",
-            "art", "abstract", "soyut", "space", "food", "phone", "dark", "minimal"
+            "art", "abstract", "soyut", "space", "food", "phone", "dark", "minimal",
+            "dog", "kopek", "cat", "kedi"
     );
+
+    private static final Map<String, List<String>> SEARCH_SYNONYMS = new LinkedHashMap<>();
+
+    static {
+        SEARCH_SYNONYMS.put("kopek", Arrays.asList("dog", "puppy", "pet", "canine", "animal"));
+        SEARCH_SYNONYMS.put("dog", Arrays.asList("kopek", "puppy", "pet", "canine", "animal"));
+        SEARCH_SYNONYMS.put("kedi", Arrays.asList("cat", "kitten", "pet", "feline", "animal"));
+        SEARCH_SYNONYMS.put("cat", Arrays.asList("kedi", "kitten", "pet", "feline", "animal"));
+        SEARCH_SYNONYMS.put("hayvan", Arrays.asList("animal", "animals", "wildlife", "pet", "dog", "cat", "bird", "horse"));
+        SEARCH_SYNONYMS.put("hayvanlar", Arrays.asList("animal", "animals", "wildlife", "pet", "dog", "cat", "bird", "horse"));
+        SEARCH_SYNONYMS.put("animal", Arrays.asList("hayvan", "hayvanlar", "wildlife", "pet", "dog", "cat", "bird", "horse"));
+        SEARCH_SYNONYMS.put("doga", Arrays.asList("nature", "forest", "landscape", "tree", "mountain", "flower"));
+        SEARCH_SYNONYMS.put("nature", Arrays.asList("doga", "forest", "landscape", "tree", "mountain", "flower"));
+        SEARCH_SYNONYMS.put("sahil", Arrays.asList("beach", "sea", "ocean", "coast", "shore", "water"));
+        SEARCH_SYNONYMS.put("beach", Arrays.asList("sahil", "sea", "ocean", "coast", "shore", "water"));
+        SEARCH_SYNONYMS.put("sehir", Arrays.asList("city", "urban", "street", "building", "architecture"));
+        SEARCH_SYNONYMS.put("city", Arrays.asList("sehir", "urban", "street", "building", "architecture"));
+        SEARCH_SYNONYMS.put("urban", Arrays.asList("sehir", "city", "street", "building", "architecture"));
+        SEARCH_SYNONYMS.put("calisma", Arrays.asList("work", "workspace", "office", "desk", "computer"));
+        SEARCH_SYNONYMS.put("work", Arrays.asList("calisma", "workspace", "office", "desk", "computer"));
+    }
 
     public static List<Wallpaper> wallpaperList = new ArrayList<>();
 
@@ -48,6 +70,7 @@ public class WallpaperRepository {
             return new ArrayList<>(wallpaperList);
         }
 
+        List<String> expandedQueries = expandSearchQuery(normalizedQuery);
         List<Wallpaper> filteredList = new ArrayList<>();
 
         for (Wallpaper wallpaper : wallpaperList) {
@@ -57,6 +80,8 @@ public class WallpaperRepository {
             String displayLabels = AiLabelDisplayMapper.toDisplayLabels(context, rawLabels);
             String searchable = normalizeSearch(
                     safeString(wallpaper.title) + " "
+                            + safeString(wallpaper.tags) + " "
+                            + safeString(wallpaper.photographer) + " "
                             + rawCategory + " "
                             + rawLabels + " "
                             + displayCategory + " "
@@ -64,19 +89,12 @@ public class WallpaperRepository {
             );
             List<String> searchableTokens = tokenize(searchable);
 
-            boolean matchesQuery;
-            if (isCategoryStyleQuery(normalizedQuery)) {
-                String categoryOnlySearchable = normalizeSearch(rawCategory + " " + displayCategory);
-                matchesQuery = categoryOnlySearchable.contains(normalizedQuery)
-                        || CategoryResolver.matchesQuery(normalizedQuery, rawCategory, "");
-                if (matchesQuery && isAnimalQuery(normalizedQuery)) {
-                    matchesQuery = hasAnimalEvidence(wallpaper, rawLabels, displayLabels);
+            boolean matchesQuery = false;
+            for (String expandedQuery : expandedQueries) {
+                if (matchesSingleQuery(wallpaper, expandedQuery, searchable, searchableTokens, rawCategory, rawLabels, displayCategory, displayLabels)) {
+                    matchesQuery = true;
+                    break;
                 }
-            } else if (isShortSpecificQuery(normalizedQuery)) {
-                matchesQuery = matchesTokenPrefix(searchableTokens, normalizedQuery);
-            } else {
-                matchesQuery = searchable.contains(normalizedQuery)
-                        || matchesTokenPrefix(searchableTokens, normalizedQuery);
             }
 
             if (matchesQuery) {
@@ -85,6 +103,45 @@ public class WallpaperRepository {
         }
 
         return filteredList;
+    }
+
+    private static boolean matchesSingleQuery(Wallpaper wallpaper, String query, String searchable, List<String> searchableTokens,
+                                              String rawCategory, String rawLabels, String displayCategory, String displayLabels) {
+        boolean matchesQuery;
+        if (isCategoryStyleQuery(query)) {
+            String categoryOnlySearchable = normalizeSearch(rawCategory + " " + displayCategory + " " + safeString(wallpaper.tags));
+            matchesQuery = categoryOnlySearchable.contains(query)
+                    || searchable.contains(query)
+                    || CategoryResolver.matchesQuery(query, rawCategory, "");
+            if (matchesQuery && isAnimalQuery(query)) {
+                matchesQuery = hasAnimalEvidence(wallpaper, rawLabels, displayLabels);
+            }
+        } else if (isShortSpecificQuery(query)) {
+            matchesQuery = matchesTokenPrefix(searchableTokens, query);
+        } else {
+            matchesQuery = searchable.contains(query)
+                    || matchesTokenPrefix(searchableTokens, query);
+        }
+        return matchesQuery;
+    }
+
+    private static List<String> expandSearchQuery(String query) {
+        List<String> expanded = new ArrayList<>();
+        if (query == null || query.trim().isEmpty()) return expanded;
+
+        addUnique(expanded, query);
+        List<String> synonyms = SEARCH_SYNONYMS.get(query);
+        if (synonyms != null) {
+            for (String synonym : synonyms) {
+                addUnique(expanded, normalizeSearch(synonym));
+            }
+        }
+        return expanded;
+    }
+
+    private static void addUnique(List<String> values, String value) {
+        if (value == null || value.trim().isEmpty()) return;
+        if (!values.contains(value)) values.add(value);
     }
 
     public static Wallpaper getWallpaperById(int id) {
@@ -163,6 +220,12 @@ public class WallpaperRepository {
                     safeString(data.get("aiLabels"))
             );
             wallpaper.aiLabels = safeString(data.get("aiLabels"));
+            wallpaper.tags = safeString(data.get("tags"));
+            wallpaper.photographer = safeString(data.get("photographer"));
+            wallpaper.views = safeInt(data.get("views"));
+            wallpaper.downloads = safeInt(data.get("downloads"));
+            wallpaper.likes = safeInt(data.get("likes"));
+            wallpaper.sourceUrl = safeString(data.get("sourceUrl"));
         }
     }
 
@@ -197,6 +260,12 @@ public class WallpaperRepository {
                     wallpaper.isFavorite = previous.isFavorite;
                     wallpaper.aiCategory = previous.aiCategory;
                     wallpaper.aiLabels = previous.aiLabels;
+                    if (wallpaper.tags == null || wallpaper.tags.trim().isEmpty()) wallpaper.tags = previous.tags;
+                    if (wallpaper.photographer == null || wallpaper.photographer.trim().isEmpty()) wallpaper.photographer = previous.photographer;
+                    if (wallpaper.views == 0) wallpaper.views = previous.views;
+                    if (wallpaper.downloads == 0) wallpaper.downloads = previous.downloads;
+                    if (wallpaper.likes == 0) wallpaper.likes = previous.likes;
+                    if (wallpaper.sourceUrl == null || wallpaper.sourceUrl.trim().isEmpty()) wallpaper.sourceUrl = previous.sourceUrl;
                 }
                 wallpaper.aiCategory = sanitizeCategoryForLabels(wallpaper.aiCategory, wallpaper.aiLabels);
                 wallpaperList.add(wallpaper);
@@ -259,6 +328,15 @@ public class WallpaperRepository {
         return value == null ? "" : String.valueOf(value);
     }
 
+    private static int safeInt(Object value) {
+        if (value instanceof Number) return ((Number) value).intValue();
+        try {
+            return value == null ? 0 : Integer.parseInt(String.valueOf(value));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     private static String normalizeSearch(String value) {
         if (value == null) return "";
         return value.toLowerCase(Locale.ROOT)
@@ -294,13 +372,13 @@ public class WallpaperRepository {
 
     private static boolean hasAnimalEvidence(Wallpaper wallpaper, String rawLabels, String displayLabels) {
         String evidence = normalizeSearch(
-                (wallpaper == null ? "" : safeString(wallpaper.title)) + " " + rawLabels + " " + displayLabels
+                (wallpaper == null ? "" : safeString(wallpaper.title) + " " + safeString(wallpaper.tags)) + " " + rawLabels + " " + displayLabels
         );
         List<String> tokens = tokenize(evidence);
         String[] animalTerms = new String[]{
                 "animal", "animals", "cat", "dog", "bird", "horse", "lion", "tiger",
                 "bear", "fish", "deer", "fox", "wolf", "elephant", "zebra", "giraffe",
-                "pet", "wildlife", "mammal", "reptile", "insect"
+                "pet", "wildlife", "mammal", "reptile", "insect", "puppy", "kitten", "calf", "cattle"
         };
 
         for (String term : animalTerms) {
