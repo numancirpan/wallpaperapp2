@@ -59,16 +59,58 @@ public class WallpaperApiService {
         List<Wallpaper> out = new ArrayList<>();
         String wanted = clean(query);
         if (wanted.isEmpty() || source == null) return out;
+
         for (Wallpaper wallpaper : source) {
-            String text = clean(text(wallpaper.tags) + " " + text(wallpaper.title) + " " + text(wallpaper.photographer));
-            for (String part : text.split(" ")) {
-                if (part.equals(wanted) || part.startsWith(wanted)) {
-                    out.add(wallpaper);
-                    break;
-                }
+            String tags = clean(text(wallpaper.tags));
+            String title = clean(text(wallpaper.title));
+
+            if (matchesWantedKeyword(tags, title, wanted)) {
+                out.add(wallpaper);
             }
         }
         return out;
+    }
+
+    private static boolean matchesWantedKeyword(String tags, String title, String wanted) {
+        String searchable = tags + " " + title;
+
+        if (wanted.equals("dog")) {
+            return containsAnyToken(searchable, "dog", "dogs", "puppy", "puppies", "canine", "hound", "retriever", "husky", "terrier", "bulldog", "beagle");
+        }
+        if (wanted.equals("cat")) {
+            return containsAnyToken(searchable, "cat", "cats", "kitten", "kittens", "feline");
+        }
+        if (wanted.equals("city")) {
+            return containsAnyToken(searchable, "city", "urban", "street", "building", "skyline", "architecture");
+        }
+        if (wanted.equals("nature")) {
+            return containsAnyToken(searchable, "nature", "forest", "tree", "flower", "leaf", "plant", "mountain", "landscape");
+        }
+        if (wanted.equals("beach")) {
+            return containsAnyToken(searchable, "beach", "sea", "ocean", "coast", "shore", "sand");
+        }
+        if (wanted.equals("space")) {
+            return containsAnyToken(searchable, "space", "stars", "star", "galaxy", "moon", "planet", "night");
+        }
+
+        for (String token : searchable.split(" ")) {
+            if (token.equals(wanted) || token.startsWith(wanted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsAnyToken(String text, String... acceptedTokens) {
+        if (text == null || text.isEmpty()) return false;
+        for (String token : text.split(" ")) {
+            for (String accepted : acceptedTokens) {
+                if (token.equals(accepted) || token.startsWith(accepted)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static String text(String value) {
