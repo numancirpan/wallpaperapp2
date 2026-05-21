@@ -51,42 +51,14 @@ public class FavoriteAiAdapter extends RecyclerView.Adapter<FavoriteAiAdapter.Vi
         } else {
             holder.imageFavorite.setImageResource(wallpaper.imageRes);
         }
-        holder.txtFavoriteTitle.setText(wallpaper.title);
+
+        holder.txtFavoriteTitle.setVisibility(View.GONE);
+        holder.txtFavoriteAiCategory.setVisibility(View.GONE);
+        holder.txtFavoriteAiLabels.setVisibility(View.GONE);
+
         FavoriteButtonStyler.apply(holder.btnFavoriteRemove, true);
         applyCollectionButtonStyle(holder.btnFavoriteCollection, UserProfileStore.isWallpaperInCachedCollection(wallpaper.id));
         holder.progressFavoriteAnalysis.setVisibility(isAnalyzing(wallpaper) ? View.VISIBLE : View.GONE);
-
-        if (wallpaper.aiCategory == null || wallpaper.aiCategory.isEmpty()) {
-            holder.txtFavoriteAiCategory.setText(
-                    holder.itemView.getContext().getString(
-                            R.string.ai_category_prefix,
-                            holder.itemView.getContext().getString(R.string.not_analyzed_yet)
-                    )
-            );
-        } else {
-            holder.txtFavoriteAiCategory.setText(
-                    holder.itemView.getContext().getString(
-                            R.string.ai_category_prefix,
-                            CategoryDisplayMapper.toDisplayName(holder.itemView.getContext(), wallpaper.aiCategory)
-                    )
-            );
-        }
-
-        if (wallpaper.aiLabels == null || wallpaper.aiLabels.isEmpty()) {
-            holder.txtFavoriteAiLabels.setText(
-                    holder.itemView.getContext().getString(
-                            R.string.ai_labels_prefix,
-                            holder.itemView.getContext().getString(R.string.not_available)
-                    )
-            );
-        } else {
-            holder.txtFavoriteAiLabels.setText(
-                    holder.itemView.getContext().getString(
-                            R.string.ai_labels_prefix,
-                            AiLabelDisplayMapper.toDisplayLabels(holder.itemView.getContext(), wallpaper.aiLabels)
-                    )
-            );
-        }
 
         holder.btnFavoriteRepost.setOnClickListener(v -> RepostDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
         holder.btnFavoriteCollection.setOnClickListener(v -> CollectionDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
