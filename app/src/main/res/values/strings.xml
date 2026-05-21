@@ -2,6 +2,7 @@
     <string name="app_name">Wallpaper App</string>
     <string name="discover_wallpapers">Discover Wallpapers</string>
     <string name="search_wallpapers">Search wallpapers</string>
+    <string name="searching_wallpapers">Searching wallpapers...</string>
     <string name="no_wallpapers_found">No wallpapers found. Try another keyword.</string>
     <string name="ai_categorized_favorites">AI Categorized Favorites</string>
     <string name="search_favorites">Search favorites by title/category/labels</string>
