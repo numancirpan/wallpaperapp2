@@ -19,7 +19,7 @@
         android:id="@+id/searchLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="8dp"
         android:hint="@string/search_wallpapers"
         app:endIconMode="clear_text">
 
@@ -31,6 +31,14 @@
             android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressDynamicSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,7 +49,7 @@
             android:id="@+id/chipGroupSuggestions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:singleSelection="false" />
+            app:singleSelection="true" />
     </HorizontalScrollView>
 
     <androidx.recyclerview.widget.RecyclerView
