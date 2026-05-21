@@ -90,11 +90,9 @@
 
                 <TextView
                     android:id="@+id/txtDetailTags"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:alpha="0.82"
-                    android:textSize="15sp" />
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:id="@+id/layoutApiStats"
@@ -139,11 +137,9 @@
 
                 <TextView
                     android:id="@+id/txtDetailAiLabels"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/not_available"
-                    android:textSize="16sp" />
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
