@@ -2,6 +2,7 @@
     <string name="app_name">Wallpaper Uygulaması</string>
     <string name="discover_wallpapers">Duvar Kağıtlarını Keşfet</string>
     <string name="search_wallpapers">Duvar kağıdı ara</string>
+    <string name="searching_wallpapers">Duvar kağıtları aranıyor...</string>
     <string name="no_wallpapers_found">Duvar kağıdı bulunamadı. Farklı bir kelime dene.</string>
     <string name="ai_categorized_favorites">AI ile Kategorilenen Favoriler</string>
     <string name="search_favorites">Başlık/kategori/etikete göre favori ara</string>
