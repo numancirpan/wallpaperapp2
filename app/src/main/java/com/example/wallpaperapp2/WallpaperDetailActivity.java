@@ -8,8 +8,10 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,6 +22,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.io.OutputStream;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,6 +31,11 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     private ImageView imageWallpaper;
     private TextView txtTitle;
     private TextView txtPhotographer;
+    private TextView txtDetailTags;
+    private LinearLayout layoutApiStats;
+    private TextView txtDetailLikes;
+    private TextView txtDetailViews;
+    private TextView txtDetailDownloads;
     private TextView txtAiCategory;
     private TextView txtAiLabels;
     private MaterialButton btnFavorite;
@@ -49,6 +57,11 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         imageWallpaper = findViewById(R.id.imageWallpaper);
         txtTitle = findViewById(R.id.txtDetailTitle);
         txtPhotographer = findViewById(R.id.txtPhotographer);
+        txtDetailTags = findViewById(R.id.txtDetailTags);
+        layoutApiStats = findViewById(R.id.layoutApiStats);
+        txtDetailLikes = findViewById(R.id.txtDetailLikes);
+        txtDetailViews = findViewById(R.id.txtDetailViews);
+        txtDetailDownloads = findViewById(R.id.txtDetailDownloads);
         txtAiCategory = findViewById(R.id.txtDetailAiCategory);
         txtAiLabels = findViewById(R.id.txtDetailAiLabels);
         btnFavorite = findViewById(R.id.btnDetailFavorite);
@@ -66,7 +79,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         if (wallpaper != null) {
             renderImage();
             txtTitle.setText(R.string.wallpaper_preview);
-            txtPhotographer.setText(getString(R.string.photo_by, wallpaper.title));
+            updateApiMetadataTexts();
             updateAiTexts();
             updateFavoriteIcon();
             bindWallpaperActions();
@@ -88,6 +101,41 @@ public class WallpaperDetailActivity extends AppCompatActivity {
         } else {
             imageWallpaper.setImageResource(wallpaper.imageRes);
         }
+    }
+
+    private void updateApiMetadataTexts() {
+        String photographer = safeString(wallpaper.photographer);
+        if (photographer.isEmpty()) {
+            photographer = safeString(wallpaper.title);
+        }
+        txtPhotographer.setText(getString(R.string.photo_by, photographer.isEmpty()
+                ? getString(R.string.not_available)
+                : photographer));
+
+        String tags = safeString(wallpaper.tags);
+        if (tags.isEmpty()) {
+            txtDetailTags.setVisibility(View.GONE);
+        } else {
+            txtDetailTags.setVisibility(View.VISIBLE);
+            txtDetailTags.setText(getString(R.string.wallpaper_tags_prefix, tags));
+        }
+
+        boolean hasStats = wallpaper.likes > 0 || wallpaper.views > 0 || wallpaper.downloads > 0;
+        layoutApiStats.setVisibility(hasStats ? View.VISIBLE : View.GONE);
+        if (hasStats) {
+            txtDetailLikes.setText(getString(R.string.wallpaper_likes, formatCount(wallpaper.likes)));
+            txtDetailViews.setText(getString(R.string.wallpaper_views, formatCount(wallpaper.views)));
+            txtDetailDownloads.setText(getString(R.string.wallpaper_downloads, formatCount(wallpaper.downloads)));
+        }
+    }
+
+    private String formatCount(int value) {
+        if (value <= 0) return getString(R.string.not_available);
+        return String.format(Locale.getDefault(), "%,d", value);
+    }
+
+    private String safeString(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void bindFavoriteAction() {
@@ -384,6 +432,7 @@ public class WallpaperDetailActivity extends AppCompatActivity {
     }
 
     private void updateUiSafe() {
+        updateApiMetadataTexts();
         updateAiTexts();
         updateFavoriteIcon();
     }
