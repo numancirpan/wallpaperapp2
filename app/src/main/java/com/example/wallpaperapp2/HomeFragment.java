@@ -66,12 +66,15 @@ public class HomeFragment extends Fragment {
     ChipGroup chipGroupSuggestions;
     LinearProgressIndicator progressDynamicSearch;
     TextView txtSearchEmptyState;
+    TextView txtDynamicSearchLoading;
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearchRunnable;
     private int searchRequestCounter = 0;
     private boolean chipClickInProgress = false;
     private boolean apiSearchActive = false;
+    private String lastScheduledApiQuery = "";
+    private String lastCompletedApiQuery = "";
 
     private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
         if (!isAdded() || adapter == null) return;
@@ -92,6 +95,7 @@ public class HomeFragment extends Fragment {
         chipGroupSuggestions = view.findViewById(R.id.chipGroupSuggestions);
         progressDynamicSearch = view.findViewById(R.id.progressDynamicSearch);
         txtSearchEmptyState = view.findViewById(R.id.txtSearchEmptyState);
+        txtDynamicSearchLoading = view.findViewById(R.id.txtDynamicSearchLoading);
 
         AppSettingsManager settingsManager = new AppSettingsManager(requireContext());
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), settingsManager.getGridColumns()));
@@ -163,6 +167,8 @@ public class HomeFragment extends Fragment {
         String normalized = normalizeQuickSearch(rawQuery);
         if (normalized.isEmpty()) {
             apiSearchActive = false;
+            lastScheduledApiQuery = "";
+            lastCompletedApiQuery = "";
             cancelPendingSearch();
             hideLoading();
             hideEmptyState();
@@ -196,14 +202,28 @@ public class HomeFragment extends Fragment {
     }
 
     private void scheduleDynamicApiSearch(String rawQuery, String visibleQuery) {
-        cancelPendingSearch();
         String apiQuery = toApiQuery(rawQuery);
         if (apiQuery.isEmpty()) {
+            cancelPendingSearch();
             hideLoading();
             hideEmptyState();
             adapter.updateList(new ArrayList<>());
             return;
         }
+
+        if (apiQuery.equals(lastCompletedApiQuery) && apiSearchActive && adapter.getItemCount() > 0) {
+            updateQuickSearchSelection(visibleQuery);
+            hideLoading();
+            hideEmptyState();
+            return;
+        }
+
+        if (apiQuery.equals(lastScheduledApiQuery) && pendingSearchRunnable != null) {
+            return;
+        }
+
+        cancelPendingSearch();
+        lastScheduledApiQuery = apiQuery;
         apiSearchActive = true;
         adapter.updateList(new ArrayList<>());
         hideEmptyState();
@@ -214,6 +234,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchFastAndFullApiResults(String apiQuery, String visibleQuery, int requestId) {
+        pendingSearchRunnable = null;
         WallpaperApiService.fetchWallpapersForQuery(apiQuery, FAST_RESULT_COUNT, new WallpaperApiService.Callback() {
             @Override
             public void onSuccess(List<Wallpaper> wallpapers) {
@@ -248,6 +269,7 @@ public class HomeFragment extends Fragment {
                         showEmptyState();
                         return;
                     }
+                    lastCompletedApiQuery = apiQuery;
                     WallpaperRepository.replaceAll(wallpapers);
                     hideEmptyState();
                     restoreCloudFavoritesAndRender(true);
@@ -293,11 +315,13 @@ public class HomeFragment extends Fragment {
 
     private void showLoading() {
         if (progressDynamicSearch != null) progressDynamicSearch.setVisibility(View.VISIBLE);
+        if (txtDynamicSearchLoading != null) txtDynamicSearchLoading.setVisibility(View.VISIBLE);
         hideEmptyState();
     }
 
     private void hideLoading() {
         if (progressDynamicSearch != null) progressDynamicSearch.setVisibility(View.GONE);
+        if (txtDynamicSearchLoading != null) txtDynamicSearchLoading.setVisibility(View.GONE);
     }
 
     private void showEmptyState() {
