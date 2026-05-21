@@ -103,14 +103,15 @@ public class WallpaperApiService {
             JSONObject item = array.getJSONObject(i);
             int id = item.optInt("id", i + 1);
             String tags = item.optString("tags", "");
-            String title = tags.trim().isEmpty() ? "Wallpaper " + id : tags;
+            String photographer = item.optString("user", "");
+            String title = photographer.trim().isEmpty() ? "Wallpaper " + id : photographer;
             String imageUrl = item.optString("largeImageURL",
                     item.optString("webformatURL", ""));
 
             if (!imageUrl.trim().isEmpty()) {
                 Wallpaper wallpaper = new Wallpaper(id, imageUrl, title);
                 wallpaper.tags = tags;
-                wallpaper.photographer = item.optString("user", "");
+                wallpaper.photographer = photographer;
                 wallpaper.views = item.optInt("views", 0);
                 wallpaper.downloads = item.optInt("downloads", 0);
                 wallpaper.likes = item.optInt("likes", 0);
