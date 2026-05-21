@@ -31,7 +31,6 @@ public class FavoritesFragment extends Fragment {
     private TextView txtFavoritesEmptyDescription;
     private TextInputEditText editFavoritesSearch;
     private ListenerRegistration favoritesListener;
-    private boolean hasRenderedLocalFavorites = false;
 
     private final UserProfileStore.CollectionsChangeListener collectionsChangeListener = () -> {
         if (!isAdded()) return;
@@ -54,17 +53,10 @@ public class FavoritesFragment extends Fragment {
         editFavoritesSearch = view.findViewById(R.id.editFavoritesSearch);
 
         editFavoritesSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void afterTextChanged(Editable s) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 renderFavoriteGroups();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
             }
         });
 
@@ -83,11 +75,6 @@ public class FavoritesFragment extends Fragment {
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
     public void onDestroyView() {
         super.onDestroyView();
         UserProfileStore.removeCollectionsChangeListener(collectionsChangeListener);
@@ -99,9 +86,15 @@ public class FavoritesFragment extends Fragment {
         if (favoritesListener != null) return;
 
         favoritesListener = FirebaseFavoritesStore.listenFavorites(favoritesById -> {
-            WallpaperRepository.applyFavoriteData(favoritesById);
             if (!isAdded()) return;
-            requireActivity().runOnUiThread(this::renderFavoriteGroups);
+            requireActivity().runOnUiThread(() -> {
+                boolean firebaseEmpty = favoritesById == null || favoritesById.isEmpty();
+                boolean hasLocalFavorites = !WallpaperRepository.getFavoriteWallpapers().isEmpty();
+                if (!firebaseEmpty || !hasLocalFavorites) {
+                    WallpaperRepository.applyFavoriteData(favoritesById);
+                }
+                renderFavoriteGroups();
+            });
         });
     }
 
@@ -124,10 +117,8 @@ public class FavoritesFragment extends Fragment {
 
         favoritesGroupsContainer.removeAllViews();
         hideEmptyState();
-        hasRenderedLocalFavorites = true;
 
-        Map<String, List<Wallpaper>> groupedFavorites =
-                WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
+        Map<String, List<Wallpaper>> groupedFavorites = WallpaperRepository.getFavoriteWallpapersGroupedByCategory();
         String query = editFavoritesSearch != null && editFavoritesSearch.getText() != null
                 ? normalizeSearch(editFavoritesSearch.getText().toString())
                 : "";
@@ -149,30 +140,22 @@ public class FavoritesFragment extends Fragment {
             categoryTitle.setTextSize(20);
             categoryTitle.setTypeface(null, android.graphics.Typeface.BOLD);
 
-            LinearLayout.LayoutParams categoryParams =
-                    new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                    );
+            LinearLayout.LayoutParams categoryParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
             categoryParams.topMargin = 16;
             categoryParams.bottomMargin = 8;
             categoryTitle.setLayoutParams(categoryParams);
-
             favoritesGroupsContainer.addView(categoryTitle);
 
             RecyclerView recyclerView = new RecyclerView(requireContext());
-            recyclerView.setLayoutManager(
-                    new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-            );
+            recyclerView.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
             recyclerView.setAdapter(new FavoriteAiAdapter(wallpapers));
-
-            LinearLayout.LayoutParams recyclerParams =
-                    new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                    );
-            recyclerView.setLayoutParams(recyclerParams);
-
+            recyclerView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
             favoritesGroupsContainer.addView(recyclerView);
         }
 
@@ -195,9 +178,7 @@ public class FavoritesFragment extends Fragment {
     }
 
     private List<Wallpaper> filterByQuery(List<Wallpaper> source, String query) {
-        if (query == null || query.isEmpty()) {
-            return source;
-        }
+        if (query == null || query.isEmpty()) return source;
 
         List<Wallpaper> filtered = new ArrayList<>();
         for (Wallpaper wallpaper : source) {
@@ -206,15 +187,10 @@ public class FavoritesFragment extends Fragment {
             String displayCategory = CategoryDisplayMapper.toDisplayName(requireContext(), rawCategory);
 
             String searchable = normalizeSearch(
-                    wallpaper.title + " "
-                            + rawCategory + " "
-                            + rawLabels + " "
-                            + displayCategory
+                    wallpaper.title + " " + rawCategory + " " + rawLabels + " " + displayCategory
             );
 
-            if (searchable.contains(query)) {
-                filtered.add(wallpaper);
-            }
+            if (searchable.contains(query)) filtered.add(wallpaper);
         }
         return filtered;
     }
