@@ -27,7 +27,7 @@ public class WallpaperApiService {
     public static void fetchWallpapers(Callback callback) {
         EXECUTOR.execute(() -> {
             try {
-                List<Wallpaper> result = fetchWallpapersFromUrl(BuildConfig.WALLPAPER_API_URL);
+                List<Wallpaper> result = fetchWallpapersFromUrl(BuildConfig.WALLPAPER_API_URL, 200);
                 callback.onSuccess(result);
             } catch (Exception e) {
                 callback.onError(e);
@@ -36,6 +36,10 @@ public class WallpaperApiService {
     }
 
     public static void fetchWallpapersForQuery(String query, Callback callback) {
+        fetchWallpapersForQuery(query, 200, callback);
+    }
+
+    public static void fetchWallpapersForQuery(String query, int perPage, Callback callback) {
         EXECUTOR.execute(() -> {
             try {
                 String urlText = BuildConfig.WALLPAPER_API_URL;
@@ -43,7 +47,7 @@ public class WallpaperApiService {
                     String encodedQuery = URLEncoder.encode(query.trim(), "UTF-8");
                     urlText = withQueryParameter(urlText, "q", encodedQuery);
                 }
-                List<Wallpaper> result = fetchWallpapersFromUrl(urlText);
+                List<Wallpaper> result = fetchWallpapersFromUrl(urlText, perPage);
                 callback.onSuccess(result);
             } catch (Exception e) {
                 callback.onError(e);
@@ -51,9 +55,10 @@ public class WallpaperApiService {
         });
     }
 
-    private static List<Wallpaper> fetchWallpapersFromUrl(String urlText) throws Exception {
+    private static List<Wallpaper> fetchWallpapersFromUrl(String urlText, int perPage) throws Exception {
         if (isPixabayUrl(urlText)) {
-            return fetchSingleUrl(withQueryParameter(withQueryParameter(urlText, "page", "1"), "per_page", "200"));
+            int safePerPage = Math.max(3, Math.min(perPage, 200));
+            return fetchSingleUrl(withQueryParameter(withQueryParameter(urlText, "page", "1"), "per_page", String.valueOf(safePerPage)));
         }
         return fetchSingleUrl(urlText);
     }
