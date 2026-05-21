@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,22 @@ public class WallpaperApiService {
         EXECUTOR.execute(() -> {
             try {
                 List<Wallpaper> result = fetchWallpapersFromUrl(BuildConfig.WALLPAPER_API_URL);
+                callback.onSuccess(result);
+            } catch (Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    public static void fetchWallpapersForQuery(String query, Callback callback) {
+        EXECUTOR.execute(() -> {
+            try {
+                String urlText = BuildConfig.WALLPAPER_API_URL;
+                if (isPixabayUrl(urlText) && query != null && !query.trim().isEmpty()) {
+                    String encodedQuery = URLEncoder.encode(query.trim(), "UTF-8");
+                    urlText = withQueryParameter(urlText, "q", encodedQuery);
+                }
+                List<Wallpaper> result = fetchWallpapersFromUrl(urlText);
                 callback.onSuccess(result);
             } catch (Exception e) {
                 callback.onError(e);
