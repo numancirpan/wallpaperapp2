@@ -65,6 +65,10 @@
 
     <string name="wallpaper_preview">Wallpaper Preview</string>
     <string name="photo_by">Photo by %1$s</string>
+    <string name="wallpaper_tags_prefix">Tags: %1$s</string>
+    <string name="wallpaper_likes">Likes\n%1$s</string>
+    <string name="wallpaper_views">Views\n%1$s</string>
+    <string name="wallpaper_downloads">Downloads\n%1$s</string>
     <string name="ai_category_prefix">AI Category: %1$s</string>
     <string name="ai_labels_prefix">AI Labels: %1$s</string>
     <string name="not_analyzed_yet">Not analyzed yet</string>
