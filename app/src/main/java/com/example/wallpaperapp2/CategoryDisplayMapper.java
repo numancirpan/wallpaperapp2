@@ -75,6 +75,7 @@ public class CategoryDisplayMapper {
                 return "Nature";
 
             case "şehir":
+            case "city":
             case "urban":
             case "street":
             case "road":
@@ -132,6 +133,9 @@ public class CategoryDisplayMapper {
             case "space":
                 return "Space";
 
+            case "diğer":
+            case "diger":
+            case "other":
             case "kategorisiz":
             case "uncategorized":
                 return "Uncategorized";
@@ -189,7 +193,7 @@ public class CategoryDisplayMapper {
             case "space":
                 return context.getString(R.string.category_space);
             case "uncategorized":
-                return context.getString(R.string.uncategorized);
+                return context.getString(R.string.category_other);
             case "analyzing":
                 return context.getString(R.string.analyzing);
             default:
