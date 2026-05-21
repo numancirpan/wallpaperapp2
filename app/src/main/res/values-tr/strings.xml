@@ -65,6 +65,10 @@
 
     <string name="wallpaper_preview">Duvar Kağıdı Önizleme</string>
     <string name="photo_by">Fotoğraf: %1$s</string>
+    <string name="wallpaper_tags_prefix">Etiketler: %1$s</string>
+    <string name="wallpaper_likes">Beğeni\n%1$s</string>
+    <string name="wallpaper_views">Görüntüleme\n%1$s</string>
+    <string name="wallpaper_downloads">İndirme\n%1$s</string>
     <string name="ai_category_prefix">AI Kategorisi: %1$s</string>
     <string name="ai_labels_prefix">AI Etiketleri: %1$s</string>
     <string name="not_analyzed_yet">Henüz analiz edilmedi</string>
