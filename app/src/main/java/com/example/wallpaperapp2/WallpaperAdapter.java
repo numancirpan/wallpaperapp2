@@ -52,22 +52,21 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         applyCollectionButtonStyle(holder.btnAddToCollection, UserProfileStore.isWallpaperInCachedCollection(wallpaper.id));
 
         holder.btnFavorite.setOnClickListener(v -> {
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) return;
+
             wallpaper.isFavorite = !wallpaper.isFavorite;
             FavoriteButtonStyler.apply(holder.btnFavorite, wallpaper.isFavorite);
 
             if (!wallpaper.isFavorite) {
                 FirebaseFavoritesStore.removeFavorite(wallpaper);
-                notifyItemChanged(position);
+                notifyItemChanged(adapterPosition);
                 return;
             }
 
+            applyFastApiTagAnalysis(wallpaper);
             FirebaseFavoritesStore.saveFavorite(wallpaper);
-
-            if (needsAnalysis(wallpaper)) {
-                applyFastApiTagAnalysis(holder, wallpaper, position);
-            } else {
-                notifyItemChanged(position);
-            }
+            notifyItemChanged(adapterPosition);
         });
 
         holder.btnRepost.setOnClickListener(v -> RepostDialogHelper.show(v.getContext(), holder.itemView, wallpaper));
@@ -80,21 +79,18 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         });
     }
 
-    private void applyFastApiTagAnalysis(ViewHolder holder, Wallpaper wallpaper, int position) {
+    private void applyFastApiTagAnalysis(Wallpaper wallpaper) {
+        if (!needsAnalysis(wallpaper)) return;
+
         String tags = wallpaper.tags == null ? "" : wallpaper.tags.trim();
         if (!tags.isEmpty()) {
             wallpaper.aiCategory = inferCategoryFromTags(tags);
             wallpaper.aiLabels = tags;
-            FirebaseFavoritesStore.saveFavorite(wallpaper);
-            FirebaseFavoritesStore.saveAiCache(wallpaper);
-            holder.itemView.post(() -> notifyItemChanged(position));
             return;
         }
 
-        wallpaper.aiCategory = holder.itemView.getContext().getString(R.string.uncategorized);
-        wallpaper.aiLabels = holder.itemView.getContext().getString(R.string.not_available);
-        FirebaseFavoritesStore.saveFavorite(wallpaper);
-        holder.itemView.post(() -> notifyItemChanged(position));
+        wallpaper.aiCategory = "Other";
+        wallpaper.aiLabels = "API metadata not available";
     }
 
     private String inferCategoryFromTags(String tags) {
@@ -117,9 +113,6 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         if (containsAny(text, "people", "person", "portrait", "face", "human")) {
             return "People";
         }
-        if (containsAny(text, "food", "fruit", "meal", "drink")) {
-            return "Food";
-        }
         if (containsAny(text, "desk", "office", "computer", "laptop", "keyboard", "workspace", "work")) {
             return "Workspace";
         }
@@ -129,7 +122,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.View
         if (containsAny(text, "nature", "flower", "forest", "tree", "leaf", "mountain", "landscape", "plant")) {
             return "Nature";
         }
-        return "Uncategorized";
+        return "Other";
     }
 
     private boolean containsAny(String source, String... keywords) {
