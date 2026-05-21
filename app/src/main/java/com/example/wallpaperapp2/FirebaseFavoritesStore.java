@@ -31,6 +31,12 @@ public class FirebaseFavoritesStore {
         payload.put("imageUrl", wallpaper.imageUrl);
         payload.put("aiCategory", wallpaper.aiCategory);
         payload.put("aiLabels", wallpaper.aiLabels);
+        payload.put("tags", wallpaper.tags);
+        payload.put("photographer", wallpaper.photographer);
+        payload.put("views", wallpaper.views);
+        payload.put("downloads", wallpaper.downloads);
+        payload.put("likes", wallpaper.likes);
+        payload.put("sourceUrl", wallpaper.sourceUrl);
         payload.put("isFavorite", wallpaper.isFavorite);
         payload.put("updatedAt", System.currentTimeMillis());
 
@@ -142,6 +148,9 @@ public class FirebaseFavoritesStore {
         payload.put("imageUrl", wallpaper.imageUrl);
         payload.put("aiCategory", wallpaper.aiCategory);
         payload.put("aiLabels", wallpaper.aiLabels);
+        payload.put("tags", wallpaper.tags);
+        payload.put("photographer", wallpaper.photographer);
+        payload.put("sourceUrl", wallpaper.sourceUrl);
         payload.put("analyzedAt", System.currentTimeMillis());
 
         db.collection(AI_CACHE_COLLECTION)
